@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{ArgAction, Parser};
 
@@ -8,7 +8,7 @@ use clap::{ArgAction, Parser};
     about = "CLI tool to track auto maintainence",
     version
 )]
-pub struct MaintenanceTrackerCLI {
+pub struct MaintenanceTrackerArgs {
     #[arg(
         short,
         long,
@@ -27,4 +27,26 @@ pub struct MaintenanceTrackerCLI {
 
     #[arg(short, long, action = ArgAction::Count, help = "Verbosity. Pass -v for info and -vv for debug. Anything after -vv will set the verbosity to debug.")]
     verbose: u8,
+}
+
+impl MaintenanceTrackerArgs {
+    pub fn new(maintenance_log: &Path, maintenance_log_env: &str, verbose: u8) -> Self {
+        Self {
+            maintenance_log: maintenance_log.into(),
+            maintenance_log_env: maintenance_log_env.into(),
+            verbose,
+        }
+    }
+
+    pub fn maintenance_log(&self) -> &Path {
+        &self.maintenance_log
+    }
+
+    pub fn maintenance_log_env(&self) -> &str {
+        &self.maintenance_log_env
+    }
+
+    pub fn verbose(&self) -> u8 {
+        self.verbose
+    }
 }

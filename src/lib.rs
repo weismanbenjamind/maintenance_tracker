@@ -2,5 +2,5 @@ mod cli;
 mod containers;
 mod run;
 
-pub use cli::MaintenanceTrackerCLI;
+pub use cli::MaintenanceTrackerArgs;
 pub use run::run;
