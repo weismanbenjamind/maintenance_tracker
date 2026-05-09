@@ -43,7 +43,7 @@ impl ServiceMetdata {
             service_interval,
             next_service,
             previous_services: previous_services.into(),
-            notes: notes.into(),
+            notes,
         }
     }
     #[allow(dead_code)]
