@@ -9,19 +9,21 @@ pub struct MaintenanceLog {
 }
 
 impl MaintenanceLog {
+    // fn load<P: AsRef<Path>>(path: P) -> Result<>
+
     #[allow(dead_code)]
-    fn new(services: HashMap<String, ServiceMetdata>) -> Self {
+    pub fn new(services: HashMap<String, ServiceMetdata>) -> Self {
         Self { services }
     }
 
     #[allow(dead_code)]
-    fn as_map(&self) -> &HashMap<String, ServiceMetdata> {
+    pub fn as_map(&self) -> &HashMap<String, ServiceMetdata> {
         &self.services
     }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct ServiceMetdata {
+pub struct ServiceMetdata {
     name: String,
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
@@ -31,7 +33,7 @@ struct ServiceMetdata {
 
 impl ServiceMetdata {
     #[allow(dead_code)]
-    fn new(
+    pub fn new(
         name: &str,
         service_interval: ServiceInterval,
         next_service: ServiceEvent,
@@ -47,78 +49,78 @@ impl ServiceMetdata {
         }
     }
     #[allow(dead_code)]
-    fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         &self.name
     }
 
     #[allow(dead_code)]
-    fn service_interval(&self) -> ServiceInterval {
+    pub fn service_interval(&self) -> ServiceInterval {
         self.service_interval
     }
 
     #[allow(dead_code)]
-    fn next_service(&self) -> ServiceEvent {
+    pub fn next_service(&self) -> ServiceEvent {
         self.next_service
     }
 
     #[allow(dead_code)]
-    fn previous_services(&self) -> &[ServiceEvent] {
+    pub fn previous_services(&self) -> &[ServiceEvent] {
         &self.previous_services
     }
 
     #[allow(dead_code)]
-    fn notes(&self) -> &[String] {
+    pub fn notes(&self) -> &[String] {
         &self.notes
     }
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-struct ServiceEvent {
+pub struct ServiceEvent {
     miles: u32,
     date: NaiveDate,
 }
 
 impl ServiceEvent {
     #[allow(dead_code)]
-    fn new(miles: u32, date: NaiveDate) -> Self {
+    pub fn new(miles: u32, date: NaiveDate) -> Self {
         Self { miles, date }
     }
 
     #[allow(dead_code)]
-    fn miles(&self) -> u32 {
+    pub fn miles(&self) -> u32 {
         self.miles
     }
 
     #[allow(dead_code)]
-    fn date(&self) -> NaiveDate {
+    pub fn date(&self) -> NaiveDate {
         self.date
     }
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-struct ServiceInterval {
+pub struct ServiceInterval {
     miles: u32,
     months: u32,
 }
 
 impl ServiceInterval {
     #[allow(dead_code)]
-    fn new(miles: u32, months: u32) -> Self {
+    pub fn new(miles: u32, months: u32) -> Self {
         Self { miles, months }
     }
 
     #[allow(dead_code)]
-    fn miles(&self) -> u32 {
+    pub fn miles(&self) -> u32 {
         self.miles
     }
 
     #[allow(dead_code)]
-    fn months(&self) -> u32 {
+    pub fn months(&self) -> u32 {
         self.months
     }
 
     #[allow(dead_code)]
-    fn years(&self) -> f64 {
+    pub fn years(&self) -> f64 {
         self.months as f64 / 12.0
     }
 }
