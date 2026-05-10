@@ -5,7 +5,7 @@ use clap::{ArgAction, Parser};
 #[derive(Clone, Debug, Parser)]
 #[command(
     name = "maintenance_tracker",
-    about = "CLI tool to track auto maintainence",
+    about = "CLI tool to track auto maintenance",
     version
 )]
 pub struct MaintenanceTrackerArgs {

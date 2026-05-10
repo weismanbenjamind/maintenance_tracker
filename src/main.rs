@@ -1,5 +1,5 @@
 use clap::Parser;
-use maintainence_tracker::{MaintenanceTrackerArgs, run};
+use maintenance_tracker::{MaintenanceTrackerArgs, run};
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
