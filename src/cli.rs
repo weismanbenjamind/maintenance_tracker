@@ -25,7 +25,7 @@ pub struct MaintenanceTrackerArgs {
     )]
     maintenance_log_env: String,
 
-    #[arg(short, long, action = ArgAction::Count, help = "Verbosity. Pass -v for info and -vv for debug. Anything after -vv will set the verbosity to debug.")]
+    #[arg(short, long, action = ArgAction::Count, help = "Verbosity. Pass -v for info and -vv for debug. Anything after -vv will set the verbosity to debug. Defaults to warning")]
     verbose: u8,
 }
 

@@ -3,13 +3,24 @@ use std::collections::HashMap;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
+use crate::errors::ContainersError;
+
+use log::info;
+
+use std::path::Path;
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MaintenanceLog {
     services: HashMap<String, ServiceMetdata>,
 }
 
 impl MaintenanceLog {
-    // fn load<P: AsRef<Path>>(path: P) -> Result<>
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, ContainersError> {
+        let path = path.as_ref();
+        info!("Reading maintenance log path at {}.", path.display());
+        let log = std::fs::read_to_string(path)?;
+        Ok(toml::from_str::<MaintenanceLog>(&log)?)
+    }
 
     #[allow(dead_code)]
     pub fn new(services: HashMap<String, ServiceMetdata>) -> Self {
