@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -15,8 +15,13 @@ pub enum MaintenanceTrackerError {
 
 #[derive(Debug, Error)]
 pub enum ContainersError {
-    #[error("Failed to read maintenance log. Error: {0}.")]
-    FailedLoad(#[from] std::io::Error),
+    #[error("Failed to read maintenance log at path {path}. Error: {source}.")]
+    FailedLoad {
+        path: PathBuf,
+
+        #[source]
+        source: std::io::Error,
+    },
 
     #[error("Failed to deserialize maintenance log from toml. Error: {0}.")]
     FailedDerserialize(#[from] toml::de::Error),
@@ -34,7 +39,25 @@ pub enum VerbosityError {
 #[derive(Debug, Error)]
 pub enum CfgResolveError {
     #[error(
-        "Failed to resolve path to config. Path {0} does not exist and environment variable {0} is not set."
+        "Failed to resolve path to config. Path {0} does not exist and skipping environment variable resolution."
     )]
-    ResolveFailure(PathBuf, String),
+    ResolveFailure(PathBuf),
+
+    #[error(
+        "Failed to resolve path to config. Path {0} does not exist and environment variable {1} is not set."
+    )]
+    ResolveFailureEnv(PathBuf, String),
+}
+
+impl CfgResolveError {
+    pub fn from_resolve_attempt(
+        maintenance_log: &Path,
+        maintenance_log_env: &str,
+        skip_env: &str,
+    ) -> Self {
+        match maintenance_log_env == skip_env {
+            true => Self::ResolveFailure(maintenance_log.into()),
+            false => Self::ResolveFailureEnv(maintenance_log.into(), maintenance_log_env.into()),
+        }
+    }
 }

@@ -1,3 +1,4 @@
+mod cfg_resolve;
 mod cli;
 mod containers;
 pub mod errors;
