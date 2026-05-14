@@ -1,5 +1,6 @@
 mod cfg_resolve;
 mod cli;
+mod cmds;
 mod containers;
 pub mod errors;
 mod run;
