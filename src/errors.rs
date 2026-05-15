@@ -11,6 +11,9 @@ pub enum MaintenanceTrackerError {
 
     #[error(transparent)]
     CfgResolve(#[from] CfgResolveError),
+
+    #[error(transparent)]
+    Cmds(#[from] CmdsError),
 }
 
 #[derive(Debug, Error)]
@@ -60,4 +63,21 @@ impl CfgResolveError {
             false => Self::ResolveFailureEnv(maintenance_log.into(), maintenance_log_env.into()),
         }
     }
+}
+
+#[derive(Debug, Error)]
+pub enum CmdsError {
+    #[error(transparent)]
+    NextServices(#[from] ServiceOptionsError),
+}
+
+#[derive(Debug, Error)]
+pub enum ServiceOptionsError {
+    #[error(
+        "'miles_from_current' and 'current_miles' must both be 'Some' if one is set to 'Some'."
+    )]
+    InvalidMileageArgs,
+
+    #[error("'today' can only be passed if 'months_from_today' is Some.")]
+    InvalidDateArgs,
 }

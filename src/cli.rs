@@ -55,12 +55,14 @@ impl MaintenanceTrackerArgs {
         self.verbose
     }
 
-    pub fn cmd(&self) -> Cmd {
-        self.cmd
+    pub fn cmd(&self) -> &Cmd {
+        &self.cmd
     }
 }
 
-#[derive(Clone, Copy, Debug, Subcommand)]
+#[derive(Clone, Debug, Subcommand)]
 pub enum Cmd {
+    NextService(cmds::NextService),
     NextServices(cmds::NextServices),
+    ServiceDetails(cmds::ServiceDetails),
 }
