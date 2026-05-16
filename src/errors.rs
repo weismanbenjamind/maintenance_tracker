@@ -68,11 +68,11 @@ impl CfgResolveError {
 #[derive(Debug, Error)]
 pub enum CmdsError {
     #[error(transparent)]
-    NextServices(#[from] ServiceOptionsError),
+    Diff(#[from] DiffOptionsError),
 }
 
 #[derive(Debug, Error)]
-pub enum ServiceOptionsError {
+pub enum DiffOptionsError {
     #[error(
         "'miles_from_current' and 'current_miles' must both be 'Some' if one is set to 'Some'."
     )]

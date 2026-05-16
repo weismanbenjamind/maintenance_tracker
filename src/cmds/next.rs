@@ -1,21 +1,18 @@
-use super::service_options::ServiceOptions;
 use clap::Args;
 
-#[derive(Clone, Copy, Debug, Args)]
-#[command(
-    about = "Get next services for a specific mileage interval/threshold and/or date interval/threshold"
-)]
+#[derive(Clone, Debug, Args)]
+#[command(about = "Get the next service event for a given maintenance item")]
 pub struct Next {
-    #[command(flatten)]
-    service_options: ServiceOptions,
+    #[arg(short, long, help = "ID of service")]
+    id: String,
 }
 
 impl Next {
-    pub fn new(service_options: ServiceOptions) -> Self {
-        Self { service_options }
+    pub fn new(id: &str) -> Self {
+        Self { id: id.into() }
     }
 
-    pub fn service_options(self) -> ServiceOptions {
-        self.service_options
+    pub fn id(&self) -> &str {
+        &self.id
     }
 }

@@ -3,7 +3,6 @@ mod detail;
 mod diff;
 mod list;
 mod next;
-mod service_options;
 
 pub use complete::Complete;
 pub use detail::Detail;

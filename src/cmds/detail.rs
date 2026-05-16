@@ -3,16 +3,16 @@ use clap::Args;
 #[derive(Clone, Debug, Args)]
 #[command(about = "Show details about a specific service")]
 pub struct Detail {
-    #[arg(short, long, help = "Service to get details about")]
-    name: String,
+    #[arg(short, long, help = "ID of service")]
+    id: String,
 }
 
 impl Detail {
-    pub fn new(name: &str) -> Self {
-        Self { name: name.into() }
+    pub fn new(id: &str) -> Self {
+        Self { id: id.into() }
     }
 
-    pub fn name(&self) -> &str {
-        &self.name
+    pub fn id(&self) -> &str {
+        &self.id
     }
 }

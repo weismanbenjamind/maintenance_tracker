@@ -4,7 +4,7 @@ use clap::Args;
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
 pub struct Complete {
-    #[arg(short, long, help = "Service id to complete")]
+    #[arg(short, long, help = "ID of service")]
     id: String,
 
     #[arg(short, long, help = "Mileage on vehicle upon service completion")]
