@@ -3,7 +3,7 @@ use clap::Args;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
-pub struct CompleteService {
+pub struct Complete {
     #[arg(short, long, help = "Service id to complete")]
     id: String,
 

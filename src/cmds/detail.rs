@@ -1,13 +1,13 @@
 use clap::Args;
 
 #[derive(Clone, Debug, Args)]
-#[command(about = "Get details about a specific service")]
-pub struct ServiceDetails {
+#[command(about = "Show details about a specific service")]
+pub struct Detail {
     #[arg(short, long, help = "Service to get details about")]
     name: String,
 }
 
-impl ServiceDetails {
+impl Detail {
     pub fn new(name: &str) -> Self {
         Self { name: name.into() }
     }

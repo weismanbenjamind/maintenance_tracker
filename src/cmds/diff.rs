@@ -5,7 +5,7 @@ use clap::Args;
 #[command(
     about = "Get mileage, date, mileage difference, date difference, or any combination for a given service"
 )]
-pub struct NextService {
+pub struct Diff {
     #[arg(short, long, help = "Service to get intervals for")]
     name: String,
 
@@ -13,7 +13,7 @@ pub struct NextService {
     service_options: ServiceOptions,
 }
 
-impl NextService {
+impl Diff {
     pub fn new(name: &str, service_options: ServiceOptions) -> Self {
         Self {
             name: name.into(),

@@ -5,12 +5,12 @@ use clap::Args;
 #[command(
     about = "Get next services for a specific mileage interval/threshold and/or date interval/threshold"
 )]
-pub struct NextServices {
+pub struct Next {
     #[command(flatten)]
     service_options: ServiceOptions,
 }
 
-impl NextServices {
+impl Next {
     pub fn new(service_options: ServiceOptions) -> Self {
         Self { service_options }
     }

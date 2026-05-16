@@ -62,8 +62,9 @@ impl MaintenanceTrackerArgs {
 
 #[derive(Clone, Debug, Subcommand)]
 pub enum Cmd {
-    CompleteService(cmds::CompleteService),
-    NextService(cmds::NextService),
-    NextServices(cmds::NextServices),
-    ServiceDetails(cmds::ServiceDetails),
+    Complete(cmds::Complete),
+    List(cmds::List),
+    Diff(cmds::Diff),
+    Next(cmds::Next),
+    Detail(cmds::Detail),
 }
