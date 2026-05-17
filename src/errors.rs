@@ -1,4 +1,8 @@
-use std::path::{Path, PathBuf};
+use chrono::ParseError;
+use std::{
+    num::ParseIntError,
+    path::{Path, PathBuf},
+};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -69,6 +73,9 @@ impl CfgResolveError {
 pub enum CmdsError {
     #[error(transparent)]
     Diff(#[from] DiffOptionsError),
+
+    #[error(transparent)]
+    Init(#[from] InitError),
 }
 
 #[derive(Debug, Error)]
@@ -80,4 +87,18 @@ pub enum DiffOptionsError {
 
     #[error("'today' can only be passed if 'months_from_today' is Some.")]
     InvalidDateArgs,
+}
+
+#[derive(Debug, Error)]
+pub enum InitError {
+    #[error(
+        "Failed to parse --previous-service (-p) argument. Ensure all previous service arguments are in the format 'miles;YYYY-MM-DD'."
+    )]
+    FailedPreviousServiceParse,
+
+    #[error("Could not parse miles into u32. Error: {0}")]
+    InvalidMilesFormat(#[from] ParseIntError),
+
+    #[error("Could not parse date. Ensure date is in format YYYY-MM-DD. Error: {0}")]
+    InvalidDateFormat(#[from] ParseError),
 }

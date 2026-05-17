@@ -1,11 +1,13 @@
 mod complete;
 mod detail;
 mod diff;
+mod init;
 mod list;
 mod next;
 
 pub use complete::Complete;
 pub use detail::Detail;
 pub use diff::Diff;
+pub use init::Init;
 pub use list::List;
 pub use next::Next;
