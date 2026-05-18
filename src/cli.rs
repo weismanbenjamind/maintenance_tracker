@@ -68,4 +68,5 @@ pub enum Cmd {
     Init(cmds::Init),
     List(cmds::List),
     Next(cmds::Next),
+    Update(cmds::Update),
 }

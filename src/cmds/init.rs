@@ -8,6 +8,7 @@ use log::debug;
 const YYYY_MM_DD: &str = "%Y-%m-%d";
 
 #[derive(Clone, Debug, Args)]
+#[command(about = "Initialize a service for tracking")]
 pub struct Init {
     #[arg(long, help = "Name of service")]
     name: String,
@@ -19,7 +20,7 @@ pub struct Init {
     miles_interval: u32,
 
     #[arg(long, help = "Month interval service should be completed at")]
-    month_interval: u32,
+    monthly_interval: u32,
 
     #[arg(
         long,
