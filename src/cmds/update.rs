@@ -6,23 +6,46 @@ pub struct Update {
     #[arg(short, long, help = "ID of service to update")]
     id: String,
 
-    #[arg(long, help = "Name of service")]
-    name: Option<String>,
-
-    #[arg(long, help = "Miles interval the service should be completed at")]
-    miles_interval: Option<u32>,
-
-    #[arg(long, help = "Monthly interval service should be completed at")]
-    monthly_interval: Option<u32>,
-
     #[command(subcommand)]
-    command: Option<Cmd>,
+    command: Cmd,
 }
 
 #[derive(Clone, Debug, Subcommand)]
 pub enum Cmd {
+    Name(UpdateName),
+    Id(UpdateId),
+    MilesInterval(UpdateMilesInterval),
+    MonthlyInterval(MonthInterval),
     Notes(UpdateNotes),
     Service(UpdateService),
+}
+
+#[derive(Clone, Debug, Args)]
+#[command(about = "Update name")]
+pub struct UpdateName {
+    #[arg(help = "New name of service")]
+    name: String,
+}
+
+#[derive(Clone, Debug, Args)]
+#[command(about = "Update id")]
+pub struct UpdateId {
+    #[arg(help = "New id of service")]
+    id: String,
+}
+
+#[derive(Clone, Copy, Debug, Args)]
+#[command(about = "Update miles interval the service should be completed at")]
+pub struct UpdateMilesInterval {
+    #[arg(help = "New miles interval")]
+    miles: u32,
+}
+
+#[derive(Clone, Copy, Debug, Args)]
+#[command(about = "Update monthly interval the service should be completed at")]
+pub struct MonthInterval {
+    #[arg(help = "New monthly interval")]
+    months: u32,
 }
 
 #[derive(Clone, Debug, Args)]
