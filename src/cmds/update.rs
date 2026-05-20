@@ -64,11 +64,11 @@ pub struct UpdateService {
 
 #[derive(Clone, Debug, Subcommand)]
 pub enum UpdateNotesCmd {
-    Append(update_notes_cmd::Append),
-    Replace(update_notes_cmd::Replace),
-    Insert(update_notes_cmd::Insert),
-    Remove(update_notes_cmd::Remove),
-    Clear(update_notes_cmd::Clear),
+    Append(update_notes_cmds::Append),
+    Replace(update_notes_cmds::Replace),
+    Insert(update_notes_cmds::Insert),
+    Remove(update_notes_cmds::Remove),
+    Clear(update_notes_cmds::Clear),
 }
 
 #[derive(Clone, Copy, Debug, Subcommand)]
@@ -79,7 +79,7 @@ pub enum UpdateServiceCmd {
     Clear(update_service_cmd::Clear),
 }
 
-pub mod update_notes_cmd {
+pub mod update_notes_cmds {
     use clap::Args;
 
     #[derive(Clone, Debug, Args)]
