@@ -3,7 +3,7 @@ use clap::{Args, Subcommand};
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
 pub struct Update {
-    #[arg(short, long, help = "ID of service to update")]
+    #[arg(help = "ID of service to update")]
     id: String,
 
     #[command(subcommand)]
@@ -15,7 +15,7 @@ pub enum Cmd {
     Name(UpdateName),
     Id(UpdateId),
     MilesInterval(UpdateMilesInterval),
-    MonthlyInterval(MonthInterval),
+    MonthInterval(MonthInterval),
     Notes(UpdateNotes),
     Service(UpdateService),
 }
@@ -85,34 +85,34 @@ pub mod update_notes_cmd {
     #[derive(Clone, Debug, Args)]
     #[command(about = "Append a note")]
     pub struct Append {
-        #[arg(long, help = "Note to append")]
-        contents: String,
+        #[arg(long, short, help = "Notes to append")]
+        notes: Vec<String>,
     }
 
     #[derive(Clone, Debug, Args)]
     #[command(about = "Replace contetns of a note")]
     pub struct Replace {
-        #[arg(long, help = "Index to replace")]
+        #[arg(short, long, help = "Index to replace")]
         index: usize,
 
-        #[arg(long, help = "Note that should be used for replacement")]
+        #[arg(short, long, help = "Note that should be used for replacement")]
         contents: String,
     }
 
     #[derive(Clone, Debug, Args)]
     #[command(about = "Insert a note")]
     pub struct Insert {
-        #[arg(long, help = "Index to insert note at")]
+        #[arg(short, long, help = "Index to insert note at")]
         index: usize,
 
-        #[arg(long, help = "Note to insert")]
+        #[arg(short, long, help = "Note to insert")]
         contents: String,
     }
 
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Remove a note")]
     pub struct Remove {
-        #[arg(long, help = "Index of note to remove")]
+        #[arg(help = "Index of note to remove")]
         index: usize,
     }
 
@@ -129,10 +129,10 @@ pub mod update_service_cmd {
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Append a service")]
     pub struct Append {
-        #[arg(long, help = "Mileage of service")]
+        #[arg(short, long, help = "Mileage of service")]
         miles: u32,
 
-        #[arg(long, default_value_t = Local::now().date_naive(), help = "Date of service")]
+        #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Date of service")]
         date: NaiveDate,
     }
 
@@ -160,20 +160,20 @@ pub mod update_service_cmd {
     #[derive(Clone, Copy, Debug, Args)]
     #[group(required = true, multiple = true)]
     pub struct CurrServiceSpecs {
-        #[arg(long, help = "Mileage on vehicle when service was performed")]
+        #[arg(short, long, help = "Mileage on vehicle when service was performed")]
         miles: Option<u32>,
 
-        #[arg(long, help = "Date when service was performed")]
+        #[arg(short, long, help = "Date when service was performed")]
         date: Option<NaiveDate>,
     }
 
     #[derive(Clone, Copy, Debug, Args)]
     #[group(required = true, multiple = true)]
     pub struct UpdatedServiceSpecs {
-        #[arg(long, help = "Mileage on vehicle to update service to")]
+        #[arg(short, long, help = "Mileage on vehicle to update service to")]
         new_miles: Option<u32>,
 
-        #[arg(long, help = "Date to update service to")]
+        #[arg(short = 'w', long, help = "Date to update service to")]
         new_date: Option<NaiveDate>,
     }
 }

@@ -3,7 +3,7 @@ use clap::Args;
 #[derive(Clone, Debug, Args)]
 #[command(about = "Show details about a specific service")]
 pub struct Detail {
-    #[arg(short, long, help = "ID of service")]
+    #[arg(help = "ID of service")]
     id: String,
 }
 

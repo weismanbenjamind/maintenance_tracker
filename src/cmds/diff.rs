@@ -8,8 +8,6 @@ use clap::Args;
 )]
 pub struct Diff {
     #[arg(
-        short,
-        long,
         help = "ID of service. If omitted, all differences will be calculated for all services."
     )]
     id: Option<String>,

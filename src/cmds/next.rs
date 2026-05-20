@@ -3,7 +3,7 @@ use clap::Args;
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get the next service event for a given maintenance item")]
 pub struct Next {
-    #[arg(short, long, help = "ID of service")]
+    #[arg(help = "ID of service")]
     id: String,
 }
 
