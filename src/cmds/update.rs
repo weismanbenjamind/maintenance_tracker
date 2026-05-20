@@ -73,10 +73,10 @@ pub enum UpdateNotesCmd {
 
 #[derive(Clone, Copy, Debug, Subcommand)]
 pub enum UpdateServiceCmd {
-    Append(update_service_cmd::Append),
-    Replace(update_service_cmd::Replace),
-    Remove(update_service_cmd::Remove),
-    Clear(update_service_cmd::Clear),
+    Append(update_service_cmds::Append),
+    Replace(update_service_cmds::Replace),
+    Remove(update_service_cmds::Remove),
+    Clear(update_service_cmds::Clear),
 }
 
 pub mod update_notes_cmds {
@@ -121,7 +121,7 @@ pub mod update_notes_cmds {
     pub struct Clear;
 }
 
-pub mod update_service_cmd {
+pub mod update_service_cmds {
     use chrono::Local;
     use chrono::NaiveDate;
     use clap::Args;
