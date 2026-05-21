@@ -6,6 +6,7 @@ use clap::Args;
 use log::debug;
 
 const YYYY_MM_DD: &str = "%Y-%m-%d";
+const DELIMITER: &str = ";";
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Initialize a service for tracking")]
@@ -38,9 +39,65 @@ pub struct Init {
         long,
         short,
         long,
-        help = "Previous service. Should be in format 'miles:YYYY-MM-DD' where miles is a positive integer"
+        help = "Previous service. Should be in format 'miles;YYYY-MM-DD' where miles is a positive integer"
     )]
-    previous_services: Vec<PreviousService>,
+    previous_services: Option<Vec<PreviousService>>,
+}
+
+impl Init {
+    pub fn new(
+        name: &str,
+        id: &str,
+        miles_interval: u32,
+        monthly_interval: u32,
+        next_service_miles: u32,
+        next_service_date: NaiveDate,
+        notes: Option<Vec<String>>,
+        previous_services: Option<Vec<PreviousService>>,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            id: id.into(),
+            miles_interval,
+            monthly_interval,
+            next_service_miles,
+            next_service_date,
+            notes,
+            previous_services,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn miles_interval(self) -> u32 {
+        self.miles_interval
+    }
+
+    pub fn monthly_interval(self) -> u32 {
+        self.monthly_interval
+    }
+
+    pub fn next_service_miles(&self) -> u32 {
+        self.next_service_miles
+    }
+
+    pub fn next_service_date(&self) -> NaiveDate {
+        self.next_service_date
+    }
+
+    pub fn notes(&self) -> Option<&[String]> {
+        self.notes.as_deref()
+    }
+
+    pub fn previous_services(&self) -> Option<&[PreviousService]> {
+        self.previous_services.as_deref()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
@@ -52,11 +109,25 @@ pub struct PreviousService {
     date: NaiveDate,
 }
 
+impl PreviousService {
+    pub fn new(miles: u32, date: NaiveDate) -> Self {
+        Self { miles, date }
+    }
+
+    pub fn miles(&self) -> u32 {
+        self.miles
+    }
+
+    pub fn date(self) -> NaiveDate {
+        self.date
+    }
+}
+
 impl FromStr for PreviousService {
     type Err = InitError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut split = s.split(";");
+        let mut split = s.split(DELIMITER);
 
         let (miles, date) = match (split.next(), split.next(), split.next()) {
             (Some(miles), Some(date), None) => {

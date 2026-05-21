@@ -7,7 +7,21 @@ pub struct Update {
     id: String,
 
     #[command(subcommand)]
-    command: Cmd,
+    cmd: Cmd,
+}
+
+impl Update {
+    pub fn new(id: &str, cmd: Cmd) -> Self {
+        Self { id: id.into(), cmd }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn cmd(&self) -> &Cmd {
+        &self.cmd
+    }
 }
 
 #[derive(Clone, Debug, Subcommand)]
@@ -27,11 +41,27 @@ pub struct UpdateName {
     name: String,
 }
 
+impl UpdateName {
+    pub fn new(name: &str) -> Self {
+        Self { name: name.into() }
+    }
+
+    pub fn name(&self) -> &str {
+        return &self.name;
+    }
+}
+
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update id")]
 pub struct UpdateId {
     #[arg(help = "New id of service")]
     id: String,
+}
+
+impl UpdateId {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
@@ -41,11 +71,23 @@ pub struct UpdateMilesInterval {
     miles: u32,
 }
 
+impl UpdateMilesInterval {
+    pub fn miles(&self) -> u32 {
+        return self.miles;
+    }
+}
+
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update monthly interval the service should be completed at")]
 pub struct MonthInterval {
     #[arg(help = "New monthly interval")]
     months: u32,
+}
+
+impl MonthInterval {
+    pub fn months(&self) -> u32 {
+        return self.months;
+    }
 }
 
 #[derive(Clone, Debug, Args)]
@@ -55,11 +97,23 @@ pub struct UpdateNotes {
     cmd: UpdateNotesCmd,
 }
 
+impl UpdateNotes {
+    pub fn cmd(&self) -> &UpdateNotesCmd {
+        &self.cmd
+    }
+}
+
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update a previous service")]
 pub struct UpdateService {
     #[command(subcommand)]
     cmd: UpdateServiceCmd,
+}
+
+impl UpdateService {
+    pub fn cmd(&self) -> &UpdateServiceCmd {
+        &self.cmd
+    }
 }
 
 #[derive(Clone, Debug, Subcommand)]
@@ -79,7 +133,7 @@ pub enum UpdateServiceCmd {
     Clear(update_service_cmds::Clear),
 }
 
-pub mod update_notes_cmds {
+mod update_notes_cmds {
     use clap::Args;
 
     #[derive(Clone, Debug, Args)]
@@ -87,6 +141,12 @@ pub mod update_notes_cmds {
     pub struct Append {
         #[arg(long, short, help = "Notes to append")]
         notes: Vec<String>,
+    }
+
+    impl Append {
+        pub fn notes(&self) -> &[String] {
+            &self.notes
+        }
     }
 
     #[derive(Clone, Debug, Args)]
@@ -99,6 +159,16 @@ pub mod update_notes_cmds {
         contents: String,
     }
 
+    impl Replace {
+        pub fn index(&self) -> usize {
+            self.index
+        }
+
+        pub fn contents(&self) -> &str {
+            &self.contents
+        }
+    }
+
     #[derive(Clone, Debug, Args)]
     #[command(about = "Insert a note")]
     pub struct Insert {
@@ -109,6 +179,16 @@ pub mod update_notes_cmds {
         contents: String,
     }
 
+    impl Insert {
+        pub fn index(&self) -> usize {
+            self.index
+        }
+
+        pub fn contents(&self) -> &str {
+            &self.contents
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Remove a note")]
     pub struct Remove {
@@ -116,12 +196,18 @@ pub mod update_notes_cmds {
         index: usize,
     }
 
+    impl Remove {
+        pub fn index(&self) -> usize {
+            self.index
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Clear notes")]
     pub struct Clear;
 }
 
-pub mod update_service_cmds {
+mod update_service_cmds {
     use chrono::Local;
     use chrono::NaiveDate;
     use clap::Args;
@@ -136,6 +222,16 @@ pub mod update_service_cmds {
         date: NaiveDate,
     }
 
+    impl Append {
+        pub fn miles(&self) -> u32 {
+            self.miles
+        }
+
+        pub fn date(&self) -> NaiveDate {
+            self.date
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Replace a service")]
     pub struct Replace {
@@ -146,11 +242,27 @@ pub mod update_service_cmds {
         updated_service_specs: UpdatedServiceSpecs,
     }
 
+    impl Replace {
+        pub fn curr_service_specs(&self) -> CurrServiceSpecs {
+            self.curr_service_specs
+        }
+
+        pub fn updated_service_specs(&self) -> UpdatedServiceSpecs {
+            self.updated_service_specs
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Remove a service")]
     pub struct Remove {
         #[command(flatten)]
         service_specs: CurrServiceSpecs,
+    }
+
+    impl Remove {
+        pub fn service_specs(&self) -> CurrServiceSpecs {
+            self.service_specs
+        }
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -167,6 +279,16 @@ pub mod update_service_cmds {
         date: Option<NaiveDate>,
     }
 
+    impl CurrServiceSpecs {
+        pub fn miles(&self) -> Option<u32> {
+            self.miles
+        }
+
+        pub fn date(&self) -> Option<NaiveDate> {
+            self.date
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[group(required = true, multiple = true)]
     pub struct UpdatedServiceSpecs {
@@ -175,5 +297,15 @@ pub mod update_service_cmds {
 
         #[arg(short = 'w', long, help = "Date to update service to")]
         new_date: Option<NaiveDate>,
+    }
+
+    impl UpdatedServiceSpecs {
+        pub fn new_miles(&self) -> Option<u32> {
+            self.new_miles
+        }
+
+        pub fn new_date(&self) -> Option<NaiveDate> {
+            self.new_date
+        }
     }
 }

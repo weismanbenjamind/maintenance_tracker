@@ -13,3 +13,25 @@ pub struct Complete {
     #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Date on which service was completed")]
     date: NaiveDate,
 }
+
+impl Complete {
+    pub fn new(id: &str, mileage: u32, date: NaiveDate) -> Self {
+        Self {
+            id: id.into(),
+            mileage,
+            date,
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn mileage(&self) -> u32 {
+        self.mileage
+    }
+
+    pub fn date(&self) -> NaiveDate {
+        self.date
+    }
+}
