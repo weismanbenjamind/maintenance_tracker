@@ -47,7 +47,7 @@ impl UpdateName {
     }
 
     pub fn name(&self) -> &str {
-        return &self.name;
+        &self.name
     }
 }
 
@@ -59,6 +59,10 @@ pub struct UpdateId {
 }
 
 impl UpdateId {
+    pub fn new(id: &str) -> Self {
+        Self { id: id.into() }
+    }
+
     pub fn id(&self) -> &str {
         &self.id
     }
@@ -72,8 +76,12 @@ pub struct UpdateMilesInterval {
 }
 
 impl UpdateMilesInterval {
+    pub fn new(miles: u32) -> Self {
+        Self { miles }
+    }
+
     pub fn miles(&self) -> u32 {
-        return self.miles;
+        self.miles
     }
 }
 
@@ -85,8 +93,12 @@ pub struct MonthInterval {
 }
 
 impl MonthInterval {
+    pub fn new(months: u32) -> Self {
+        Self { months }
+    }
+
     pub fn months(&self) -> u32 {
-        return self.months;
+        self.months
     }
 }
 
@@ -98,6 +110,10 @@ pub struct UpdateNotes {
 }
 
 impl UpdateNotes {
+    pub fn new(cmd: UpdateNotesCmd) -> Self {
+        Self { cmd }
+    }
+
     pub fn cmd(&self) -> &UpdateNotesCmd {
         &self.cmd
     }
@@ -111,6 +127,10 @@ pub struct UpdateService {
 }
 
 impl UpdateService {
+    pub fn new(cmd: UpdateServiceCmd) -> Self {
+        Self { cmd }
+    }
+
     pub fn cmd(&self) -> &UpdateServiceCmd {
         &self.cmd
     }
@@ -144,6 +164,10 @@ mod update_notes_cmds {
     }
 
     impl Append {
+        pub fn new(notes: Vec<String>) -> Self {
+            Self { notes }
+        }
+
         pub fn notes(&self) -> &[String] {
             &self.notes
         }
@@ -160,6 +184,13 @@ mod update_notes_cmds {
     }
 
     impl Replace {
+        pub fn new(index: usize, contents: &str) -> Self {
+            Self {
+                index,
+                contents: contents.into(),
+            }
+        }
+
         pub fn index(&self) -> usize {
             self.index
         }
@@ -180,6 +211,13 @@ mod update_notes_cmds {
     }
 
     impl Insert {
+        pub fn new(index: usize, contents: &str) -> Self {
+            Self {
+                index,
+                contents: contents.into(),
+            }
+        }
+
         pub fn index(&self) -> usize {
             self.index
         }
@@ -197,6 +235,10 @@ mod update_notes_cmds {
     }
 
     impl Remove {
+        pub fn new(index: usize) -> Self {
+            Self { index }
+        }
+
         pub fn index(&self) -> usize {
             self.index
         }
@@ -223,6 +265,10 @@ mod update_service_cmds {
     }
 
     impl Append {
+        pub fn new(miles: u32, date: NaiveDate) -> Self {
+            Self { miles, date }
+        }
+
         pub fn miles(&self) -> u32 {
             self.miles
         }
@@ -243,6 +289,16 @@ mod update_service_cmds {
     }
 
     impl Replace {
+        pub fn new(
+            curr_service_specs: CurrServiceSpecs,
+            updated_service_specs: UpdatedServiceSpecs,
+        ) -> Self {
+            Self {
+                curr_service_specs,
+                updated_service_specs,
+            }
+        }
+
         pub fn curr_service_specs(&self) -> CurrServiceSpecs {
             self.curr_service_specs
         }
@@ -260,6 +316,10 @@ mod update_service_cmds {
     }
 
     impl Remove {
+        pub fn new(service_specs: CurrServiceSpecs) -> Self {
+            Self { service_specs }
+        }
+
         pub fn service_specs(&self) -> CurrServiceSpecs {
             self.service_specs
         }
@@ -280,6 +340,10 @@ mod update_service_cmds {
     }
 
     impl CurrServiceSpecs {
+        pub fn new(miles: Option<u32>, date: Option<NaiveDate>) -> Self {
+            Self { miles, date }
+        }
+
         pub fn miles(&self) -> Option<u32> {
             self.miles
         }
@@ -300,6 +364,13 @@ mod update_service_cmds {
     }
 
     impl UpdatedServiceSpecs {
+        pub fn new(new_miles: Option<u32>, new_date: Option<NaiveDate>) -> Self {
+            Self {
+                new_miles,
+                new_date,
+            }
+        }
+
         pub fn new_miles(&self) -> Option<u32> {
             self.new_miles
         }

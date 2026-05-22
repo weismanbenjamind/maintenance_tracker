@@ -17,20 +17,11 @@ pub struct Init {
     #[arg(long, help = "ID of service")]
     id: String,
 
-    #[arg(long, help = "Miles interval service should be completed at")]
-    miles_interval: u32,
+    #[command(flatten)]
+    service_interval: ServiceInterval,
 
-    #[arg(long, help = "Month interval service should be completed at")]
-    monthly_interval: u32,
-
-    #[arg(
-        long,
-        help = "Mileage on vehcile when next service should be completed"
-    )]
-    next_service_miles: u32,
-
-    #[arg(long, help = "Date which next service should be completed")]
-    next_service_date: NaiveDate,
+    #[command(flatten)]
+    next_service: NextService,
 
     #[arg(long, short, long, help = "Notes about service")]
     notes: Option<Vec<String>>,
@@ -48,20 +39,16 @@ impl Init {
     pub fn new(
         name: &str,
         id: &str,
-        miles_interval: u32,
-        monthly_interval: u32,
-        next_service_miles: u32,
-        next_service_date: NaiveDate,
+        service_interval: ServiceInterval,
+        next_service: NextService,
         notes: Option<Vec<String>>,
         previous_services: Option<Vec<PreviousService>>,
     ) -> Self {
         Self {
             name: name.into(),
             id: id.into(),
-            miles_interval,
-            monthly_interval,
-            next_service_miles,
-            next_service_date,
+            service_interval,
+            next_service,
             notes,
             previous_services,
         }
@@ -75,20 +62,12 @@ impl Init {
         &self.id
     }
 
-    pub fn miles_interval(self) -> u32 {
-        self.miles_interval
+    pub fn service_interval(&self) -> ServiceInterval {
+        self.service_interval
     }
 
-    pub fn monthly_interval(self) -> u32 {
-        self.monthly_interval
-    }
-
-    pub fn next_service_miles(&self) -> u32 {
-        self.next_service_miles
-    }
-
-    pub fn next_service_date(&self) -> NaiveDate {
-        self.next_service_date
+    pub fn next_service(&self) -> NextService {
+        self.next_service
     }
 
     pub fn notes(&self) -> Option<&[String]> {
@@ -141,5 +120,60 @@ impl FromStr for PreviousService {
             miles: miles.parse::<u32>()?,
             date: NaiveDate::parse_from_str(date, YYYY_MM_DD)?,
         })
+    }
+}
+
+#[derive(Clone, Copy, Debug, Args)]
+pub struct ServiceInterval {
+    #[arg(long, help = "Miles interval service should be completed at")]
+    miles_interval: u32,
+
+    #[arg(long, help = "Month interval service should be completed at")]
+    monthly_interval: u32,
+}
+
+impl ServiceInterval {
+    pub fn new(miles_interval: u32, monthly_interval: u32) -> Self {
+        Self {
+            miles_interval,
+            monthly_interval,
+        }
+    }
+
+    pub fn miles_interval(&self) -> u32 {
+        self.miles_interval
+    }
+
+    pub fn monthly_interval(&self) -> u32 {
+        self.monthly_interval
+    }
+}
+
+#[derive(Clone, Copy, Debug, Args)]
+pub struct NextService {
+    #[arg(
+        long,
+        help = "Mileage on vehcile when next service should be completed"
+    )]
+    next_service_miles: u32,
+
+    #[arg(long, help = "Date which next service should be completed")]
+    next_service_date: NaiveDate,
+}
+
+impl NextService {
+    pub fn new(next_service_miles: u32, next_service_date: NaiveDate) -> Self {
+        Self {
+            next_service_miles,
+            next_service_date,
+        }
+    }
+
+    pub fn next_service_miles(&self) -> u32 {
+        self.next_service_miles
+    }
+
+    pub fn next_service_date(&self) -> NaiveDate {
+        self.next_service_date
     }
 }

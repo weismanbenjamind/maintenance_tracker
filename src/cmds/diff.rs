@@ -17,11 +17,8 @@ pub struct Diff {
 }
 
 impl Diff {
-    pub fn new(id: Option<&str>, diff_options: DiffOptions) -> Self {
-        Self {
-            id: id.map(|id| id.into()),
-            diff_options,
-        }
+    pub fn new(id: Option<String>, diff_options: DiffOptions) -> Self {
+        Self { id, diff_options }
     }
 
     pub fn diff_options(self) -> DiffOptions {
