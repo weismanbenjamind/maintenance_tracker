@@ -77,6 +77,8 @@ impl Init {
     pub fn previous_services(&self) -> Option<&[PreviousService]> {
         self.previous_services.as_deref()
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Copy, Debug, Args)]

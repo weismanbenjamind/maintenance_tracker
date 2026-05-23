@@ -24,6 +24,8 @@ impl Diff {
     pub fn diff_options(self) -> DiffOptions {
         self.diff_options
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Copy, Debug, Args)]

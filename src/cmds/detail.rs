@@ -15,4 +15,6 @@ impl Detail {
     pub fn id(&self) -> &str {
         &self.id
     }
+
+    pub fn run(self) {}
 }

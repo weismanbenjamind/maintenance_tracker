@@ -34,4 +34,6 @@ impl Complete {
     pub fn date(&self) -> NaiveDate {
         self.date
     }
+
+    pub fn run(self) {}
 }

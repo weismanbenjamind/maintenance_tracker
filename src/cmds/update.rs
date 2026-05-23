@@ -22,6 +22,8 @@ impl Update {
     pub fn cmd(&self) -> &Cmd {
         &self.cmd
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Debug, Subcommand)]
@@ -49,6 +51,8 @@ impl UpdateName {
     pub fn name(&self) -> &str {
         &self.name
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Debug, Args)]
@@ -66,6 +70,8 @@ impl UpdateId {
     pub fn id(&self) -> &str {
         &self.id
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Copy, Debug, Args)]
@@ -83,6 +89,8 @@ impl UpdateMilesInterval {
     pub fn miles(&self) -> u32 {
         self.miles
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Copy, Debug, Args)]
@@ -100,6 +108,8 @@ impl MonthInterval {
     pub fn months(&self) -> u32 {
         self.months
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Debug, Args)]
@@ -117,6 +127,8 @@ impl UpdateNotes {
     pub fn cmd(&self) -> &UpdateNotesCmd {
         &self.cmd
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Copy, Debug, Args)]
@@ -134,6 +146,8 @@ impl UpdateService {
     pub fn cmd(&self) -> &UpdateServiceCmd {
         &self.cmd
     }
+
+    pub fn run(self) {}
 }
 
 #[derive(Clone, Debug, Subcommand)]
@@ -171,6 +185,8 @@ mod update_notes_cmds {
         pub fn notes(&self) -> &[String] {
             &self.notes
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Debug, Args)]
@@ -198,6 +214,8 @@ mod update_notes_cmds {
         pub fn contents(&self) -> &str {
             &self.contents
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Debug, Args)]
@@ -225,6 +243,8 @@ mod update_notes_cmds {
         pub fn contents(&self) -> &str {
             &self.contents
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -242,11 +262,17 @@ mod update_notes_cmds {
         pub fn index(&self) -> usize {
             self.index
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Clear notes")]
     pub struct Clear;
+
+    impl Clear {
+        pub fn run(self) {}
+    }
 }
 
 mod update_service_cmds {
@@ -276,6 +302,8 @@ mod update_service_cmds {
         pub fn date(&self) -> NaiveDate {
             self.date
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -306,6 +334,8 @@ mod update_service_cmds {
         pub fn updated_service_specs(&self) -> UpdatedServiceSpecs {
             self.updated_service_specs
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -323,6 +353,8 @@ mod update_service_cmds {
         pub fn service_specs(&self) -> CurrServiceSpecs {
             self.service_specs
         }
+
+        pub fn run(self) {}
     }
 
     #[derive(Clone, Copy, Debug, Args)]

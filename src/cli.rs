@@ -70,3 +70,7 @@ pub enum Cmd {
     Next(cmds::Next),
     Update(cmds::Update),
 }
+
+impl Cmd {
+    pub fn run(self) {}
+}

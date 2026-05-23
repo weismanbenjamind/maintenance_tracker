@@ -4,3 +4,7 @@ use clap::Args;
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "List all services and their ids")]
 pub struct List;
+
+impl List {
+    pub fn run(self) {}
+}
