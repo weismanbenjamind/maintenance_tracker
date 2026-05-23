@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::hash_map::Keys;
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -29,6 +30,10 @@ impl MaintenanceLog {
     #[allow(dead_code)]
     pub fn as_map(&self) -> &HashMap<String, ServiceMetdata> {
         &self.services
+    }
+
+    pub fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
+        self.services.keys()
     }
 }
 
