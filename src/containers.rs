@@ -128,6 +128,39 @@ impl ServiceMetdata {
     }
 }
 
+impl fmt::Display for ServiceMetdata {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Name: {}", self.name)?;
+        writeln!(f, "Service Interval Miles: {}", self.service_interval.miles)?;
+        writeln!(
+            f,
+            "Service Interval Months: {}",
+            self.service_interval.months
+        )?;
+        writeln!(f, "Next Service Miles: {}", self.next_service.miles)?;
+        write!(f, "Next Service Date: {}", self.next_service.date)?;
+
+        match &self.previous_services {
+            Some(previous_services) => {
+                write!(f, "\nPrevious Services:")?;
+                previous_services.iter().try_for_each(|service| {
+                    write!(f, "\n  - {}/{} miles", service.date, service.miles)
+                })?
+            }
+            None => write!(f, "\nPrevious Services: None")?,
+        }
+
+        if let Some(notes) = &self.notes {
+            write!(f, "\nNotes:")?;
+            notes
+                .iter()
+                .try_for_each(|note| write!(f, "\n  - {note}"))?
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct ServiceEvent {
     miles: u32,

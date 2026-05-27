@@ -25,7 +25,7 @@ impl Next {
         info!("Getting next service for id {}", self.id);
         let found = log
             .get(&self.id)
-            .ok_or_else(|| NextError::IdNotFound(self.id().into()))?
+            .ok_or_else(|| CmdsError::IdNotFound(self.id().into()))?
             .next_service();
 
         info!("Writing next to stdout");

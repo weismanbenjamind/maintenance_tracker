@@ -102,6 +102,12 @@ pub enum CmdsError {
 
     #[error(transparent)]
     Next(#[from] NextError),
+
+    #[error(transparent)]
+    Detail(#[from] DetailError),
+
+    #[error("Could not find service with id {0}")]
+    IdNotFound(String),
 }
 
 #[derive(Debug, Error)]
@@ -140,9 +146,12 @@ pub enum ListError {
 
 #[derive(Debug, Error)]
 pub enum NextError {
-    #[error("Could not find service with id {0}")]
-    IdNotFound(String),
-
     #[error("Failed to write next service for id {0}. Error: {1}")]
+    FailedWrite(String, #[source] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum DetailError {
+    #[error("Failed to write details for service with id: {0}. Error: {1}")]
     FailedWrite(String, #[source] std::io::Error),
 }
