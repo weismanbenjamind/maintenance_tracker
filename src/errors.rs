@@ -30,8 +30,28 @@ pub enum ContainersError {
         source: std::io::Error,
     },
 
+    #[error("Failed to write maintenance log to path {path}. Error: source {source}.")]
+    FailedWrite {
+        path: PathBuf,
+
+        #[source]
+        source: std::io::Error,
+    },
+
     #[error("Failed to deserialize maintenance log from toml. Error: {0}.")]
     FailedDerserialize(#[from] toml::de::Error),
+
+    #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
+    FailedSerialize(#[from] toml::ser::Error),
+}
+
+impl ContainersError {
+    pub fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
+        Self::FailedWrite {
+            path: path.into(),
+            source: e,
+        }
+    }
 }
 
 #[derive(Debug, Error)]

@@ -1,6 +1,6 @@
 use crate::errors::ContainersError;
 use chrono::NaiveDate;
-use log::info;
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Keys;
@@ -21,6 +21,17 @@ impl MaintenanceLog {
             source,
         })?;
         Ok(toml::from_str::<MaintenanceLog>(&log)?)
+    }
+
+    pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), ContainersError> {
+        let path = path.as_ref();
+        info!("Writing maintenance log to {}", path.display());
+        let log_string = toml::to_string_pretty(&self)?;
+        build_subdirs(path)?;
+        std::fs::write(path, log_string)
+            .map_err(|e| ContainersError::build_failed_write(e, path))?;
+        info!("Successfully wrote maintenance log to {}", path.display());
+        Ok(())
     }
 
     #[allow(dead_code)]
@@ -48,6 +59,19 @@ impl MaintenanceLog {
     pub fn insert(&mut self, id: &str, metadata: ServiceMetdata) -> Option<ServiceMetdata> {
         self.services.insert(id.into(), metadata)
     }
+}
+
+fn build_subdirs(path: &Path) -> Result<(), ContainersError> {
+    if let Some(parent) = path.parent() {
+        debug!(
+            "Creating subdirs for maintenance log at path {}",
+            parent.display()
+        );
+        std::fs::create_dir_all(parent)
+            .map_err(|e| ContainersError::build_failed_write(e, path))?;
+        debug!("Subdirs created");
+    }
+    Ok(())
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

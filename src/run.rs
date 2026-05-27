@@ -11,16 +11,16 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> 
 
     set_verbosity(args.verbose())?;
     let maintenance_log_path = resolve_cfg(args.maintenance_log(), args.maintenance_log_env())?;
-    let mut log = MaintenanceLog::load(maintenance_log_path)?;
+    let mut log = MaintenanceLog::load(&maintenance_log_path)?;
+
     match args.into_cmd() {
         Cmd::List(list_cmd) => list_cmd.run(&log)?,
         Cmd::Next(next_cmd) => next_cmd.run(&log)?,
-        Cmd::Init(init_cmd) => {
-            init_cmd.run(&mut log)?;
-            println!("{:#?}", log)
-        }
+        Cmd::Init(init_cmd) => init_cmd.run(&mut log)?,
         _ => println!("{:#?}", log),
     }
+
+    log.write(&maintenance_log_path)?;
 
     info!("Maintenance tracking run complete.");
 
