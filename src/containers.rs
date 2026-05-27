@@ -1,3 +1,5 @@
+use crate::cmds::init::ServiceInterval as InitServiceInterval;
+use crate::cmds::init::{NextService, PreviousService};
 use crate::errors::ContainersError;
 use chrono::NaiveDate;
 use log::{debug, info};
@@ -156,6 +158,24 @@ impl fmt::Display for ServiceEvent {
     }
 }
 
+impl From<NextService> for ServiceEvent {
+    fn from(value: NextService) -> Self {
+        Self {
+            miles: value.next_service_miles(),
+            date: value.next_service_date(),
+        }
+    }
+}
+
+impl From<PreviousService> for ServiceEvent {
+    fn from(value: PreviousService) -> Self {
+        Self {
+            miles: value.miles(),
+            date: value.date(),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct ServiceInterval {
     miles: u32,
@@ -181,5 +201,14 @@ impl ServiceInterval {
     #[allow(dead_code)]
     pub fn years(&self) -> f64 {
         self.months as f64 / 12.0
+    }
+}
+
+impl From<InitServiceInterval> for ServiceInterval {
+    fn from(value: InitServiceInterval) -> Self {
+        Self {
+            miles: value.miles_interval(),
+            months: value.monthly_interval(),
+        }
     }
 }

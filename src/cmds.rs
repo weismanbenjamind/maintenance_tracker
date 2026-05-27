@@ -1,10 +1,10 @@
-mod complete;
-mod detail;
-mod diff;
-mod init;
-mod list;
-mod next;
-mod update;
+pub mod complete;
+pub mod detail;
+pub mod diff;
+pub mod init;
+pub mod list;
+pub mod next;
+pub mod update;
 
 pub use complete::Complete;
 pub use detail::Detail;

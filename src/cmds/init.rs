@@ -89,27 +89,17 @@ impl Init {
             return Err(InitError::IdExists(self.id, self.name).into());
         }
 
-        let service_interval = containers::ServiceInterval::new(
-            self.service_interval.miles_interval,
-            self.service_interval.monthly_interval,
-        );
-
-        let next_service = containers::ServiceEvent::new(
-            self.next_service.next_service_miles,
-            self.next_service.next_service_date,
-        );
-
         let previous_services = self.previous_services.map(|prev_services| {
             prev_services
                 .into_iter()
-                .map(|service| containers::ServiceEvent::new(service.miles, service.date))
+                .map(|service| service.into())
                 .collect()
         });
 
         let update = containers::ServiceMetdata::new(
             &self.name,
-            service_interval,
-            next_service,
+            self.service_interval.into(),
+            self.next_service.into(),
             previous_services,
             self.notes,
         );
