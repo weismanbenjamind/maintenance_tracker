@@ -20,6 +20,7 @@ impl List {
         log.ids()
             // Map error to ListError::FailedList to convert to a MaintenanceLogError
             .try_for_each(|id| writeln!(handle, "{id}").map_err(ListError::FailedList))?;
+        info!("Successfully wrote maintenance log ids to stdout");
         Ok(())
     }
 }

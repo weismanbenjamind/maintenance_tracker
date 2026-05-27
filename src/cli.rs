@@ -58,6 +58,10 @@ impl MaintenanceTrackerArgs {
     pub fn cmd(&self) -> &Cmd {
         &self.cmd
     }
+
+    pub fn into_cmd(self) -> Cmd {
+        self.cmd
+    }
 }
 
 #[derive(Clone, Debug, Subcommand)]

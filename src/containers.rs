@@ -4,6 +4,7 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Keys;
+use std::fmt;
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -35,6 +36,18 @@ impl MaintenanceLog {
     pub fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
         self.services.keys()
     }
+
+    pub fn get(&self, id: &str) -> Option<&ServiceMetdata> {
+        self.services.get(id)
+    }
+
+    pub fn contains(&self, id: &str) -> bool {
+        self.services.contains_key(id)
+    }
+
+    pub fn insert(&mut self, id: &str, metadata: ServiceMetdata) -> Option<ServiceMetdata> {
+        self.services.insert(id.into(), metadata)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -42,8 +55,8 @@ pub struct ServiceMetdata {
     name: String,
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
-    previous_services: Vec<ServiceEvent>,
-    notes: Vec<String>,
+    previous_services: Option<Vec<ServiceEvent>>,
+    notes: Option<Vec<String>>,
 }
 
 impl ServiceMetdata {
@@ -52,14 +65,14 @@ impl ServiceMetdata {
         name: &str,
         service_interval: ServiceInterval,
         next_service: ServiceEvent,
-        previous_services: &[ServiceEvent], // Since ServiceEvent is clone can pass a slice. Only one heap allocation for the Clone
-        notes: Vec<String>, // Don't pass slice here. Will cause a Vec heap allocation along with all heap allocations for Strings
+        previous_services: Option<Vec<ServiceEvent>>,
+        notes: Option<Vec<String>>,
     ) -> Self {
         Self {
             name: name.into(),
             service_interval,
             next_service,
-            previous_services: previous_services.into(),
+            previous_services,
             notes,
         }
     }
@@ -79,13 +92,13 @@ impl ServiceMetdata {
     }
 
     #[allow(dead_code)]
-    pub fn previous_services(&self) -> &[ServiceEvent] {
-        &self.previous_services
+    pub fn previous_services(&self) -> Option<&[ServiceEvent]> {
+        self.previous_services.as_deref()
     }
 
     #[allow(dead_code)]
-    pub fn notes(&self) -> &[String] {
-        &self.notes
+    pub fn notes(&self) -> Option<&[String]> {
+        self.notes.as_deref()
     }
 }
 
@@ -109,6 +122,13 @@ impl ServiceEvent {
     #[allow(dead_code)]
     pub fn date(&self) -> NaiveDate {
         self.date
+    }
+}
+
+impl fmt::Display for ServiceEvent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Miles: {}", self.miles)?;
+        write!(f, "Date: {}", self.date)
     }
 }
 

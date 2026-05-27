@@ -1,9 +1,10 @@
 use std::str::FromStr;
 
-use crate::errors::InitError;
+use crate::containers;
+use crate::errors::{CmdsError, InitError};
 use chrono::NaiveDate;
 use clap::Args;
-use log::debug;
+use log::{debug, info};
 
 const YYYY_MM_DD: &str = "%Y-%m-%d";
 const DELIMITER: &str = ";";
@@ -78,7 +79,51 @@ impl Init {
         self.previous_services.as_deref()
     }
 
-    pub fn run(self) {}
+    pub fn run(self, log: &mut containers::MaintenanceLog) -> Result<(), CmdsError> {
+        info!(
+            "Initializing service with id {} and name {}",
+            self.id, self.name
+        );
+
+        if log.contains(&self.id) {
+            return Err(InitError::IdExists(self.id, self.name).into());
+        }
+
+        let service_interval = containers::ServiceInterval::new(
+            self.service_interval.miles_interval,
+            self.service_interval.monthly_interval,
+        );
+
+        let next_service = containers::ServiceEvent::new(
+            self.next_service.next_service_miles,
+            self.next_service.next_service_date,
+        );
+
+        let previous_services = self.previous_services.map(|prev_services| {
+            prev_services
+                .into_iter()
+                .map(|service| containers::ServiceEvent::new(service.miles, service.date))
+                .collect()
+        });
+
+        let update = containers::ServiceMetdata::new(
+            &self.name,
+            service_interval,
+            next_service,
+            previous_services,
+            self.notes,
+        );
+
+        // Don't need to check the return type here because we already check that the id is not present at
+        // the start of this function
+        log.insert(&self.id, update);
+        info!(
+            "Successfully initialized service with id {} and name {}",
+            self.id, self.name
+        );
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Copy, Debug, Args)]

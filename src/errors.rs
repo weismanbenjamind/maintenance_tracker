@@ -79,6 +79,9 @@ pub enum CmdsError {
 
     #[error(transparent)]
     List(#[from] ListError),
+
+    #[error(transparent)]
+    Next(#[from] NextError),
 }
 
 #[derive(Debug, Error)]
@@ -104,10 +107,22 @@ pub enum InitError {
 
     #[error("Could not parse date. Ensure date is in format YYYY-MM-DD. Error: {0}")]
     InvalidDateFormat(#[from] ParseError),
+
+    #[error("Id {0} already exists for maintenance item {0}")]
+    IdExists(String, String),
 }
 
 #[derive(Debug, Error)]
 pub enum ListError {
     #[error("Failed to list service ids. Error: {0}")]
     FailedList(#[from] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum NextError {
+    #[error("Could not find service with id {0}")]
+    IdNotFound(String),
+
+    #[error("Failed to write next service for id {0}. Error: {1}")]
+    FailedWrite(String, #[source] std::io::Error),
 }
