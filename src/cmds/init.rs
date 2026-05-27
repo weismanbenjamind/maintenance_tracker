@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::containers;
+use crate::containers::{MaintenanceLog, ServiceMetdata};
 use crate::errors::{CmdsError, InitError};
 use chrono::NaiveDate;
 use clap::Args;
@@ -79,7 +79,7 @@ impl Init {
         self.previous_services.as_deref()
     }
 
-    pub fn run(self, log: &mut containers::MaintenanceLog) -> Result<(), CmdsError> {
+    pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Initializing service with id {} and name {}",
             self.id, self.name
@@ -96,7 +96,7 @@ impl Init {
                 .collect()
         });
 
-        let update = containers::ServiceMetdata::new(
+        let update = ServiceMetdata::new(
             &self.name,
             self.service_interval.into(),
             self.next_service.into(),
