@@ -65,6 +65,10 @@ impl MaintenanceLog {
     pub fn insert(&mut self, id: &str, metadata: ServiceMetdata) -> Option<ServiceMetdata> {
         self.services.insert(id.into(), metadata)
     }
+
+    pub fn remove(&mut self, id: &str) -> Option<ServiceMetdata> {
+        self.services.remove(id)
+    }
 }
 
 fn build_subdirs(path: &Path) -> Result<(), ContainersError> {
@@ -82,7 +86,7 @@ fn build_subdirs(path: &Path) -> Result<(), ContainersError> {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ServiceMetdata {
-    name: String,
+    pub name: String, // TODO - should this be public or have getters and setters so no one else can own it?
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
     previous_services: Option<Vec<ServiceEvent>>,
@@ -106,14 +110,18 @@ impl ServiceMetdata {
             notes,
         }
     }
-    #[allow(dead_code)]
-    pub fn name(&self) -> &str {
-        &self.name
-    }
 
     #[allow(dead_code)]
     pub fn service_interval(&self) -> ServiceInterval {
         self.service_interval
+    }
+
+    pub fn set_service_interval_miles(&mut self, miles: u32) {
+        self.service_interval.miles = miles
+    }
+
+    pub fn set_service_interavl_months(&mut self, months: u32) {
+        self.service_interval.months = months
     }
 
     #[allow(dead_code)]
@@ -134,6 +142,47 @@ impl ServiceMetdata {
     #[allow(dead_code)]
     pub fn notes(&self) -> Option<&[String]> {
         self.notes.as_deref()
+    }
+
+    // TODO - See if can de-dupe any notes code
+
+    pub fn exetend_notes(&mut self, extension: Vec<String>) {
+        match &mut self.notes {
+            Some(notes) => notes.extend(extension),
+            None => self.notes = Some(extension),
+        }
+    }
+
+    pub fn replace_note(&mut self, index: usize, contents: &str) {
+        match &mut self.notes {
+            Some(notes) => match notes.get_mut(index) {
+                Some(val) => *val = contents.into(),
+                None => notes.push(contents.into()),
+            },
+            None => self.notes = Some(vec![contents.into()]),
+        }
+    }
+
+    pub fn remove_note(&mut self, index: usize) {
+        if let Some(notes) = &mut self.notes
+            && index < notes.len()
+        {
+            notes.remove(index);
+        }
+    }
+
+    pub fn insert_note(&mut self, index: usize, contents: &str) {
+        match &mut self.notes {
+            Some(notes) => match index > notes.len() {
+                true => notes.push(contents.into()),
+                false => notes.insert(index, contents.into()),
+            },
+            None => self.notes = Some(vec![contents.into()]),
+        }
+    }
+
+    pub fn clear_notes(&mut self) {
+        self.notes = None
     }
 
     pub fn add_service_event(&mut self, miles: u32, date: NaiveDate) {
@@ -228,24 +277,14 @@ impl From<PreviousService> for ServiceEvent {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct ServiceInterval {
-    miles: u32,
-    months: u32,
+    pub miles: u32,
+    pub months: u32,
 }
 
 impl ServiceInterval {
     #[allow(dead_code)]
     pub fn new(miles: u32, months: u32) -> Self {
         Self { miles, months }
-    }
-
-    #[allow(dead_code)]
-    pub fn miles(&self) -> u32 {
-        self.miles
-    }
-
-    #[allow(dead_code)]
-    pub fn months(&self) -> u32 {
-        self.months
     }
 
     #[allow(dead_code)]

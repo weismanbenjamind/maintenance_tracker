@@ -87,7 +87,7 @@ impl Init {
         );
 
         if log.contains(&self.id) {
-            return Err(InitError::IdExists(self.id, self.name).into());
+            return Err(CmdsError::IdExists(self.id, self.name));
         }
 
         let previous_services = self.previous_services.map(|prev_services| {

@@ -111,6 +111,9 @@ pub enum CmdsError {
 
     #[error("Could not find service with id {0}")]
     IdNotFound(String),
+
+    #[error("Id {0} already exists for maintenance item {0}")]
+    IdExists(String, String),
 }
 
 #[derive(Debug, Error)]
@@ -136,9 +139,6 @@ pub enum InitError {
 
     #[error("Could not parse date. Ensure date is in format YYYY-MM-DD. Error: {0}")]
     InvalidDateFormat(#[from] ParseError),
-
-    #[error("Id {0} already exists for maintenance item {0}")]
-    IdExists(String, String),
 
     #[error("Failed to write initialized service details. Error {0}")]
     FailedWrite(#[source] std::io::Error),

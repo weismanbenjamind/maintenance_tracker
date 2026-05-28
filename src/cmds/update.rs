@@ -1,5 +1,9 @@
 use clap::{Args, Subcommand};
 
+use crate::containers::{MaintenanceLog, ServiceMetdata};
+use crate::errors::CmdsError;
+use log::info;
+
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
 pub struct Update {
@@ -23,13 +27,45 @@ impl Update {
         &self.cmd
     }
 
-    pub fn run(self) {}
+    // TODO - need a command to update the next service in here
+    pub fn run(mut self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+        info!("Updating maintenance log");
+
+        let mut metadata = log
+            .remove(&self.id)
+            .ok_or_else(|| CmdsError::IdNotFound(self.id().into()))?;
+
+        // If want to update the id need to remove the current metadata and insert at the new id
+        // Another option is to always remove then for the id cmd just update the self.id attribute to be the update
+        // At the end just put the metadata back with the proper id
+
+        match self.cmd {
+            Cmd::Name(args) => metadata.name = args.name,
+            Cmd::Id(args) => {
+                if log.contains(&args.id) {
+                    return Err(CmdsError::IdExists(args.id, metadata.name));
+                }
+                // Set the id attribute so when we insert back into the map we insert with the new id
+                self.id = args.id
+            }
+            Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
+            Cmd::MonthInterval(args) => metadata.set_service_interavl_months(args.months),
+            Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata),
+            _ => todo!("Finish these up"),
+        }
+
+        // Don't need to check the option return since when we remove above we are sure this key does not exist
+        // We also check during the update id cmd that they new id does not exist
+        log.insert(&self.id, metadata);
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, Subcommand)]
 pub enum Cmd {
     Name(UpdateName),
-    Id(UpdateId),
+    Id(UpdateId), // Do this last
     MilesInterval(UpdateMilesInterval),
     MonthInterval(MonthInterval),
     Notes(UpdateNotes),
@@ -128,7 +164,21 @@ impl UpdateNotes {
         &self.cmd
     }
 
-    pub fn run(self) {}
+    pub fn run(self, metadata: &mut ServiceMetdata) {
+        match self.cmd {
+            UpdateNotesCmd::Append(args) => metadata.exetend_notes(args.into_notes()),
+            UpdateNotesCmd::Replace(args) => {
+                let (index, contents) = args.into_parts();
+                metadata.replace_note(index, &contents);
+            }
+            UpdateNotesCmd::Insert(args) => {
+                let (index, contents) = args.into_parts();
+                metadata.insert_note(index, &contents);
+            }
+            UpdateNotesCmd::Remove(args) => metadata.remove_note(args.index()),
+            UpdateNotesCmd::Clear(_) => metadata.clear_notes(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
@@ -173,7 +223,7 @@ mod update_notes_cmds {
     #[derive(Clone, Debug, Args)]
     #[command(about = "Append a note")]
     pub struct Append {
-        #[arg(long, short, help = "Notes to append")]
+        #[arg(help = "Notes to append")]
         notes: Vec<String>,
     }
 
@@ -186,7 +236,9 @@ mod update_notes_cmds {
             &self.notes
         }
 
-        pub fn run(self) {}
+        pub fn into_notes(self) -> Vec<String> {
+            self.notes
+        }
     }
 
     #[derive(Clone, Debug, Args)]
@@ -215,7 +267,9 @@ mod update_notes_cmds {
             &self.contents
         }
 
-        pub fn run(self) {}
+        pub fn into_parts(self) -> (usize, String) {
+            (self.index, self.contents)
+        }
     }
 
     #[derive(Clone, Debug, Args)]
@@ -244,7 +298,9 @@ mod update_notes_cmds {
             &self.contents
         }
 
-        pub fn run(self) {}
+        pub fn into_parts(self) -> (usize, String) {
+            (self.index, self.contents)
+        }
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -262,17 +318,11 @@ mod update_notes_cmds {
         pub fn index(&self) -> usize {
             self.index
         }
-
-        pub fn run(self) {}
     }
 
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Clear notes")]
     pub struct Clear;
-
-    impl Clear {
-        pub fn run(self) {}
-    }
 }
 
 mod update_service_cmds {

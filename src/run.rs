@@ -19,6 +19,7 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> 
         Cmd::Init(init_cmd) => init_cmd.run(&mut log)?,
         Cmd::Detail(detail_cmd) => detail_cmd.run(&log)?,
         Cmd::Complete(complete_cmd) => complete_cmd.run(&mut log)?,
+        Cmd::Update(update_cmd) => update_cmd.run(&mut log)?,
         _ => println!("{:#?}", log),
     }
 
