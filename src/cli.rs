@@ -55,10 +55,6 @@ impl MaintenanceTrackerArgs {
         self.verbose
     }
 
-    pub fn cmd(&self) -> &Cmd {
-        &self.cmd
-    }
-
     pub fn into_cmd(self) -> Cmd {
         self.cmd
     }
@@ -73,8 +69,4 @@ pub enum Cmd {
     List(cmds::List),
     Next(cmds::Next),
     Update(cmds::Update),
-}
-
-impl Cmd {
-    pub fn run(self) {}
 }

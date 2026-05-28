@@ -38,48 +38,6 @@ pub struct Init {
 }
 
 impl Init {
-    pub fn new(
-        name: &str,
-        id: &str,
-        service_interval: ServiceInterval,
-        next_service: NextService,
-        notes: Option<Vec<String>>,
-        previous_services: Option<Vec<PreviousService>>,
-    ) -> Self {
-        Self {
-            name: name.into(),
-            id: id.into(),
-            service_interval,
-            next_service,
-            notes,
-            previous_services,
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-
-    pub fn service_interval(&self) -> ServiceInterval {
-        self.service_interval
-    }
-
-    pub fn next_service(&self) -> NextService {
-        self.next_service
-    }
-
-    pub fn notes(&self) -> Option<&[String]> {
-        self.notes.as_deref()
-    }
-
-    pub fn previous_services(&self) -> Option<&[PreviousService]> {
-        self.previous_services.as_deref()
-    }
-
     pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Initializing service with id {} and name {}",
@@ -136,10 +94,6 @@ pub struct PreviousService {
 }
 
 impl PreviousService {
-    pub fn new(miles: u32, date: NaiveDate) -> Self {
-        Self { miles, date }
-    }
-
     pub fn miles(&self) -> u32 {
         self.miles
     }
@@ -180,13 +134,6 @@ pub struct ServiceInterval {
 }
 
 impl ServiceInterval {
-    pub fn new(miles_interval: u32, monthly_interval: u32) -> Self {
-        Self {
-            miles_interval,
-            monthly_interval,
-        }
-    }
-
     pub fn miles_interval(&self) -> u32 {
         self.miles_interval
     }
@@ -209,13 +156,6 @@ pub struct NextService {
 }
 
 impl NextService {
-    pub fn new(next_service_miles: u32, next_service_date: NaiveDate) -> Self {
-        Self {
-            next_service_miles,
-            next_service_date,
-        }
-    }
-
     pub fn next_service_miles(&self) -> u32 {
         self.next_service_miles
     }

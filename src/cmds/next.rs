@@ -13,25 +13,17 @@ pub struct Next {
 }
 
 impl Next {
-    pub fn new(id: &str) -> Self {
-        Self { id: id.into() }
-    }
-
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-
     pub fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!("Getting next service for id {}", self.id);
         let found = log
             .get(&self.id)
-            .ok_or_else(|| CmdsError::IdNotFound(self.id().into()))?
+            .ok_or_else(|| CmdsError::IdNotFound((&self.id).into()))? // Borrow here because need below and don't want an accidental move here
             .next_service();
 
         info!("Writing next to stdout");
         let stdout = io::stdout();
         let mut buf = stdout.lock();
-        writeln!(buf, "{found}").map_err(|e| NextError::FailedWrite(self.id().into(), e))?;
+        writeln!(buf, "{found}").map_err(|e| NextError::FailedWrite((&self.id).into(), e))?; // Borrow here because need below and don't want an accidental move here
 
         info!("Finished getting next service for id {}", self.id);
         Ok(())

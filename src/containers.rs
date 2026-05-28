@@ -36,16 +36,6 @@ impl MaintenanceLog {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    pub fn new(services: HashMap<String, ServiceMetdata>) -> Self {
-        Self { services }
-    }
-
-    #[allow(dead_code)]
-    pub fn as_map(&self) -> &HashMap<String, ServiceMetdata> {
-        &self.services
-    }
-
     pub fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
         self.services.keys()
     }
@@ -111,7 +101,6 @@ impl ServiceMetdata {
         }
     }
 
-    #[allow(dead_code)]
     pub fn service_interval(&self) -> ServiceInterval {
         self.service_interval
     }
@@ -124,7 +113,6 @@ impl ServiceMetdata {
         self.service_interval.months = months
     }
 
-    #[allow(dead_code)]
     pub fn next_service(&self) -> ServiceEvent {
         self.next_service
     }
@@ -134,18 +122,7 @@ impl ServiceMetdata {
         self.next_service.date = date;
     }
 
-    #[allow(dead_code)]
-    pub fn previous_services(&self) -> Option<&[ServiceEvent]> {
-        self.previous_services.as_deref()
-    }
-
-    #[allow(dead_code)]
-    pub fn notes(&self) -> Option<&[String]> {
-        self.notes.as_deref()
-    }
-
-    // TODO - See if can de-dupe any notes code
-
+    // TODO - See if can de-dupe any notes methods
     pub fn exetend_notes(&mut self, extension: Vec<String>) {
         match &mut self.notes {
             Some(notes) => notes.extend(extension),
@@ -233,23 +210,6 @@ pub struct ServiceEvent {
     date: NaiveDate,
 }
 
-impl ServiceEvent {
-    #[allow(dead_code)]
-    pub fn new(miles: u32, date: NaiveDate) -> Self {
-        Self { miles, date }
-    }
-
-    #[allow(dead_code)]
-    pub fn miles(&self) -> u32 {
-        self.miles
-    }
-
-    #[allow(dead_code)]
-    pub fn date(&self) -> NaiveDate {
-        self.date
-    }
-}
-
 impl fmt::Display for ServiceEvent {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Miles: {}", self.miles)?;
@@ -282,19 +242,9 @@ pub struct ServiceInterval {
 }
 
 impl ServiceInterval {
-    #[allow(dead_code)]
-    pub fn new(miles: u32, months: u32) -> Self {
-        Self { miles, months }
-    }
-
-    #[allow(dead_code)]
-    pub fn years(&self) -> f64 {
-        self.months as f64 / 12.0
-    }
-
     pub fn days(&self) -> i64 {
         // Floor to prevent accidentally going overdue on maintenance
-        (self.years() * 365.0).floor() as i64
+        (self.months as f64 / 12.0 * 365.0).floor() as i64
     }
 }
 

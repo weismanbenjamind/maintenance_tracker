@@ -1,4 +1,3 @@
-use crate::errors::DiffOptionsError;
 use chrono::NaiveDate;
 use clap::Args;
 
@@ -17,14 +16,6 @@ pub struct Diff {
 }
 
 impl Diff {
-    pub fn new(id: Option<String>, diff_options: DiffOptions) -> Self {
-        Self { id, diff_options }
-    }
-
-    pub fn diff_options(self) -> DiffOptions {
-        self.diff_options
-    }
-
     pub fn run(self) {}
 }
 
@@ -75,61 +66,4 @@ pub struct DiffOptions {
         requires = "months_from_today"
     )]
     today: Option<NaiveDate>,
-}
-
-#[allow(dead_code)]
-impl DiffOptions {
-    pub fn new(
-        miles_threshold: Option<u32>,
-        date_threhold: Option<NaiveDate>,
-        current_mileage: Option<u32>,
-        miles_from_current: Option<u32>,
-        months_from_today: Option<u32>,
-        today: Option<NaiveDate>,
-    ) -> Result<Self, DiffOptionsError> {
-        if miles_from_current.is_some() && current_mileage.is_none() {
-            return Err(DiffOptionsError::InvalidMileageArgs);
-        }
-
-        if miles_from_current.is_none() && current_mileage.is_some() {
-            return Err(DiffOptionsError::InvalidMileageArgs);
-        }
-
-        if today.is_some() && months_from_today.is_none() {
-            return Err(DiffOptionsError::InvalidDateArgs);
-        }
-
-        Ok(Self {
-            miles_threshold,
-            date_threhold,
-            current_mileage,
-            miles_from_current,
-            months_from_today,
-            today,
-        })
-    }
-
-    pub fn miles_threshold(&self) -> Option<u32> {
-        self.miles_threshold
-    }
-
-    pub fn date_threhold(&self) -> Option<NaiveDate> {
-        self.date_threhold
-    }
-
-    pub fn current_mileage(&self) -> Option<u32> {
-        self.current_mileage
-    }
-
-    pub fn miles_from_current(&self) -> Option<u32> {
-        self.miles_from_current
-    }
-
-    pub fn months_from_today(&self) -> Option<u32> {
-        self.months_from_today
-    }
-
-    pub fn today(&self) -> Option<NaiveDate> {
-        self.today
-    }
 }

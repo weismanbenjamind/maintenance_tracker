@@ -19,26 +19,6 @@ pub struct Complete {
 }
 
 impl Complete {
-    pub fn new(id: &str, mileage: u32, date: NaiveDate) -> Self {
-        Self {
-            id: id.into(),
-            mileage,
-            date,
-        }
-    }
-
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-
-    pub fn mileage(&self) -> u32 {
-        self.mileage
-    }
-
-    pub fn date(&self) -> NaiveDate {
-        self.date
-    }
-
     pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Completing service with id '{}' at mileage {} on date {}",
@@ -47,7 +27,7 @@ impl Complete {
 
         let metadata = log
             .get_mut(&self.id)
-            .ok_or_else(|| CmdsError::IdNotFound(self.id().into()))?;
+            .ok_or_else(|| CmdsError::IdNotFound((&self.id).into()))?; // Have to borrow and convert to a string since might move here and need below
 
         let next_service_miles = self.mileage + metadata.service_interval().miles;
         let next_service_date = self.date + TimeDelta::days(metadata.service_interval().days());
@@ -64,7 +44,7 @@ impl Complete {
             Updated next service to {} miles or on {}.",
             metadata.name, self.mileage, self.date, next_service_miles, next_service_date
         )
-        .map_err(|e| CompleteError::FailedWrite(self.id().into(), e))?;
+        .map_err(|e| CompleteError::FailedWrite(self.id, e))?;
 
         info!("Service logged as complete");
         Ok(())

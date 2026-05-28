@@ -1,8 +1,6 @@
 use chrono::ParseError;
-use std::{
-    num::ParseIntError,
-    path::{Path, PathBuf},
-};
+use std::num::ParseIntError;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -92,9 +90,6 @@ impl CfgResolveError {
 #[derive(Debug, Error)]
 pub enum CmdsError {
     #[error(transparent)]
-    Diff(#[from] DiffOptionsError),
-
-    #[error(transparent)]
     Init(#[from] InitError),
 
     #[error(transparent)]
@@ -114,17 +109,6 @@ pub enum CmdsError {
 
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
-}
-
-#[derive(Debug, Error)]
-pub enum DiffOptionsError {
-    #[error(
-        "'miles_from_current' and 'current_miles' must both be 'Some' if one is set to 'Some'."
-    )]
-    InvalidMileageArgs,
-
-    #[error("'today' can only be passed if 'months_from_today' is Some.")]
-    InvalidDateArgs,
 }
 
 #[derive(Debug, Error)]

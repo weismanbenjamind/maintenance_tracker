@@ -13,14 +13,6 @@ pub struct Detail {
 }
 
 impl Detail {
-    pub fn new(id: &str) -> Self {
-        Self { id: id.into() }
-    }
-
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-
     pub fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Getting details for maintenance log item with id {}",
