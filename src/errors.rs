@@ -139,6 +139,9 @@ pub enum InitError {
 
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
+
+    #[error("Failed to write initialized service details. Error {0}")]
+    FailedWrite(#[source] std::io::Error),
 }
 
 #[derive(Debug, Error)]

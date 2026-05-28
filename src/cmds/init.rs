@@ -5,6 +5,7 @@ use crate::errors::{CmdsError, InitError};
 use chrono::NaiveDate;
 use clap::Args;
 use log::{debug, info};
+use std::io::{self, Write};
 
 const YYYY_MM_DD: &str = "%Y-%m-%d";
 const DELIMITER: &str = ";";
@@ -103,6 +104,15 @@ impl Init {
             previous_services,
             self.notes,
         );
+
+        let stdout = io::stdout();
+        let mut buf = stdout.lock();
+        writeln!(
+            buf,
+            "Initialized the following service:\n\nId: {}\n{update}\n",
+            self.id
+        )
+        .map_err(InitError::FailedWrite)?;
 
         // Don't need to check the return type here because we already check that the id is not present at
         // the start of this function
