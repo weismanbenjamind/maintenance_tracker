@@ -1,5 +1,9 @@
-use chrono::{Local, NaiveDate};
+use crate::errors::CmdsError;
+use crate::{containers::MaintenanceLog, errors::CompleteError};
+use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
+use log::info;
+use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
@@ -35,5 +39,38 @@ impl Complete {
         self.date
     }
 
-    pub fn run(self) {}
+    pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+        info!(
+            "Completing service with id '{}' at mileage {} on date {}",
+            self.id, self.mileage, self.date
+        );
+
+        let metadata = log
+            .get_mut(&self.id)
+            .ok_or_else(|| CmdsError::IdNotFound(self.id().into()))?;
+
+        let next_service_miles = self.mileage + metadata.service_interval().miles();
+        let next_service_date = self.date + TimeDelta::days(metadata.service_interval().days());
+
+        metadata.set_next_service(next_service_miles, next_service_date);
+        metadata.add_service_event(self.mileage, self.date);
+
+        let stdout = io::stdout();
+        let mut buf = stdout.lock();
+
+        writeln!(
+            buf,
+            "Marked {} as complete at {} miles on {}.\n\
+            Updated next service to {} miles or on {}.",
+            metadata.name(),
+            self.mileage,
+            self.date,
+            next_service_miles,
+            next_service_date
+        )
+        .map_err(|e| CompleteError::FailedWrite(self.id().into(), e))?;
+
+        info!("Service logged as complete");
+        Ok(())
+    }
 }

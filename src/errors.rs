@@ -106,6 +106,9 @@ pub enum CmdsError {
     #[error(transparent)]
     Detail(#[from] DetailError),
 
+    #[error(transparent)]
+    Complete(#[from] CompleteError),
+
     #[error("Could not find service with id {0}")]
     IdNotFound(String),
 }
@@ -153,5 +156,11 @@ pub enum NextError {
 #[derive(Debug, Error)]
 pub enum DetailError {
     #[error("Failed to write details for service with id: {0}. Error: {1}")]
+    FailedWrite(String, #[source] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum CompleteError {
+    #[error("Failed to write details for service completion for service with id {0}. Error: {1}")]
     FailedWrite(String, #[source] std::io::Error),
 }

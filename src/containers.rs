@@ -54,6 +54,10 @@ impl MaintenanceLog {
         self.services.get(id)
     }
 
+    pub fn get_mut(&mut self, id: &str) -> Option<&mut ServiceMetdata> {
+        self.services.get_mut(id)
+    }
+
     pub fn contains(&self, id: &str) -> bool {
         self.services.contains_key(id)
     }
@@ -117,6 +121,11 @@ impl ServiceMetdata {
         self.next_service
     }
 
+    pub fn set_next_service(&mut self, miles: u32, date: NaiveDate) {
+        self.next_service.miles = miles;
+        self.next_service.date = date;
+    }
+
     #[allow(dead_code)]
     pub fn previous_services(&self) -> Option<&[ServiceEvent]> {
         self.previous_services.as_deref()
@@ -125,6 +134,14 @@ impl ServiceMetdata {
     #[allow(dead_code)]
     pub fn notes(&self) -> Option<&[String]> {
         self.notes.as_deref()
+    }
+
+    pub fn add_service_event(&mut self, miles: u32, date: NaiveDate) {
+        let service_event = ServiceEvent { miles, date };
+        match &mut self.previous_services {
+            None => self.previous_services = Some(vec![service_event]),
+            Some(previous_services) => previous_services.push(service_event),
+        }
     }
 }
 
@@ -234,6 +251,11 @@ impl ServiceInterval {
     #[allow(dead_code)]
     pub fn years(&self) -> f64 {
         self.months as f64 / 12.0
+    }
+
+    pub fn days(&self) -> i64 {
+        // Floor to prevent accidentally going overdue on maintenance
+        (self.years() * 365.0).floor() as i64
     }
 }
 
