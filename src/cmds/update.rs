@@ -19,9 +19,10 @@ impl Update {
     pub fn run(mut self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!("Updating maintenance log");
 
-        let mut metadata = log
-            .remove(&self.id)
-            .ok_or_else(|| CmdsError::IdNotFound((&self.id).into()))?;
+        let mut metadata = match log.remove(&self.id) {
+            Some(metadata) => metadata,
+            None => return Err(CmdsError::IdNotFound(self.id)),
+        };
 
         // If want to update the id need to remove the current metadata and insert at the new id
         // Another option is to always remove then for the id cmd just update the self.id attribute to be the update
