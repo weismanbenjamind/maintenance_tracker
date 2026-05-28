@@ -76,7 +76,7 @@ fn build_subdirs(path: &Path) -> Result<(), ContainersError> {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ServiceMetdata {
-    pub name: String, // TODO - should this be public or have getters and setters so no one else can own it?
+    name: String,
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
     previous_services: Option<Vec<ServiceEvent>>,
@@ -84,7 +84,6 @@ pub struct ServiceMetdata {
 }
 
 impl ServiceMetdata {
-    #[allow(dead_code)]
     pub fn new(
         name: &str,
         service_interval: ServiceInterval,
@@ -99,6 +98,14 @@ impl ServiceMetdata {
             previous_services,
             notes,
         }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn set_name(&mut self, name: &str) {
+        self.name = name.into()
     }
 
     pub fn service_interval(&self) -> ServiceInterval {
@@ -237,11 +244,19 @@ impl From<PreviousService> for ServiceEvent {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct ServiceInterval {
-    pub miles: u32,
-    pub months: u32,
+    miles: u32,
+    months: u32,
 }
 
 impl ServiceInterval {
+    pub fn miles(&self) -> u32 {
+        self.miles
+    }
+
+    pub fn months(&self) -> u32 {
+        self.months
+    }
+
     pub fn days(&self) -> i64 {
         // Floor to prevent accidentally going overdue on maintenance
         (self.months as f64 / 12.0 * 365.0).floor() as i64

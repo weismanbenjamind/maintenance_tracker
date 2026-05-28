@@ -34,15 +34,6 @@ pub struct MaintenanceTrackerArgs {
 }
 
 impl MaintenanceTrackerArgs {
-    pub fn new(maintenance_log: &Path, maintenance_log_env: &str, verbose: u8, cmd: Cmd) -> Self {
-        Self {
-            maintenance_log: maintenance_log.into(),
-            maintenance_log_env: maintenance_log_env.into(),
-            verbose,
-            cmd,
-        }
-    }
-
     pub fn maintenance_log(&self) -> &Path {
         &self.maintenance_log
     }

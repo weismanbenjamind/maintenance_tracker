@@ -28,10 +28,10 @@ impl Update {
         // At the end just put the metadata back with the proper id
 
         match self.cmd {
-            Cmd::Name(args) => metadata.name = args.name,
+            Cmd::Name(args) => metadata.set_name(&args.name),
             Cmd::Id(args) => {
                 if log.contains(&args.id) {
-                    return Err(CmdsError::IdExists(args.id, metadata.name));
+                    return Err(CmdsError::IdExists(args.id, metadata.name().into()));
                 }
                 // Set the id attribute so when we insert back into the map we insert with the new id
                 self.id = args.id
