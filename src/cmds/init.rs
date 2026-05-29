@@ -40,7 +40,7 @@ pub struct Init {
 impl Init {
     pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
-            "Initializing service with id {} and name {}",
+            "Initializing service with id {} and name {}.",
             self.id, self.name
         );
 
@@ -76,7 +76,7 @@ impl Init {
         // the start of this function
         log.insert(&self.id, update);
         info!(
-            "Successfully initialized service with id {} and name {}",
+            "Successfully initialized service with id {} and name {}.",
             self.id, self.name
         );
 
@@ -111,7 +111,7 @@ impl FromStr for PreviousService {
 
         let (miles, date) = match (split.next(), split.next(), split.next()) {
             (Some(miles), Some(date), None) => {
-                debug!("When parsing previous service found miles {miles} and date {date}");
+                debug!("When parsing previous service found miles {miles} and date {date}.");
                 (miles, date)
             }
             _ => Err(InitError::FailedPreviousServiceParse)?,

@@ -18,31 +18,6 @@ pub enum MaintenanceTrackerError {
     Cmds(#[from] CmdsError),
 }
 
-#[derive(Debug, Error)]
-pub enum ContainersError {
-    #[error("Failed to read maintenance log at path {path}. Error: {source}.")]
-    FailedLoad {
-        path: PathBuf,
-
-        #[source]
-        source: std::io::Error,
-    },
-
-    #[error("Failed to write maintenance log to path {path}. Error: source {source}.")]
-    FailedWrite {
-        path: PathBuf,
-
-        #[source]
-        source: std::io::Error,
-    },
-
-    #[error("Failed to deserialize maintenance log from toml. Error: {0}.")]
-    FailedDerserialize(#[from] toml::de::Error),
-
-    #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
-    FailedSerialize(#[from] toml::ser::Error),
-}
-
 impl ContainersError {
     pub fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
         Self::FailedWrite {
@@ -104,11 +79,54 @@ pub enum CmdsError {
     #[error(transparent)]
     Complete(#[from] CompleteError),
 
+    #[error(transparent)]
+    Containers(#[from] ContainersError),
+
     #[error("Could not find service with id {0}")]
     IdNotFound(String),
 
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
+}
+
+#[derive(Debug, Error)]
+pub enum ContainersError {
+    #[error("Failed to read maintenance log at path {path}. Error: {source}.")]
+    FailedLoad {
+        path: PathBuf,
+
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Failed to write maintenance log to path {path}. Error: source {source}.")]
+    FailedWrite {
+        path: PathBuf,
+
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Failed to write update to console. Error: {source}")]
+    FailedInform {
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("Failed to deserialize maintenance log from toml. Error: {0}.")]
+    FailedDerserialize(#[from] toml::de::Error),
+
+    #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
+    FailedSerialize(#[from] toml::ser::Error),
+
+    #[error("At least one of notes or date must be set.")]
+    InvalidOptionalArgs,
+
+    #[error("Could not find target service event.")]
+    ServiceEventNotFound,
+
+    #[error("Found multiple service events.")]
+    MultipleServiceEvents,
 }
 
 #[derive(Debug, Error)]

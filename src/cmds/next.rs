@@ -14,13 +14,13 @@ pub struct Next {
 
 impl Next {
     pub fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
-        info!("Getting next service for id {}", self.id);
+        info!("Getting next service for id {}.", self.id);
         let found = match log.get(&self.id) {
             Some(metadata) => metadata.next_service(),
             None => return Err(CmdsError::IdNotFound(self.id)),
         };
 
-        info!("Writing next to stdout");
+        info!("Writing next to stdout.");
         let stdout = io::stdout();
         let mut buf = stdout.lock();
 
@@ -28,7 +28,7 @@ impl Next {
             return Err(NextError::FailedWrite(self.id, e).into());
         }
 
-        info!("Finished getting next service for id {}", self.id);
+        info!("Finished getting next service for id {}.", self.id);
         Ok(())
     }
 }

@@ -15,7 +15,7 @@ pub struct Detail {
 impl Detail {
     pub fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!(
-            "Getting details for maintenance log item with id {}",
+            "Getting details for maintenance log item with id {}.",
             self.id
         );
 
@@ -28,7 +28,7 @@ impl Detail {
             None => return Err(CmdsError::IdNotFound(self.id)),
         };
 
-        info!("Successfully got details for maintenance log item");
+        info!("Successfully got details for maintenance log item.");
 
         Ok(())
     }

@@ -7,9 +7,9 @@ use crate::verbosity::set_verbosity;
 use log::info;
 
 pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> {
+    set_verbosity(args.verbose())?;
     info!("Starting maintenance tracking run.");
 
-    set_verbosity(args.verbose())?;
     let maintenance_log_path = resolve_cfg(args.maintenance_log(), args.maintenance_log_env())?;
     let mut log = MaintenanceLog::load(&maintenance_log_path)?;
 

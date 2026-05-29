@@ -17,7 +17,7 @@ pub struct Update {
 impl Update {
     // TODO - need a command to update the next service in here
     pub fn run(mut self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
-        info!("Updating maintenance log");
+        info!("Updating maintenance log.");
 
         let mut metadata = match log.remove(&self.id) {
             Some(metadata) => metadata,
@@ -30,17 +30,11 @@ impl Update {
 
         match self.cmd {
             Cmd::Name(args) => metadata.set_name(&args.name),
-            Cmd::Id(args) => {
-                if log.contains(&args.id) {
-                    return Err(CmdsError::IdExists(args.id, metadata.name().into()));
-                }
-                // Set the id attribute so when we insert back into the map we insert with the new id
-                self.id = args.id
-            }
+            Cmd::Id(args) => self.id = args.id, // Set the id attribute so when we insert back into the map we insert with the new id
             Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
             Cmd::MonthInterval(args) => metadata.set_service_interavl_months(args.months),
             Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata),
-            _ => todo!("Finish these up"),
+            Cmd::Service(update_service_cmd) => update_service_cmd.run(&mut metadata)?,
         }
 
         // Don't need to check the option return since when we remove above we are sure this key does not exist
@@ -131,7 +125,26 @@ pub struct UpdateService {
 }
 
 impl UpdateService {
-    pub fn _run(self) {}
+    pub fn run(self, metadata: &mut ServiceMetdata) -> Result<(), CmdsError> {
+        match self.cmd {
+            UpdateServiceCmd::Append(args) => {
+                metadata.add_service_event(args.miles(), args.date());
+                Ok(())
+            }
+            UpdateServiceCmd::Replace(args) => {
+                let curr_specs = args.curr_service_specs();
+                let updated_specs = args.updated_service_specs();
+                metadata.replace_service_event(
+                    curr_specs.miles(),
+                    curr_specs.date(),
+                    updated_specs.miles(),
+                    updated_specs.date(),
+                )?;
+                Ok(())
+            }
+            _ => todo!("Implement other update service arms"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Subcommand)]
@@ -223,6 +236,16 @@ mod update_service_cmds {
         date: NaiveDate,
     }
 
+    impl Append {
+        pub fn miles(&self) -> u32 {
+            self.miles
+        }
+
+        pub fn date(&self) -> NaiveDate {
+            self.date
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[command(about = "Replace a service")]
     pub struct Replace {
@@ -231,6 +254,16 @@ mod update_service_cmds {
 
         #[command(flatten)]
         updated_service_specs: UpdatedServiceSpecs,
+    }
+
+    impl Replace {
+        pub fn curr_service_specs(&self) -> CurrServiceSpecs {
+            self.curr_service_specs
+        }
+
+        pub fn updated_service_specs(&self) -> UpdatedServiceSpecs {
+            self.updated_service_specs
+        }
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -254,6 +287,16 @@ mod update_service_cmds {
         date: Option<NaiveDate>,
     }
 
+    impl CurrServiceSpecs {
+        pub fn miles(&self) -> Option<u32> {
+            self.miles
+        }
+
+        pub fn date(&self) -> Option<NaiveDate> {
+            self.date
+        }
+    }
+
     #[derive(Clone, Copy, Debug, Args)]
     #[group(required = true, multiple = true)]
     pub struct UpdatedServiceSpecs {
@@ -262,5 +305,15 @@ mod update_service_cmds {
 
         #[arg(short = 'w', long, help = "Date to update service to")]
         new_date: Option<NaiveDate>,
+    }
+
+    impl UpdatedServiceSpecs {
+        pub fn miles(&self) -> Option<u32> {
+            self.new_miles
+        }
+
+        pub fn date(&self) -> Option<NaiveDate> {
+            self.new_date
+        }
     }
 }

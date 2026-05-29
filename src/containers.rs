@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Keys;
 use std::fmt;
+use std::io::{self, Write};
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -27,12 +28,12 @@ impl MaintenanceLog {
 
     pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), ContainersError> {
         let path = path.as_ref();
-        info!("Writing maintenance log to {}", path.display());
+        info!("Writing maintenance log to {}.", path.display());
         let log_string = toml::to_string_pretty(&self)?;
         build_subdirs(path)?;
         std::fs::write(path, log_string)
             .map_err(|e| ContainersError::build_failed_write(e, path))?;
-        info!("Successfully wrote maintenance log to {}", path.display());
+        info!("Successfully wrote maintenance log to {}.", path.display());
         Ok(())
     }
 
@@ -64,12 +65,12 @@ impl MaintenanceLog {
 fn build_subdirs(path: &Path) -> Result<(), ContainersError> {
     if let Some(parent) = path.parent() {
         debug!(
-            "Creating subdirs for maintenance log at path {}",
+            "Creating subdirs for maintenance log at path {}.",
             parent.display()
         );
         std::fs::create_dir_all(parent)
             .map_err(|e| ContainersError::build_failed_write(e, path))?;
-        debug!("Subdirs created");
+        debug!("Subdirs created.");
     }
     Ok(())
 }
@@ -176,6 +177,81 @@ impl ServiceMetdata {
             Some(previous_services) => previous_services.push(service_event),
         }
     }
+
+    pub fn replace_service_event(
+        &mut self,
+        curr_miles: Option<u32>,
+        curr_date: Option<NaiveDate>,
+        new_miles: Option<u32>,
+        new_date: Option<NaiveDate>,
+    ) -> Result<(), ContainersError> {
+        info!("Attempting to replace previous service.");
+        match &mut self.previous_services {
+            None => {
+                info!("Previous service events is None. Skipping relace.");
+                Ok(())
+            }
+            Some(prev_services) => {
+                let service_event = get_prev_service(prev_services, curr_miles, curr_date)?;
+
+                let stdout = io::stdout();
+                let mut buf = stdout.lock();
+                writeln!(buf, "Found previce service event. Replacing.")
+                    .map_err(|e| ContainersError::FailedInform { source: e })?;
+                service_event.update(new_miles, new_date);
+                writeln!(buf, "Previous service event replaced.")
+                    .map_err(|e| ContainersError::FailedInform { source: e })?;
+
+                info!("Replaced previous service.");
+
+                Ok(())
+            }
+        }
+    }
+}
+
+fn get_prev_service(
+    prev_services: &mut [ServiceEvent],
+    miles: Option<u32>,
+    date: Option<NaiveDate>,
+) -> Result<&mut ServiceEvent, ContainersError> {
+    let mut service_events = filter_prev_services(prev_services, miles, date)?;
+    if service_events.is_empty() {
+        debug!("No previous events found for provided filter.");
+        Err(ContainersError::ServiceEventNotFound)
+    } else if service_events.len() > 1 {
+        debug!("Found multiple previous service events for provided filter.");
+        Err(ContainersError::MultipleServiceEvents)
+    } else {
+        debug!("Found service event to replace.");
+        Ok(service_events.remove(0))
+    }
+}
+
+fn filter_prev_services(
+    prev_services: &mut [ServiceEvent],
+    miles: Option<u32>,
+    date: Option<NaiveDate>,
+) -> Result<Vec<&mut ServiceEvent>, ContainersError> {
+    let result: Vec<&mut ServiceEvent> = match (miles, date) {
+        (Some(miles), None) => prev_services
+            .iter_mut()
+            .filter(|service_event| service_event.miles == miles)
+            .collect(),
+        (None, Some(date)) => prev_services
+            .iter_mut()
+            .filter(|service_event| service_event.date == date)
+            .collect(),
+        (Some(miles), Some(date)) => prev_services
+            .iter_mut()
+            .filter(|service_event| service_event.miles == miles && service_event.date == date)
+            .collect(),
+        (None, None) => {
+            return Err(ContainersError::InvalidOptionalArgs);
+        }
+    };
+
+    Ok(result)
 }
 
 impl fmt::Display for ServiceMetdata {
@@ -215,6 +291,18 @@ impl fmt::Display for ServiceMetdata {
 pub struct ServiceEvent {
     miles: u32,
     date: NaiveDate,
+}
+
+impl ServiceEvent {
+    fn update(&mut self, miles: Option<u32>, date: Option<NaiveDate>) {
+        if let Some(miles) = miles {
+            self.miles = miles
+        };
+
+        if let Some(date) = date {
+            self.date = date
+        };
+    }
 }
 
 impl fmt::Display for ServiceEvent {

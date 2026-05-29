@@ -21,7 +21,7 @@ pub struct Complete {
 impl Complete {
     pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
-            "Completing service with id '{}' at mileage {} on date {}",
+            "Completing service with id '{}' at mileage {} on date {}.",
             self.id, self.mileage, self.date
         );
 
@@ -51,7 +51,7 @@ impl Complete {
         )
         .map_err(|e| CompleteError::FailedWrite(self.id, e))?;
 
-        info!("Service logged as complete");
+        info!("Service logged as complete.");
         Ok(())
     }
 }
