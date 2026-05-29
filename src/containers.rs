@@ -188,17 +188,24 @@ impl ServiceMetdata {
         info!("Attempting to replace previous service.");
         match &mut self.previous_services {
             None => {
-                info!("Previous service events is None. Skipping relace.");
-                Ok(())
+                info!("No previous services. Skipping replace operation");
+                Err(ContainersError::ServiceEventNotFound)
             }
             Some(prev_services) => {
-                let service_event = get_prev_service(prev_services, curr_miles, curr_date)?;
+                let idx = get_prev_service_idx(prev_services, curr_miles, curr_date)?;
 
                 let stdout = io::stdout();
                 let mut buf = stdout.lock();
                 writeln!(buf, "Found previce service event. Replacing.")
                     .map_err(|e| ContainersError::FailedInform { source: e })?;
-                service_event.update(new_miles, new_date);
+
+                // Note - .get_mut() should never error (return None) because get_prev_service_idx ensures we have the service event
+                // Leaving error as fallback
+                prev_services
+                    .get_mut(idx)
+                    .ok_or(ContainersError::ServiceEventNotFound)?
+                    .update(new_miles, new_date);
+
                 writeln!(buf, "Previous service event replaced.")
                     .map_err(|e| ContainersError::FailedInform { source: e })?;
 
@@ -208,43 +215,84 @@ impl ServiceMetdata {
             }
         }
     }
-}
 
-fn get_prev_service(
-    prev_services: &mut [ServiceEvent],
-    miles: Option<u32>,
-    date: Option<NaiveDate>,
-) -> Result<&mut ServiceEvent, ContainersError> {
-    let mut service_events = filter_prev_services(prev_services, miles, date)?;
-    if service_events.is_empty() {
-        debug!("No previous events found for provided filter.");
-        Err(ContainersError::ServiceEventNotFound)
-    } else if service_events.len() > 1 {
-        debug!("Found multiple previous service events for provided filter.");
-        Err(ContainersError::MultipleServiceEvents)
-    } else {
-        debug!("Found service event to replace.");
-        Ok(service_events.remove(0))
+    pub fn remove_service_event(
+        &mut self,
+        miles: Option<u32>,
+        date: Option<NaiveDate>,
+    ) -> Result<(), ContainersError> {
+        info!("Attempting to remove service event.");
+        match &mut self.previous_services {
+            None => {
+                info!("No previous services. Skipping remove operation.");
+                Err(ContainersError::ServiceEventNotFound)
+            }
+            Some(prev_services) => {
+                let idx = get_prev_service_idx(prev_services, miles, date)?;
+
+                let stdout = io::stdout();
+                let mut buf = stdout.lock();
+                writeln!(buf, "Found previce service event. Removing.")
+                    .map_err(|e| ContainersError::FailedInform { source: e })?;
+
+                // Remove can panic
+                // get_prev_service_idx shuould ensure this index exists so the remove call is safe
+                prev_services.remove(idx);
+
+                writeln!(buf, "Previous service event removed.")
+                    .map_err(|e| ContainersError::FailedInform { source: e })?;
+
+                info!("Removed service event.");
+
+                Ok(())
+            }
+        }
     }
 }
 
-fn filter_prev_services(
-    prev_services: &mut [ServiceEvent],
+fn get_prev_service_idx(
+    prev_services: &[ServiceEvent],
     miles: Option<u32>,
     date: Option<NaiveDate>,
-) -> Result<Vec<&mut ServiceEvent>, ContainersError> {
-    let result: Vec<&mut ServiceEvent> = match (miles, date) {
+) -> Result<usize, ContainersError> {
+    let idxs = filter_prev_services_idxs(prev_services, miles, date)?;
+    if idxs.is_empty() {
+        debug!("No previous events found for provided filter.");
+        Err(ContainersError::ServiceEventNotFound)
+    } else if idxs.len() > 1 {
+        debug!("Found multiple previous service events for provided filter.");
+        Err(ContainersError::MultipleServiceEvents)
+    } else {
+        debug!("Found service event.");
+        Ok(idxs[0])
+    }
+}
+
+fn filter_prev_services_idxs(
+    prev_services: &[ServiceEvent],
+    miles: Option<u32>,
+    date: Option<NaiveDate>,
+) -> Result<Vec<usize>, ContainersError> {
+    let result: Vec<usize> = match (miles, date) {
         (Some(miles), None) => prev_services
-            .iter_mut()
-            .filter(|service_event| service_event.miles == miles)
+            .iter()
+            .enumerate()
+            .filter(|(_idx, service_event)| service_event.miles == miles)
+            .map(|(idx, _service_event)| idx)
             .collect(),
         (None, Some(date)) => prev_services
-            .iter_mut()
-            .filter(|service_event| service_event.date == date)
+            .iter()
+            .enumerate()
+            .filter(|(_idx, service_event)| service_event.date == date)
+            .map(|(idx, _service_event)| idx)
             .collect(),
         (Some(miles), Some(date)) => prev_services
-            .iter_mut()
-            .filter(|service_event| service_event.miles == miles && service_event.date == date)
+            .iter()
+            .enumerate()
+            .filter(|(_idx, service_event)| {
+                service_event.miles == miles && service_event.date == date
+            })
+            .map(|(idx, _service_event)| idx)
             .collect(),
         (None, None) => {
             return Err(ContainersError::InvalidOptionalArgs);
@@ -287,7 +335,7 @@ impl fmt::Display for ServiceMetdata {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
 pub struct ServiceEvent {
     miles: u32,
     date: NaiveDate,

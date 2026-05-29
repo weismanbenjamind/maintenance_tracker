@@ -132,14 +132,16 @@ impl UpdateService {
                 Ok(())
             }
             UpdateServiceCmd::Replace(args) => {
-                let curr_specs = args.curr_service_specs();
-                let updated_specs = args.updated_service_specs();
                 metadata.replace_service_event(
-                    curr_specs.miles(),
-                    curr_specs.date(),
-                    updated_specs.miles(),
-                    updated_specs.date(),
+                    args.curr_miles(),
+                    args.curr_date(),
+                    args.new_miles(),
+                    args.new_date(),
                 )?;
+                Ok(())
+            }
+            UpdateServiceCmd::Remove(args) => {
+                metadata.remove_service_event(args.miles(), args.date())?;
                 Ok(())
             }
             _ => todo!("Implement other update service arms"),
@@ -257,12 +259,20 @@ mod update_service_cmds {
     }
 
     impl Replace {
-        pub fn curr_service_specs(&self) -> CurrServiceSpecs {
-            self.curr_service_specs
+        pub fn curr_miles(&self) -> Option<u32> {
+            self.curr_service_specs.miles
         }
 
-        pub fn updated_service_specs(&self) -> UpdatedServiceSpecs {
-            self.updated_service_specs
+        pub fn curr_date(&self) -> Option<NaiveDate> {
+            self.curr_service_specs.date
+        }
+
+        pub fn new_miles(&self) -> Option<u32> {
+            self.updated_service_specs.miles()
+        }
+
+        pub fn new_date(&self) -> Option<NaiveDate> {
+            self.updated_service_specs.date()
         }
     }
 
@@ -271,6 +281,16 @@ mod update_service_cmds {
     pub struct Remove {
         #[command(flatten)]
         service_specs: CurrServiceSpecs,
+    }
+
+    impl Remove {
+        pub fn miles(&self) -> Option<u32> {
+            self.service_specs.miles
+        }
+
+        pub fn date(&self) -> Option<NaiveDate> {
+            self.service_specs.date
+        }
     }
 
     #[derive(Clone, Copy, Debug, Args)]
@@ -285,16 +305,6 @@ mod update_service_cmds {
 
         #[arg(short, long, help = "Date when service was performed")]
         date: Option<NaiveDate>,
-    }
-
-    impl CurrServiceSpecs {
-        pub fn miles(&self) -> Option<u32> {
-            self.miles
-        }
-
-        pub fn date(&self) -> Option<NaiveDate> {
-            self.date
-        }
     }
 
     #[derive(Clone, Copy, Debug, Args)]
