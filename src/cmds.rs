@@ -1,4 +1,5 @@
 pub mod complete;
+pub mod delete;
 pub mod detail;
 pub mod diff;
 pub mod init;
@@ -7,6 +8,7 @@ pub mod next;
 pub mod update;
 
 pub use complete::Complete;
+pub use delete::Delete;
 pub use detail::Detail;
 pub use diff::Diff;
 pub use init::Init;

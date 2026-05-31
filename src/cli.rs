@@ -54,6 +54,7 @@ impl MaintenanceTrackerArgs {
 #[derive(Clone, Debug, Subcommand)]
 pub enum Cmd {
     Complete(cmds::Complete),
+    Delete(cmds::Delete),
     Detail(cmds::Detail),
     Diff(cmds::Diff),
     Init(cmds::Init),
