@@ -136,7 +136,7 @@ pub struct UpdateService {
 }
 
 impl UpdateService {
-    pub fn run(self, metadata: &mut ServiceMetdata) -> Result<(), CmdsError> {
+    pub fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
         match self.cmd {
             UpdateServiceCmd::Append(args) => {
                 metadata.add_service_event(args.miles(), args.date());

@@ -116,15 +116,6 @@ pub enum ContainersError {
     #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
     FailedSerialize(#[from] toml::ser::Error),
 
-    #[error("At least one of notes or date must be set.")]
-    InvalidOptionalArgs,
-
-    #[error("Could not find target service event.")]
-    ServiceEventNotFound,
-
-    #[error("Found multiple service events.")]
-    MultipleServiceEvents,
-
     #[error(transparent)]
     ServiceMetadata(#[from] ServiceMetadataError),
 }
@@ -139,6 +130,18 @@ pub enum ServiceMetadataError {
 
     #[error("No notes present.")]
     NotesNotSet,
+
+    #[error("No previous services present.")]
+    PreviousServicesNotSet,
+
+    #[error("Could not find target service event.")]
+    ServiceEventNotFound,
+
+    #[error("Found multiple service events.")]
+    MultipleServiceEvents,
+
+    #[error("At least one of notes or date must be set.")]
+    InvalidOptionalArgs,
 }
 
 #[derive(Debug, Error)]
