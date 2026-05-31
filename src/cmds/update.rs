@@ -144,7 +144,10 @@ impl UpdateService {
                 metadata.remove_service_event(args.miles(), args.date())?;
                 Ok(())
             }
-            _ => todo!("Implement other update service arms"),
+            UpdateServiceCmd::Clear(_) => {
+                metadata.clear_previous_services();
+                Ok(())
+            }
         }
     }
 }

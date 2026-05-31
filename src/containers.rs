@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Keys;
 use std::fmt;
-use std::io::{self, Write};
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -194,20 +193,12 @@ impl ServiceMetdata {
             Some(prev_services) => {
                 let idx = get_prev_service_idx(prev_services, curr_miles, curr_date)?;
 
-                let stdout = io::stdout();
-                let mut buf = stdout.lock();
-                writeln!(buf, "Found previce service event. Replacing.")
-                    .map_err(|e| ContainersError::FailedInform { source: e })?;
-
                 // Note - .get_mut() should never error (return None) because get_prev_service_idx ensures we have the service event
                 // Leaving error as fallback
                 prev_services
                     .get_mut(idx)
                     .ok_or(ContainersError::ServiceEventNotFound)?
                     .update(new_miles, new_date);
-
-                writeln!(buf, "Previous service event replaced.")
-                    .map_err(|e| ContainersError::FailedInform { source: e })?;
 
                 info!("Replaced previous service.");
 
@@ -230,23 +221,20 @@ impl ServiceMetdata {
             Some(prev_services) => {
                 let idx = get_prev_service_idx(prev_services, miles, date)?;
 
-                let stdout = io::stdout();
-                let mut buf = stdout.lock();
-                writeln!(buf, "Found previce service event. Removing.")
-                    .map_err(|e| ContainersError::FailedInform { source: e })?;
-
                 // Remove can panic
                 // get_prev_service_idx shuould ensure this index exists so the remove call is safe
                 prev_services.remove(idx);
-
-                writeln!(buf, "Previous service event removed.")
-                    .map_err(|e| ContainersError::FailedInform { source: e })?;
 
                 info!("Removed service event.");
 
                 Ok(())
             }
         }
+    }
+
+    pub fn clear_previous_services(&mut self) {
+        info!("Clearing previous services");
+        self.previous_services = None
     }
 }
 

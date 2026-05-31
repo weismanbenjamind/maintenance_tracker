@@ -107,12 +107,6 @@ pub enum ContainersError {
         source: std::io::Error,
     },
 
-    #[error("Failed to write update to console. Error: {source}")]
-    FailedInform {
-        #[source]
-        source: std::io::Error,
-    },
-
     #[error("Failed to deserialize maintenance log from toml. Error: {0}.")]
     FailedDerserialize(#[from] toml::de::Error),
 
