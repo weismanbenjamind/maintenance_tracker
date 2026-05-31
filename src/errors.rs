@@ -102,7 +102,7 @@ pub enum MaintenanceLogError {
         source: std::io::Error,
     },
 
-    #[error("Failed to write maintenance log to path {path}. Error: source {source}.")]
+    #[error("Failed to write maintenance log to path {path}. Error: {source}.")]
     FailedWrite {
         path: PathBuf,
 
@@ -164,7 +164,7 @@ pub enum InitError {
     InvalidDateFormat(#[from] ParseError),
 
     #[error("Failed to write initialized service details. Error {0}")]
-    FailedWrite(#[source] std::io::Error),
+    FailedWrite(#[from] std::io::Error),
 }
 
 #[derive(Debug, Error)]
