@@ -7,7 +7,7 @@ const WARN: &str = "warn";
 const INFO: &str = "info";
 const DEBUG: &str = "debug";
 
-pub fn set_verbosity(verbosity: u8) -> Result<(), VerbosityError> {
+pub(crate) fn set_verbosity(verbosity: u8) -> Result<(), VerbosityError> {
     let log_level = get_log_level(verbosity);
     init_tracing_subscriber(&log_level)
 }

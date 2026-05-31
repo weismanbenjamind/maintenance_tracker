@@ -7,7 +7,7 @@ use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
-pub struct Complete {
+pub(crate) struct Complete {
     #[arg(short, long, help = "ID of service")]
     id: String,
 
@@ -19,7 +19,7 @@ pub struct Complete {
 }
 
 impl Complete {
-    pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Completing service with id '{}' at mileage {} on date {}.",
             self.id, self.mileage, self.date

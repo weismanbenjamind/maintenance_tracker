@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 const SKIP_ENV_FLAG: &str = "skip";
 
-pub fn resolve_cfg(
+pub(crate) fn resolve_cfg(
     maintenance_log: &Path,
     maintenance_log_env: &str,
 ) -> Result<PathBuf, CfgResolveError> {

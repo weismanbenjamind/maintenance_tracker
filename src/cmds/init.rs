@@ -12,7 +12,7 @@ const DELIMITER: &str = ";";
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Initialize a service for tracking")]
-pub struct Init {
+pub(crate) struct Init {
     #[arg(long, help = "Name of service")]
     name: String,
 
@@ -38,7 +38,7 @@ pub struct Init {
 }
 
 impl Init {
-    pub fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Initializing service with id {} and name {}.",
             self.id, self.name
@@ -85,7 +85,7 @@ impl Init {
 }
 
 #[derive(Clone, Copy, Debug, Args)]
-pub struct PreviousService {
+pub(crate) struct PreviousService {
     #[arg(short, long, help = "Mileage on vehicle at previous service event")]
     miles: u32,
 
@@ -94,11 +94,11 @@ pub struct PreviousService {
 }
 
 impl PreviousService {
-    pub fn miles(&self) -> u32 {
+    pub(crate) fn miles(&self) -> u32 {
         self.miles
     }
 
-    pub fn date(self) -> NaiveDate {
+    pub(crate) fn date(self) -> NaiveDate {
         self.date
     }
 }
@@ -125,7 +125,7 @@ impl FromStr for PreviousService {
 }
 
 #[derive(Clone, Copy, Debug, Args)]
-pub struct ServiceInterval {
+pub(crate) struct ServiceInterval {
     #[arg(long, help = "Miles interval service should be completed at")]
     miles_interval: u32,
 
@@ -134,17 +134,17 @@ pub struct ServiceInterval {
 }
 
 impl ServiceInterval {
-    pub fn miles_interval(&self) -> u32 {
+    pub(crate) fn miles_interval(&self) -> u32 {
         self.miles_interval
     }
 
-    pub fn monthly_interval(&self) -> u32 {
+    pub(crate) fn monthly_interval(&self) -> u32 {
         self.monthly_interval
     }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
-pub struct NextService {
+pub(crate) struct NextService {
     #[arg(
         long,
         help = "Mileage on vehcile when next service should be completed"
@@ -156,11 +156,11 @@ pub struct NextService {
 }
 
 impl NextService {
-    pub fn next_service_miles(&self) -> u32 {
+    pub(crate) fn next_service_miles(&self) -> u32 {
         self.next_service_miles
     }
 
-    pub fn next_service_date(&self) -> NaiveDate {
+    pub(crate) fn next_service_date(&self) -> NaiveDate {
         self.next_service_date
     }
 }

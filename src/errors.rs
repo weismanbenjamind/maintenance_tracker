@@ -41,7 +41,7 @@ pub enum CfgResolveError {
 }
 
 impl CfgResolveError {
-    pub fn from_resolve_attempt(
+    pub(crate) fn from_resolve_attempt(
         maintenance_log: &Path,
         maintenance_log_env: &str,
         skip_env: &str,
@@ -108,7 +108,7 @@ pub enum MaintenanceLogError {
 }
 
 impl MaintenanceLogError {
-    pub fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
+    pub(crate) fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
         Self::FailedWrite(path.into(), e)
     }
 }

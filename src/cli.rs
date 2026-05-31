@@ -34,25 +34,25 @@ pub struct MaintenanceTrackerArgs {
 }
 
 impl MaintenanceTrackerArgs {
-    pub fn maintenance_log(&self) -> &Path {
+    pub(crate) fn maintenance_log(&self) -> &Path {
         &self.maintenance_log
     }
 
-    pub fn maintenance_log_env(&self) -> &str {
+    pub(crate) fn maintenance_log_env(&self) -> &str {
         &self.maintenance_log_env
     }
 
-    pub fn verbose(&self) -> u8 {
+    pub(crate) fn verbose(&self) -> u8 {
         self.verbose
     }
 
-    pub fn into_cmd(self) -> Cmd {
+    pub(crate) fn into_cmd(self) -> Cmd {
         self.cmd
     }
 }
 
 #[derive(Clone, Debug, Subcommand)]
-pub enum Cmd {
+pub(crate) enum Cmd {
     Complete(cmds::Complete),
     Delete(cmds::Delete),
     Detail(cmds::Detail),

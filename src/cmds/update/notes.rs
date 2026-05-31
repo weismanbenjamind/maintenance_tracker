@@ -2,20 +2,20 @@ use clap::Args;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Append a note")]
-pub struct Append {
+pub(super) struct Append {
     #[arg(help = "Notes to append")]
     notes: Vec<String>,
 }
 
 impl Append {
-    pub fn into_notes(self) -> Vec<String> {
+    pub(super) fn into_notes(self) -> Vec<String> {
         self.notes
     }
 }
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Replace contetns of a note")]
-pub struct Replace {
+pub(super) struct Replace {
     #[arg(short, long, help = "Index to replace")]
     index: usize,
 
@@ -24,14 +24,14 @@ pub struct Replace {
 }
 
 impl Replace {
-    pub fn into_parts(self) -> (usize, String) {
+    pub(super) fn into_parts(self) -> (usize, String) {
         (self.index, self.contents)
     }
 }
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Insert a note")]
-pub struct Insert {
+pub(super) struct Insert {
     #[arg(short, long, help = "Index to insert note at")]
     index: usize,
 
@@ -40,24 +40,24 @@ pub struct Insert {
 }
 
 impl Insert {
-    pub fn into_parts(self) -> (usize, String) {
+    pub(super) fn into_parts(self) -> (usize, String) {
         (self.index, self.contents)
     }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Remove a note")]
-pub struct Remove {
+pub(super) struct Remove {
     #[arg(help = "Index of note to remove")]
     index: usize,
 }
 
 impl Remove {
-    pub fn index(&self) -> usize {
+    pub(super) fn index(&self) -> usize {
         self.index
     }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Clear notes")]
-pub struct Clear;
+pub(super) struct Clear;

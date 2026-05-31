@@ -11,7 +11,7 @@ use log::info;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
-pub struct Update {
+pub(crate) struct Update {
     #[arg(help = "ID of service to update")]
     id: String,
 
@@ -21,7 +21,7 @@ pub struct Update {
 
 impl Update {
     // TODO - need a command to update the next service in here
-    pub fn run(mut self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(mut self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!("Updating maintenance log.");
 
         let mut metadata = match log.remove(&self.id) {
@@ -51,7 +51,7 @@ impl Update {
 }
 
 #[derive(Clone, Debug, Subcommand)]
-pub enum Cmd {
+enum Cmd {
     Name(UpdateName),
     Id(UpdateId),
     MilesInterval(UpdateMilesInterval),
@@ -62,41 +62,41 @@ pub enum Cmd {
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update name")]
-pub struct UpdateName {
+struct UpdateName {
     #[arg(help = "New name of service")]
     name: String,
 }
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update id")]
-pub struct UpdateId {
+struct UpdateId {
     #[arg(help = "New id of service")]
     id: String,
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update miles interval the service should be completed at")]
-pub struct UpdateMilesInterval {
+struct UpdateMilesInterval {
     #[arg(help = "New miles interval")]
     miles: u32,
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update monthly interval the service should be completed at")]
-pub struct UpdateMonthInterval {
+struct UpdateMonthInterval {
     #[arg(help = "New monthly interval")]
     months: u32,
 }
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update notes")]
-pub struct UpdateNotes {
+struct UpdateNotes {
     #[command(subcommand)]
     cmd: UpdateNotesCmd,
 }
 
 impl UpdateNotes {
-    pub fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+    fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
         match self.cmd {
             UpdateNotesCmd::Append(args) => {
                 metadata.exetend_notes(args.into_notes());
@@ -125,7 +125,7 @@ impl UpdateNotes {
 }
 
 #[derive(Clone, Debug, Subcommand)]
-pub enum UpdateNotesCmd {
+enum UpdateNotesCmd {
     Append(notes_cmds::Append),
     Replace(notes_cmds::Replace),
     Insert(notes_cmds::Insert),
@@ -135,13 +135,13 @@ pub enum UpdateNotesCmd {
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update a previous service")]
-pub struct UpdateService {
+struct UpdateService {
     #[command(subcommand)]
     cmd: UpdateServiceCmd,
 }
 
 impl UpdateService {
-    pub fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+    fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
         match self.cmd {
             UpdateServiceCmd::Append(args) => {
                 metadata.add_service_event(args.miles(), args.date());
@@ -169,7 +169,7 @@ impl UpdateService {
 }
 
 #[derive(Clone, Copy, Debug, Subcommand)]
-pub enum UpdateServiceCmd {
+enum UpdateServiceCmd {
     Append(service_cmds::Append),
     Replace(service_cmds::Replace),
     Remove(service_cmds::Remove),

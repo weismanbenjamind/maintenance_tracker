@@ -7,13 +7,13 @@ use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get the next service event for a given maintenance item")]
-pub struct Next {
+pub(crate) struct Next {
     #[arg(help = "ID of service")]
     id: String,
 }
 
 impl Next {
-    pub fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!("Getting next service for id {}.", self.id);
         let found = match log.get(&self.id) {
             Some(metadata) => metadata.next_service(),

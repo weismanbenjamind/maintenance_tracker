@@ -4,7 +4,7 @@ use clap::Args;
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Append a service")]
-pub struct Append {
+pub(super) struct Append {
     #[arg(short, long, help = "Mileage of service")]
     miles: u32,
 
@@ -13,18 +13,18 @@ pub struct Append {
 }
 
 impl Append {
-    pub fn miles(&self) -> u32 {
+    pub(super) fn miles(&self) -> u32 {
         self.miles
     }
 
-    pub fn date(&self) -> NaiveDate {
+    pub(super) fn date(&self) -> NaiveDate {
         self.date
     }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Replace a service")]
-pub struct Replace {
+pub(super) struct Replace {
     #[command(flatten)]
     curr_service_specs: CurrServiceSpecs,
 
@@ -33,47 +33,47 @@ pub struct Replace {
 }
 
 impl Replace {
-    pub fn curr_miles(&self) -> Option<u32> {
+    pub(super) fn curr_miles(&self) -> Option<u32> {
         self.curr_service_specs.miles
     }
 
-    pub fn curr_date(&self) -> Option<NaiveDate> {
+    pub(super) fn curr_date(&self) -> Option<NaiveDate> {
         self.curr_service_specs.date
     }
 
-    pub fn new_miles(&self) -> Option<u32> {
+    pub(super) fn new_miles(&self) -> Option<u32> {
         self.updated_service_specs.miles()
     }
 
-    pub fn new_date(&self) -> Option<NaiveDate> {
+    pub(super) fn new_date(&self) -> Option<NaiveDate> {
         self.updated_service_specs.date()
     }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Remove a service")]
-pub struct Remove {
+pub(super) struct Remove {
     #[command(flatten)]
     service_specs: CurrServiceSpecs,
 }
 
 impl Remove {
-    pub fn miles(&self) -> Option<u32> {
+    pub(super) fn miles(&self) -> Option<u32> {
         self.service_specs.miles
     }
 
-    pub fn date(&self) -> Option<NaiveDate> {
+    pub(super) fn date(&self) -> Option<NaiveDate> {
         self.service_specs.date
     }
 }
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Clear all services")]
-pub struct Clear;
+pub(super) struct Clear;
 
 #[derive(Clone, Copy, Debug, Args)]
 #[group(required = true, multiple = true)]
-pub struct CurrServiceSpecs {
+pub(super) struct CurrServiceSpecs {
     #[arg(short, long, help = "Mileage on vehicle when service was performed")]
     miles: Option<u32>,
 
@@ -83,7 +83,7 @@ pub struct CurrServiceSpecs {
 
 #[derive(Clone, Copy, Debug, Args)]
 #[group(required = true, multiple = true)]
-pub struct UpdatedServiceSpecs {
+pub(super) struct UpdatedServiceSpecs {
     #[arg(short, long, help = "Mileage on vehicle to update service to")]
     new_miles: Option<u32>,
 
@@ -92,11 +92,11 @@ pub struct UpdatedServiceSpecs {
 }
 
 impl UpdatedServiceSpecs {
-    pub fn miles(&self) -> Option<u32> {
+    pub(super) fn miles(&self) -> Option<u32> {
         self.new_miles
     }
 
-    pub fn date(&self) -> Option<NaiveDate> {
+    pub(super) fn date(&self) -> Option<NaiveDate> {
         self.new_date
     }
 }

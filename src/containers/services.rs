@@ -1,16 +1,36 @@
-use crate::cmds::init::ServiceInterval as InitServiceInterval;
-use crate::cmds::init::{NextService, PreviousService};
+use crate::cmds::ServiceInterval as InitServiceInterval;
+use crate::cmds::{NextService, PreviousService};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
-pub struct ServiceEvent {
-    pub(super) miles: u32,
-    pub(super) date: NaiveDate,
+pub(crate) struct ServiceEvent {
+    miles: u32,
+    date: NaiveDate,
 }
 
 impl ServiceEvent {
+    pub(super) fn new(miles: u32, date: NaiveDate) -> Self {
+        Self { miles, date }
+    }
+
+    pub(super) fn miles(&self) -> u32 {
+        self.miles
+    }
+
+    pub(super) fn set_miles(&mut self, miles: u32) {
+        self.miles = miles
+    }
+
+    pub(super) fn date(&self) -> NaiveDate {
+        self.date
+    }
+
+    pub(super) fn set_date(&mut self, date: NaiveDate) {
+        self.date = date
+    }
+
     pub(super) fn update(&mut self, miles: Option<u32>, date: Option<NaiveDate>) {
         if let Some(miles) = miles {
             self.miles = miles
@@ -56,10 +76,6 @@ pub struct ServiceInterval {
 impl ServiceInterval {
     pub fn miles(&self) -> u32 {
         self.miles
-    }
-
-    pub fn months(&self) -> u32 {
-        self.months
     }
 
     pub fn days(&self) -> i64 {

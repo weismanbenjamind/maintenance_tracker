@@ -1,4 +1,4 @@
-use crate::containers::{ServiceEvent, ServiceInterval};
+use crate::containers::services::{ServiceEvent, ServiceInterval};
 use crate::errors::ServiceMetadataError;
 use chrono::NaiveDate;
 use log::{debug, info};
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ServiceMetdata {
+pub(crate) struct ServiceMetdata {
     name: String,
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
@@ -15,7 +15,7 @@ pub struct ServiceMetdata {
 }
 
 impl ServiceMetdata {
-    pub fn new(
+    pub(crate) fn new(
         name: &str,
         service_interval: ServiceInterval,
         next_service: ServiceEvent,
@@ -31,36 +31,36 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn name(&self) -> &str {
+    pub(crate) fn name(&self) -> &str {
         &self.name
     }
 
-    pub fn set_name(&mut self, name: &str) {
+    pub(crate) fn set_name(&mut self, name: &str) {
         self.name = name.into()
     }
 
-    pub fn service_interval(&self) -> ServiceInterval {
+    pub(crate) fn service_interval(&self) -> ServiceInterval {
         self.service_interval
     }
 
-    pub fn set_service_interval_miles(&mut self, miles: u32) {
+    pub(crate) fn set_service_interval_miles(&mut self, miles: u32) {
         self.service_interval.miles = miles
     }
 
-    pub fn set_service_interval_months(&mut self, months: u32) {
+    pub(crate) fn set_service_interval_months(&mut self, months: u32) {
         self.service_interval.months = months
     }
 
-    pub fn next_service(&self) -> ServiceEvent {
+    pub(crate) fn next_service(&self) -> ServiceEvent {
         self.next_service
     }
 
-    pub fn set_next_service(&mut self, miles: u32, date: NaiveDate) {
-        self.next_service.miles = miles;
-        self.next_service.date = date;
+    pub(crate) fn set_next_service(&mut self, miles: u32, date: NaiveDate) {
+        self.next_service.set_miles(miles);
+        self.next_service.set_date(date);
     }
 
-    pub fn exetend_notes(&mut self, extension: Vec<String>) {
+    pub(crate) fn exetend_notes(&mut self, extension: Vec<String>) {
         match &mut self.notes {
             Some(notes) => notes.extend(extension),
             None => self.notes = Some(extension),
@@ -74,7 +74,7 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn replace_note(
+    pub(crate) fn replace_note(
         &mut self,
         index: usize,
         contents: &str,
@@ -89,7 +89,7 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn remove_note(&mut self, index: usize) -> Result<(), ServiceMetadataError> {
+    pub(crate) fn remove_note(&mut self, index: usize) -> Result<(), ServiceMetadataError> {
         let notes = self.get_notes()?;
         match index < notes.len() {
             true => {
@@ -103,7 +103,7 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn insert_note(
+    pub(crate) fn insert_note(
         &mut self,
         index: usize,
         contents: &str,
@@ -121,12 +121,12 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn clear_notes(&mut self) {
+    pub(crate) fn clear_notes(&mut self) {
         self.notes = None
     }
 
-    pub fn add_service_event(&mut self, miles: u32, date: NaiveDate) {
-        let service_event = ServiceEvent { miles, date };
+    pub(crate) fn add_service_event(&mut self, miles: u32, date: NaiveDate) {
+        let service_event = ServiceEvent::new(miles, date);
         match &mut self.previous_services {
             None => self.previous_services = Some(vec![service_event]),
             Some(previous_services) => previous_services.push(service_event),
@@ -140,7 +140,7 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn replace_service_event(
+    pub(crate) fn replace_service_event(
         &mut self,
         curr_miles: Option<u32>,
         curr_date: Option<NaiveDate>,
@@ -163,7 +163,7 @@ impl ServiceMetdata {
         Ok(())
     }
 
-    pub fn remove_service_event(
+    pub(crate) fn remove_service_event(
         &mut self,
         miles: Option<u32>,
         date: Option<NaiveDate>,
@@ -181,7 +181,7 @@ impl ServiceMetdata {
         Ok(())
     }
 
-    pub fn clear_previous_services(&mut self) {
+    pub(crate) fn clear_previous_services(&mut self) {
         info!("Clearing previous services");
         self.previous_services = None
     }
@@ -214,20 +214,20 @@ fn filter_prev_services_idxs(
         (Some(miles), None) => prev_services
             .iter()
             .enumerate()
-            .filter(|(_idx, service_event)| service_event.miles == miles)
+            .filter(|(_idx, service_event)| service_event.miles() == miles)
             .map(|(idx, _service_event)| idx)
             .collect(),
         (None, Some(date)) => prev_services
             .iter()
             .enumerate()
-            .filter(|(_idx, service_event)| service_event.date == date)
+            .filter(|(_idx, service_event)| service_event.date() == date)
             .map(|(idx, _service_event)| idx)
             .collect(),
         (Some(miles), Some(date)) => prev_services
             .iter()
             .enumerate()
             .filter(|(_idx, service_event)| {
-                service_event.miles == miles && service_event.date == date
+                service_event.miles() == miles && service_event.date() == date
             })
             .map(|(idx, _service_event)| idx)
             .collect(),
@@ -248,14 +248,14 @@ impl fmt::Display for ServiceMetdata {
             "Service Interval Months: {}",
             self.service_interval.months
         )?;
-        writeln!(f, "Next Service Miles: {}", self.next_service.miles)?;
-        write!(f, "Next Service Date: {}", self.next_service.date)?;
+        writeln!(f, "Next Service Miles: {}", self.next_service.miles())?;
+        write!(f, "Next Service Date: {}", self.next_service.date())?;
 
         match &self.previous_services {
             Some(previous_services) => {
                 write!(f, "\nPrevious Services:")?;
                 previous_services.iter().try_for_each(|service| {
-                    write!(f, "\n  - {}/{} miles", service.date, service.miles)
+                    write!(f, "\n  - {}/{} miles", service.date(), service.miles())
                 })?
             }
             None => write!(f, "\nPrevious Services: None")?,

@@ -12,7 +12,7 @@ pub struct MaintenanceLog {
 }
 
 impl MaintenanceLog {
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, MaintenanceLogError> {
+    pub(crate) fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, MaintenanceLogError> {
         let path = path.as_ref();
         info!("Reading maintenance log path at {}.", path.display());
         let log = std::fs::read_to_string(path)
@@ -20,7 +20,7 @@ impl MaintenanceLog {
         Ok(toml::from_str::<MaintenanceLog>(&log)?)
     }
 
-    pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), MaintenanceLogError> {
+    pub(crate) fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), MaintenanceLogError> {
         let path = path.as_ref();
         info!("Writing maintenance log to {}.", path.display());
         let log_string = toml::to_string_pretty(&self)?;
@@ -31,27 +31,27 @@ impl MaintenanceLog {
         Ok(())
     }
 
-    pub fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
+    pub(crate) fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
         self.services.keys()
     }
 
-    pub fn get(&self, id: &str) -> Option<&ServiceMetdata> {
+    pub(crate) fn get(&self, id: &str) -> Option<&ServiceMetdata> {
         self.services.get(id)
     }
 
-    pub fn get_mut(&mut self, id: &str) -> Option<&mut ServiceMetdata> {
+    pub(crate) fn get_mut(&mut self, id: &str) -> Option<&mut ServiceMetdata> {
         self.services.get_mut(id)
     }
 
-    pub fn contains(&self, id: &str) -> bool {
+    pub(crate) fn contains(&self, id: &str) -> bool {
         self.services.contains_key(id)
     }
 
-    pub fn insert(&mut self, id: &str, metadata: ServiceMetdata) -> Option<ServiceMetdata> {
+    pub(crate) fn insert(&mut self, id: &str, metadata: ServiceMetdata) -> Option<ServiceMetdata> {
         self.services.insert(id.into(), metadata)
     }
 
-    pub fn remove(&mut self, id: &str) -> Option<ServiceMetdata> {
+    pub(crate) fn remove(&mut self, id: &str) -> Option<ServiceMetdata> {
         self.services.remove(id)
     }
 }

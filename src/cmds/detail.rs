@@ -7,13 +7,13 @@ use crate::errors::{CmdsError, DetailError};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Show details about a specific service")]
-pub struct Detail {
+pub(crate) struct Detail {
     #[arg(help = "ID of service")]
     id: String,
 }
 
 impl Detail {
-    pub fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!(
             "Getting details for maintenance log item with id {}.",
             self.id
