@@ -32,7 +32,7 @@ impl Update {
             Cmd::Name(args) => metadata.set_name(&args.name),
             Cmd::Id(args) => self.id = args.id, // Set the id attribute so when we insert back into the map we insert with the new id
             Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
-            Cmd::MonthInterval(args) => metadata.set_service_interavl_months(args.months),
+            Cmd::MonthInterval(args) => metadata.set_service_interval_months(args.months),
             Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata),
             Cmd::Service(update_service_cmd) => update_service_cmd.run(&mut metadata)?,
         }
