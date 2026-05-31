@@ -1,5 +1,6 @@
 use crate::containers::{ServiceEvent, ServiceInterval};
-use crate::errors::ContainersError;
+use crate::errors::ServiceMetadataError::NoteIndexOutOfRange;
+use crate::errors::{ContainersError, ServiceMetadataError};
 use chrono::NaiveDate;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
@@ -60,7 +61,6 @@ impl ServiceMetdata {
         self.next_service.date = date;
     }
 
-    // TODO - See if can de-dupe any notes methods
     pub fn exetend_notes(&mut self, extension: Vec<String>) {
         match &mut self.notes {
             Some(notes) => notes.extend(extension),
@@ -68,31 +68,54 @@ impl ServiceMetdata {
         }
     }
 
-    pub fn replace_note(&mut self, index: usize, contents: &str) {
+    fn get_notes(&mut self) -> Result<&mut Vec<String>, ServiceMetadataError> {
         match &mut self.notes {
-            Some(notes) => match notes.get_mut(index) {
-                Some(val) => *val = contents.into(),
-                None => notes.push(contents.into()),
-            },
-            None => self.notes = Some(vec![contents.into()]),
+            Some(notes) => Ok(notes),
+            None => Err(ServiceMetadataError::NotesNotSet),
         }
     }
 
-    pub fn remove_note(&mut self, index: usize) {
-        if let Some(notes) = &mut self.notes
-            && index < notes.len()
-        {
-            notes.remove(index);
+    pub fn replace_note(
+        &mut self,
+        index: usize,
+        contents: &str,
+    ) -> Result<(), ServiceMetadataError> {
+        let notes = self.get_notes()?;
+        match notes.get_mut(index) {
+            Some(val) => {
+                *val = contents.into();
+                Ok(())
+            }
+            None => Err(ServiceMetadataError::NoteIndexNotFound(index)),
         }
     }
 
-    pub fn insert_note(&mut self, index: usize, contents: &str) {
-        match &mut self.notes {
-            Some(notes) => match index > notes.len() {
-                true => notes.push(contents.into()),
-                false => notes.insert(index, contents.into()),
-            },
-            None => self.notes = Some(vec![contents.into()]),
+    pub fn remove_note(&mut self, index: usize) -> Result<(), ServiceMetadataError> {
+        let notes = self.get_notes()?;
+        match index < notes.len() {
+            true => {
+                notes.remove(index);
+                Ok(())
+            }
+            false => Err(ServiceMetadataError::NoteIndexOutOfRange(
+                index,
+                notes.len(),
+            )),
+        }
+    }
+
+    pub fn insert_note(
+        &mut self,
+        index: usize,
+        contents: &str,
+    ) -> Result<(), ServiceMetadataError> {
+        let notes = self.get_notes()?;
+        match index <= notes.len() {
+            true => {
+                notes.insert(index, contents.into());
+                Ok(())
+            }
+            false => Err(NoteIndexOutOfRange(index, notes.len())),
         }
     }
 

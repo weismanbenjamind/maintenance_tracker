@@ -1,7 +1,7 @@
 use clap::{Args, Subcommand};
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
-use crate::errors::CmdsError;
+use crate::errors::{CmdsError, UpdateError};
 use log::info;
 
 #[derive(Clone, Debug, Args)]
@@ -33,7 +33,7 @@ impl Update {
             Cmd::Id(args) => self.id = args.id, // Set the id attribute so when we insert back into the map we insert with the new id
             Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
             Cmd::MonthInterval(args) => metadata.set_service_interval_months(args.months),
-            Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata),
+            Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata)?,
             Cmd::Service(update_service_cmd) => update_service_cmd.run(&mut metadata)?,
         }
 
@@ -48,7 +48,7 @@ impl Update {
 #[derive(Clone, Debug, Subcommand)]
 pub enum Cmd {
     Name(UpdateName),
-    Id(UpdateId), // Do this last
+    Id(UpdateId),
     MilesInterval(UpdateMilesInterval),
     MonthInterval(MonthInterval),
     Notes(UpdateNotes),
@@ -91,19 +91,30 @@ pub struct UpdateNotes {
 }
 
 impl UpdateNotes {
-    pub fn run(self, metadata: &mut ServiceMetdata) {
+    pub fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
         match self.cmd {
-            UpdateNotesCmd::Append(args) => metadata.exetend_notes(args.into_notes()),
+            UpdateNotesCmd::Append(args) => {
+                metadata.exetend_notes(args.into_notes());
+                Ok(())
+            }
             UpdateNotesCmd::Replace(args) => {
                 let (index, contents) = args.into_parts();
-                metadata.replace_note(index, &contents);
+                metadata.replace_note(index, &contents)?;
+                Ok(())
             }
             UpdateNotesCmd::Insert(args) => {
                 let (index, contents) = args.into_parts();
-                metadata.insert_note(index, &contents);
+                metadata.insert_note(index, &contents)?;
+                Ok(())
             }
-            UpdateNotesCmd::Remove(args) => metadata.remove_note(args.index()),
-            UpdateNotesCmd::Clear(_) => metadata.clear_notes(),
+            UpdateNotesCmd::Remove(args) => {
+                metadata.remove_note(args.index())?;
+                Ok(())
+            }
+            UpdateNotesCmd::Clear(_) => {
+                metadata.clear_notes();
+                Ok(())
+            }
         }
     }
 }

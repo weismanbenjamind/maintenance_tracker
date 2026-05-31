@@ -82,6 +82,9 @@ pub enum CmdsError {
     #[error(transparent)]
     Containers(#[from] ContainersError),
 
+    #[error(transparent)]
+    Update(#[from] UpdateError),
+
     #[error("Could not find service with id {0}")]
     IdNotFound(String),
 
@@ -121,6 +124,21 @@ pub enum ContainersError {
 
     #[error("Found multiple service events.")]
     MultipleServiceEvents,
+
+    #[error(transparent)]
+    ServiceMetadata(#[from] ServiceMetadataError),
+}
+
+#[derive(Debug, Error)]
+pub enum ServiceMetadataError {
+    #[error("Note not found at index {0}.")]
+    NoteIndexNotFound(usize),
+
+    #[error("Note index {0} out of range. {1} notes present.")]
+    NoteIndexOutOfRange(usize, usize),
+
+    #[error("No notes present.")]
+    NotesNotSet,
 }
 
 #[derive(Debug, Error)]
@@ -162,4 +180,10 @@ pub enum DetailError {
 pub enum CompleteError {
     #[error("Failed to write details for service completion for service with id {0}. Error: {1}")]
     FailedWrite(String, #[source] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum UpdateError {
+    #[error("Failed update operation. Error: {0}")]
+    FailedReplace(#[from] ServiceMetadataError),
 }
