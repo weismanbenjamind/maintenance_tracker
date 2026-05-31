@@ -15,11 +15,8 @@ impl MaintenanceLog {
     pub fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, MaintenanceLogError> {
         let path = path.as_ref();
         info!("Reading maintenance log path at {}.", path.display());
-        let log =
-            std::fs::read_to_string(path).map_err(|source| MaintenanceLogError::FailedLoad {
-                path: path.into(),
-                source,
-            })?;
+        let log = std::fs::read_to_string(path)
+            .map_err(|source| MaintenanceLogError::FailedLoad(path.into(), source))?;
         Ok(toml::from_str::<MaintenanceLog>(&log)?)
     }
 

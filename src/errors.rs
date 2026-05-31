@@ -94,21 +94,11 @@ pub enum ContainersError {
 
 #[derive(Debug, Error)]
 pub enum MaintenanceLogError {
-    #[error("Failed to read maintenance log at path {path}. Error: {source}.")]
-    FailedLoad {
-        path: PathBuf,
+    #[error("Failed to read maintenance log at path {0}. Error: {1}.")]
+    FailedLoad(PathBuf, #[source] std::io::Error),
 
-        #[source]
-        source: std::io::Error,
-    },
-
-    #[error("Failed to write maintenance log to path {path}. Error: {source}.")]
-    FailedWrite {
-        path: PathBuf,
-
-        #[source]
-        source: std::io::Error,
-    },
+    #[error("Failed to write maintenance log to path {0}. Error: {1}.")]
+    FailedWrite(PathBuf, #[source] std::io::Error),
 
     #[error("Failed to deserialize maintenance log from toml. Error: {0}.")]
     FailedDerserialize(#[from] toml::de::Error),
@@ -119,10 +109,7 @@ pub enum MaintenanceLogError {
 
 impl MaintenanceLogError {
     pub fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
-        Self::FailedWrite {
-            path: path.into(),
-            source: e,
-        }
+        Self::FailedWrite(path.into(), e)
     }
 }
 
