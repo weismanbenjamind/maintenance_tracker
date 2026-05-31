@@ -1,5 +1,5 @@
 use crate::containers::ServiceMetdata;
-use crate::errors::ContainersError;
+use crate::errors::MaintenanceLogError;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -12,23 +12,24 @@ pub struct MaintenanceLog {
 }
 
 impl MaintenanceLog {
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, ContainersError> {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, MaintenanceLogError> {
         let path = path.as_ref();
         info!("Reading maintenance log path at {}.", path.display());
-        let log = std::fs::read_to_string(path).map_err(|source| ContainersError::FailedLoad {
-            path: path.into(),
-            source,
-        })?;
+        let log =
+            std::fs::read_to_string(path).map_err(|source| MaintenanceLogError::FailedLoad {
+                path: path.into(),
+                source,
+            })?;
         Ok(toml::from_str::<MaintenanceLog>(&log)?)
     }
 
-    pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), ContainersError> {
+    pub fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), MaintenanceLogError> {
         let path = path.as_ref();
         info!("Writing maintenance log to {}.", path.display());
         let log_string = toml::to_string_pretty(&self)?;
         build_subdirs(path)?;
         std::fs::write(path, log_string)
-            .map_err(|e| ContainersError::build_failed_write(e, path))?;
+            .map_err(|e| MaintenanceLogError::build_failed_write(e, path))?;
         info!("Successfully wrote maintenance log to {}.", path.display());
         Ok(())
     }
@@ -58,14 +59,14 @@ impl MaintenanceLog {
     }
 }
 
-fn build_subdirs(path: &Path) -> Result<(), ContainersError> {
+fn build_subdirs(path: &Path) -> Result<(), MaintenanceLogError> {
     if let Some(parent) = path.parent() {
         debug!(
             "Creating subdirs for maintenance log at path {}.",
             parent.display()
         );
         std::fs::create_dir_all(parent)
-            .map_err(|e| ContainersError::build_failed_write(e, path))?;
+            .map_err(|e| MaintenanceLogError::build_failed_write(e, path))?;
         debug!("Subdirs created.");
     }
     Ok(())

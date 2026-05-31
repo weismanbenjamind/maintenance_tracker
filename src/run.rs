@@ -2,6 +2,7 @@ use crate::cfg_resolve::resolve_cfg;
 use crate::cli::Cmd;
 use crate::cli::MaintenanceTrackerArgs;
 use crate::containers::MaintenanceLog;
+use crate::errors::ContainersError;
 use crate::errors::MaintenanceTrackerError;
 use crate::verbosity::set_verbosity;
 use log::info;
@@ -11,7 +12,7 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> 
     info!("Starting maintenance tracking run.");
 
     let maintenance_log_path = resolve_cfg(args.maintenance_log(), args.maintenance_log_env())?;
-    let mut log = MaintenanceLog::load(&maintenance_log_path)?;
+    let mut log = MaintenanceLog::load(&maintenance_log_path).map_err(ContainersError::from)?;
 
     match args.into_cmd() {
         Cmd::List(list_cmd) => list_cmd.run(&log)?,
@@ -24,7 +25,8 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> 
         _ => println!("{:#?}", log),
     }
 
-    log.write(&maintenance_log_path)?;
+    log.write(&maintenance_log_path)
+        .map_err(ContainersError::from)?;
 
     info!("Maintenance tracking run complete.");
 

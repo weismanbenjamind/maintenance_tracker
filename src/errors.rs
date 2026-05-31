@@ -18,15 +18,6 @@ pub enum MaintenanceTrackerError {
     Cmds(#[from] CmdsError),
 }
 
-impl ContainersError {
-    pub fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
-        Self::FailedWrite {
-            path: path.into(),
-            source: e,
-        }
-    }
-}
-
 #[derive(Debug, Error)]
 pub enum VerbosityError {
     // Must use normal error below
@@ -94,6 +85,15 @@ pub enum CmdsError {
 
 #[derive(Debug, Error)]
 pub enum ContainersError {
+    #[error(transparent)]
+    MaintenanceLog(#[from] MaintenanceLogError),
+
+    #[error(transparent)]
+    ServiceMetadata(#[from] ServiceMetadataError),
+}
+
+#[derive(Debug, Error)]
+pub enum MaintenanceLogError {
     #[error("Failed to read maintenance log at path {path}. Error: {source}.")]
     FailedLoad {
         path: PathBuf,
@@ -115,9 +115,15 @@ pub enum ContainersError {
 
     #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
     FailedSerialize(#[from] toml::ser::Error),
+}
 
-    #[error(transparent)]
-    ServiceMetadata(#[from] ServiceMetadataError),
+impl MaintenanceLogError {
+    pub fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
+        Self::FailedWrite {
+            path: path.into(),
+            source: e,
+        }
+    }
 }
 
 #[derive(Debug, Error)]
