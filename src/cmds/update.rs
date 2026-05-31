@@ -50,7 +50,7 @@ pub enum Cmd {
     Name(UpdateName),
     Id(UpdateId),
     MilesInterval(UpdateMilesInterval),
-    MonthInterval(MonthInterval),
+    MonthInterval(UpdateMonthInterval),
     Notes(UpdateNotes),
     Service(UpdateService),
 }
@@ -78,7 +78,7 @@ pub struct UpdateMilesInterval {
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update monthly interval the service should be completed at")]
-pub struct MonthInterval {
+pub struct UpdateMonthInterval {
     #[arg(help = "New monthly interval")]
     months: u32,
 }
