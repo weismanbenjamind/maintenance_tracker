@@ -11,12 +11,15 @@ use log::{debug, info, warn};
 use std::fmt::Write;
 use std::io::{self, Write as WriteStdOut};
 
-use crate::containers::MaintenanceLog;
+use crate::containers::{MaintenanceLog, ServiceMetdata};
 use crate::errors::{CmdsError, DiffError};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get info on services due by mileage and/or date intervals")]
 pub struct Diff {
+    #[arg(help = "Id to get diff for. If omitted diff will be executed for all maintenance items")]
+    id: Option<String>,
+
     #[command(subcommand)]
     cmd: Cmd,
 }
@@ -36,10 +39,19 @@ impl Diff {
 
         let mut buf = String::new();
 
+        let target_metadata = match self.id {
+            Some(id) => {
+                let metadata = log.get(&id).ok_or(CmdsError::IdNotFound(id))?;
+                vec![metadata]
+            }
+            None => log.metadata().collect::<Vec<&ServiceMetdata>>(),
+        };
+
         // Writng to a string won't fail so unwrap below
         // writeln! below cannot fail when writing to a string
         //  Warn if a failure occurs but should never actually happen
-        log.metadata()
+        target_metadata
+            .iter()
             .filter(|m| filter.apply(m))
             .map(|m| calc.diff(m))
             .for_each(|d| writeln!(buf, "{d}").unwrap_or_else(|_| warn!("Failed to write Diff")));
