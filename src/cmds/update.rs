@@ -21,7 +21,7 @@ pub(crate) struct Update {
 
 impl Update {
     // TODO - need a command to update the next service in here
-    pub(crate) fn run(mut self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!("Updating maintenance log.");
 
         let mut metadata = match log.remove(&self.id) {
@@ -32,10 +32,11 @@ impl Update {
         // If want to update the id need to remove the current metadata and insert at the new id
         // Another option is to always remove then for the id cmd just update the self.id attribute to be the update
         // At the end just put the metadata back with the proper id
+        let mut id_to_insert: Option<String> = None;
 
         match self.cmd {
             Cmd::Name(args) => metadata.set_name(&args.name),
-            Cmd::Id(args) => self.id = args.id, // Set the id attribute so when we insert back into the map we insert with the new id
+            Cmd::Id(args) => id_to_insert = Some(args.id), // Set the id variable so when we insert back into the map we insert with the new id
             Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
             Cmd::MonthInterval(args) => metadata.set_service_interval_months(args.months),
             Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata)?,
@@ -44,7 +45,7 @@ impl Update {
 
         // Don't need to check the option return since when we remove above we are sure this key does not exist
         // We also check during the update id cmd that they new id does not exist
-        log.insert(&self.id, metadata);
+        log.insert(&id_to_insert.unwrap_or(self.id), metadata);
 
         Ok(())
     }

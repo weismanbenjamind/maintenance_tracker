@@ -3,7 +3,7 @@ use crate::errors::MaintenanceLogError;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::collections::hash_map::Keys;
+use std::collections::hash_map::{Keys, Values};
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -31,8 +31,14 @@ impl MaintenanceLog {
         Ok(())
     }
 
+    // Might want iter here instead of calling the dict Keys and Values - that design is a bit confusing
+
     pub(crate) fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
         self.services.keys()
+    }
+
+    pub(crate) fn metadata(&self) -> Values<'_, String, ServiceMetdata> {
+        self.services.values()
     }
 
     pub(crate) fn get(&self, id: &str) -> Option<&ServiceMetdata> {

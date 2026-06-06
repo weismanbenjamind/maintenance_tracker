@@ -76,6 +76,9 @@ pub enum CmdsError {
     #[error(transparent)]
     Update(#[from] UpdateError),
 
+    #[error(transparent)]
+    Diff(#[from] DiffError),
+
     #[error("Could not find service with id {0}")]
     IdNotFound(String),
 
@@ -182,4 +185,15 @@ pub enum CompleteError {
 pub enum UpdateError {
     #[error("Failed update operation. Error: {0}")]
     FailedReplace(#[from] ServiceMetadataError),
+}
+
+#[derive(Debug, Error)]
+pub enum DiffError {
+    #[error(
+        "Both mileage and curr mileage and/or a date must be present for a threshold diff operation."
+    )]
+    InvalidThresholdArgs,
+
+    #[error("Must pass miles and current miles and/or months for an interval diff operation.")]
+    InvalidIntervalArgs,
 }

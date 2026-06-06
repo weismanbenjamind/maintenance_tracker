@@ -1,5 +1,6 @@
 use crate::cmds::ServiceInterval as InitServiceInterval;
 use crate::cmds::{NextService, PreviousService};
+use crate::dates::months_to_days_floored;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -15,7 +16,7 @@ impl ServiceEvent {
         Self { miles, date }
     }
 
-    pub(super) fn miles(&self) -> u32 {
+    pub(crate) fn miles(&self) -> u32 {
         self.miles
     }
 
@@ -23,7 +24,7 @@ impl ServiceEvent {
         self.miles = miles
     }
 
-    pub(super) fn date(&self) -> NaiveDate {
+    pub(crate) fn date(&self) -> NaiveDate {
         self.date
     }
 
@@ -79,8 +80,7 @@ impl ServiceInterval {
     }
 
     pub fn days(&self) -> i64 {
-        // Floor to prevent accidentally going overdue on maintenance
-        (self.months as f64 / 12.0 * 365.0).floor() as i64
+        months_to_days_floored(self.months)
     }
 }
 
