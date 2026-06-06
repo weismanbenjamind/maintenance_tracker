@@ -73,35 +73,76 @@ pub(super) struct Interval {
     today: NaiveDate,
 }
 
-impl TryFrom<Interval> for Threshold {
+#[derive(Clone, Copy, Debug)]
+pub(super) enum ValidatedThreshold {
+    Miles {
+        miles_threshold: u32,
+        curr_miles: u32,
+    },
+    Date {
+        date_threshold: NaiveDate,
+    },
+    MilesAndDate {
+        miles_threshold: u32,
+        curr_miles: u32,
+        date_threshold: NaiveDate,
+    },
+}
+
+impl TryFrom<Threshold> for ValidatedThreshold {
     type Error = DiffError;
 
-    fn try_from(value: Interval) -> Result<Self, Self::Error> {
-        let (miles, curr_miles) = match (value.miles, value.curr_miles) {
-            (Some(miles), Some(curr_miles)) => (Some(miles + curr_miles), Some(curr_miles)),
-            (None, None) => (None, None),
-            _ => return Err(DiffError::InvalidIntervalArgs),
+    fn try_from(value: Threshold) -> Result<Self, Self::Error> {
+        let result = match (value.miles(), value.curr_miles(), value.date()) {
+            (Some(miles_threshold), Some(curr_miles), None) => Self::Miles {
+                miles_threshold,
+                curr_miles,
+            },
+            (None, None, Some(date_threshold)) => Self::Date { date_threshold },
+            (Some(miles_threshold), Some(curr_miles), Some(date_threshold)) => Self::MilesAndDate {
+                miles_threshold,
+                curr_miles,
+                date_threshold,
+            },
+            _ => return Err(DiffError::InvalidThresholdArgs),
         };
-
-        let date = value.months.map(|months| {
-            let days = months_to_days_floored(months);
-            value.today + TimeDelta::days(days)
-        });
-
-        Ok(Threshold {
-            miles: miles,
-            date,
-            curr_miles: curr_miles,
-        })
+        Ok(result)
     }
 }
 
-impl TryFrom<DiffCmd> for Threshold {
+impl TryFrom<Interval> for ValidatedThreshold {
+    type Error = DiffError;
+
+    fn try_from(value: Interval) -> Result<Self, Self::Error> {
+        let result = match (value.miles, value.curr_miles, value.months) {
+            (Some(miles), Some(curr_miles), None) => Self::Miles {
+                miles_threshold: miles + curr_miles,
+                curr_miles,
+            },
+            (None, None, Some(months)) => Self::Date {
+                date_threshold: value.today + build_days_time_delta(months),
+            },
+            (Some(miles), Some(curr_miles), Some(months)) => Self::MilesAndDate {
+                miles_threshold: miles + curr_miles,
+                curr_miles,
+                date_threshold: value.today + build_days_time_delta(months),
+            },
+            _ => return Err(DiffError::InvalidIntervalArgs),
+        };
+        Ok(result)
+    }
+}
+
+fn build_days_time_delta(months: u32) -> TimeDelta {
+    TimeDelta::days(months_to_days_floored(months))
+}
+
+impl TryFrom<DiffCmd> for ValidatedThreshold {
     type Error = DiffError;
 
     fn try_from(value: DiffCmd) -> Result<Self, Self::Error> {
         match value {
-            DiffCmd::Threshold(threshold) => Ok(threshold),
+            DiffCmd::Threshold(threshold) => threshold.try_into(),
             DiffCmd::Interval(interval) => interval.try_into(),
         }
     }

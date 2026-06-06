@@ -196,4 +196,7 @@ pub enum DiffError {
 
     #[error("Must pass miles and current miles and/or months for an interval diff operation.")]
     InvalidIntervalArgs,
+
+    #[error("Failed to write Diff result to stdout. Error: {0}")]
+    FailedStdOutWrite(#[from] std::io::Error),
 }
