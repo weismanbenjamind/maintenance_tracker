@@ -23,6 +23,7 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> 
         Cmd::Update(update_cmd) => update_cmd.run(&mut log)?,
         Cmd::Delete(delete_cmd) => delete_cmd.run(&mut log)?,
         Cmd::Diff(diff_cmd) => diff_cmd.run(&log)?,
+        Cmd::Status(status_cmd) => status_cmd.run(&log)?,
     }
 
     log.write(&maintenance_log_path)

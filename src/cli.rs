@@ -60,5 +60,6 @@ pub(crate) enum Cmd {
     Init(cmds::Init),
     List(cmds::List),
     Next(cmds::Next),
+    Status(cmds::Status),
     Update(cmds::Update),
 }

@@ -79,6 +79,9 @@ pub enum CmdsError {
     #[error(transparent)]
     Diff(#[from] DiffError),
 
+    #[error(transparent)]
+    Status(#[from] StatusError),
+
     #[error("Could not find service with id {0}")]
     IdNotFound(String),
 
@@ -199,4 +202,10 @@ pub enum DiffError {
 
     #[error("Failed to write Diff result to stdout. Error: {0}")]
     FailedStdOutWrite(#[from] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum StatusError {
+    #[error("Failed to write to stdout. Error: {0}")]
+    FailedStdoutWrite(#[from] std::io::Error),
 }
