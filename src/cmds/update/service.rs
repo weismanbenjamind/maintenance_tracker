@@ -1,6 +1,6 @@
 use chrono::Local;
 use chrono::NaiveDate;
-use clap::Args;
+use clap::{Args, Subcommand};
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Append a service")]
@@ -42,11 +42,11 @@ impl Replace {
     }
 
     pub(super) fn new_miles(&self) -> Option<u32> {
-        self.updated_service_specs.miles()
+        self.updated_service_specs.new_miles
     }
 
     pub(super) fn new_date(&self) -> Option<NaiveDate> {
-        self.updated_service_specs.date()
+        self.updated_service_specs.new_date
     }
 }
 
@@ -73,7 +73,7 @@ pub(super) struct Clear;
 
 #[derive(Clone, Copy, Debug, Args)]
 #[group(required = true, multiple = true)]
-pub(super) struct CurrServiceSpecs {
+struct CurrServiceSpecs {
     #[arg(short, long, help = "Mileage on vehicle when service was performed")]
     miles: Option<u32>,
 
@@ -83,7 +83,7 @@ pub(super) struct CurrServiceSpecs {
 
 #[derive(Clone, Copy, Debug, Args)]
 #[group(required = true, multiple = true)]
-pub(super) struct UpdatedServiceSpecs {
+struct UpdatedServiceSpecs {
     #[arg(short, long, help = "Mileage on vehicle to update service to")]
     new_miles: Option<u32>,
 
@@ -91,12 +91,10 @@ pub(super) struct UpdatedServiceSpecs {
     new_date: Option<NaiveDate>,
 }
 
-impl UpdatedServiceSpecs {
-    pub(super) fn miles(&self) -> Option<u32> {
-        self.new_miles
-    }
-
-    pub(super) fn date(&self) -> Option<NaiveDate> {
-        self.new_date
-    }
+#[derive(Clone, Copy, Debug, Subcommand)]
+pub(crate) enum UpdateServiceCmd {
+    Append(Append),
+    Replace(Replace),
+    Remove(Remove),
+    Clear(Clear),
 }

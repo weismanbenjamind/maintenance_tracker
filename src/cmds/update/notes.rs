@@ -1,4 +1,4 @@
-use clap::Args;
+use clap::{Args, Subcommand};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Append a note")]
@@ -61,3 +61,12 @@ impl Remove {
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Clear notes")]
 pub(super) struct Clear;
+
+#[derive(Clone, Debug, Subcommand)]
+pub(super) enum UpdateNotesCmd {
+    Append(Append),
+    Replace(Replace),
+    Insert(Insert),
+    Remove(Remove),
+    Clear(Clear),
+}

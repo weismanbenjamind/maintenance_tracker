@@ -1,5 +1,6 @@
+use super::cmd::Cmd as DiffCmd;
 use crate::dates::months_to_days_floored;
-use crate::{cmds::diff::Cmd as DiffCmd, errors::DiffError};
+use crate::errors::DiffError;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 
