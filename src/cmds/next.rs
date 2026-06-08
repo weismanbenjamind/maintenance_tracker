@@ -15,10 +15,7 @@ pub(crate) struct Next {
 impl Next {
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!("Getting next service for id {}.", self.id);
-        let found = match log.get(&self.id) {
-            Some(metadata) => metadata.next_service(),
-            None => return Err(CmdsError::IdNotFound(self.id)),
-        };
+        let found = log.get(&self.id)?;
 
         info!("Writing next to stdout.");
         let stdout = io::stdout();

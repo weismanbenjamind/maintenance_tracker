@@ -26,7 +26,7 @@ impl Update {
 
         let mut metadata = match log.remove(&self.id) {
             Some(metadata) => metadata,
-            None => return Err(CmdsError::IdNotFound(self.id)),
+            None => return Err(CmdsError::new_id_not_found(&self.id)),
         };
 
         // If want to update the id need to remove the current metadata and insert at the new id

@@ -34,8 +34,7 @@ impl Status {
 
         let metadata = match self.id {
             Some(id) => {
-                let id = log.get(&id).ok_or(CmdsError::IdNotFound(id))?;
-                vec![id]
+                vec![log.get(&id)?]
             }
             None => log.metadata().collect::<Vec<&ServiceMetdata>>(),
         };

@@ -19,14 +19,10 @@ impl Detail {
             self.id
         );
 
-        match log.get(&self.id) {
-            Some(found) => {
-                let stdout = io::stdout();
-                let mut buf = stdout.lock();
-                writeln!(buf, "{found}").map_err(|e| DetailError::FailedWrite(self.id, e))?
-            }
-            None => return Err(CmdsError::IdNotFound(self.id)),
-        };
+        let metadata = log.get(&self.id)?;
+        let stdout = io::stdout();
+        let mut buf = stdout.lock();
+        writeln!(buf, "{metadata}").map_err(|e| DetailError::FailedWrite(self.id, e))?;
 
         info!("Successfully got details for maintenance log item.");
 

@@ -25,11 +25,7 @@ impl Complete {
             self.id, self.mileage, self.date
         );
 
-        let metadata = match log.get_mut(&self.id) {
-            Some(metdata) => metdata,
-            None => return Err(CmdsError::IdNotFound(self.id)),
-        };
-
+        let metadata = log.get_mut(&self.id)?;
         let next_service_miles = self.mileage + metadata.service_interval().miles();
         let next_service_date = self.date + TimeDelta::days(metadata.service_interval().days());
 

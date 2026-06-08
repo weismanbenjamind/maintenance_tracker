@@ -1,5 +1,5 @@
 use crate::containers::ServiceMetdata;
-use crate::errors::MaintenanceLogError;
+use crate::errors::{IdNotFoundError, MaintenanceLogError};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -26,7 +26,7 @@ impl MaintenanceLog {
         let log_string = toml::to_string_pretty(&self)?;
         build_subdirs(path)?;
         std::fs::write(path, log_string)
-            .map_err(|e| MaintenanceLogError::build_failed_write(e, path))?;
+            .map_err(|e| MaintenanceLogError::new_failed_write(e, path))?;
         info!("Successfully wrote maintenance log to {}.", path.display());
         Ok(())
     }
@@ -41,12 +41,16 @@ impl MaintenanceLog {
         self.services.values()
     }
 
-    pub(crate) fn get(&self, id: &str) -> Option<&ServiceMetdata> {
-        self.services.get(id)
+    pub(crate) fn get(&self, id: &str) -> Result<&ServiceMetdata, IdNotFoundError> {
+        self.services
+            .get(id)
+            .ok_or(IdNotFoundError::IdNotFound(id.into()))
     }
 
-    pub(crate) fn get_mut(&mut self, id: &str) -> Option<&mut ServiceMetdata> {
-        self.services.get_mut(id)
+    pub(crate) fn get_mut(&mut self, id: &str) -> Result<&mut ServiceMetdata, IdNotFoundError> {
+        self.services
+            .get_mut(id)
+            .ok_or(IdNotFoundError::IdNotFound(id.into()))
     }
 
     pub(crate) fn contains(&self, id: &str) -> bool {
@@ -69,7 +73,7 @@ fn build_subdirs(path: &Path) -> Result<(), MaintenanceLogError> {
             parent.display()
         );
         std::fs::create_dir_all(parent)
-            .map_err(|e| MaintenanceLogError::build_failed_write(e, path))?;
+            .map_err(|e| MaintenanceLogError::new_failed_write(e, path))?;
         debug!("Subdirs created.");
     }
     Ok(())

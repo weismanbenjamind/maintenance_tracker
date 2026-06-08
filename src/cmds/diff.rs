@@ -41,8 +41,7 @@ impl Diff {
 
         let target_metadata = match self.id {
             Some(id) => {
-                let metadata = log.get(&id).ok_or(CmdsError::IdNotFound(id))?;
-                vec![metadata]
+                vec![log.get(&id)?]
             }
             None => log.metadata().collect::<Vec<&ServiceMetdata>>(),
         };

@@ -82,11 +82,17 @@ pub enum CmdsError {
     #[error(transparent)]
     Status(#[from] StatusError),
 
-    #[error("Could not find service with id {0}")]
-    IdNotFound(String),
+    #[error(transparent)]
+    IdNotFound(#[from] IdNotFoundError),
 
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
+}
+
+impl CmdsError {
+    pub(crate) fn new_id_not_found(id: &str) -> Self {
+        Self::IdNotFound(IdNotFoundError::IdNotFound(id.into()))
+    }
 }
 
 #[derive(Debug, Error)]
@@ -111,12 +117,20 @@ pub enum MaintenanceLogError {
 
     #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
     FailedSerialize(#[from] toml::ser::Error),
+    // #[error(transparent)]
+    // IdNotFound(#[from] IdNotFoundError),
 }
 
 impl MaintenanceLogError {
-    pub(crate) fn build_failed_write(e: std::io::Error, path: &Path) -> Self {
+    pub(crate) fn new_failed_write(e: std::io::Error, path: &Path) -> Self {
         Self::FailedWrite(path.into(), e)
     }
+}
+
+#[derive(Debug, Error)]
+pub enum IdNotFoundError {
+    #[error("Could not find service with id {0}")]
+    IdNotFound(String),
 }
 
 #[derive(Debug, Error)]
