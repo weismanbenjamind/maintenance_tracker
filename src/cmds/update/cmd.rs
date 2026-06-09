@@ -95,27 +95,28 @@ struct UpdateNotes {
 
 impl UpdateNotes {
     fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+        let notes = metadata.notes_mut();
         match self.cmd {
             UpdateNotesCmd::Append(args) => {
-                metadata.exetend_notes(args.into_notes());
+                notes.extend(args.into_notes());
                 Ok(())
             }
             UpdateNotesCmd::Replace(args) => {
-                let (index, contents) = args.into_parts();
-                metadata.replace_note(index, &contents)?;
+                let (idx, contents) = args.into_parts();
+                notes.replace(idx, &contents)?;
                 Ok(())
             }
             UpdateNotesCmd::Insert(args) => {
-                let (index, contents) = args.into_parts();
-                metadata.insert_note(index, &contents)?;
+                let (idx, contents) = args.into_parts();
+                notes.insert(idx, &contents)?;
                 Ok(())
             }
             UpdateNotesCmd::Remove(args) => {
-                metadata.remove_note(args.index())?;
+                notes.remove(args.index())?;
                 Ok(())
             }
             UpdateNotesCmd::Clear(_) => {
-                metadata.clear_notes();
+                notes.clear();
                 Ok(())
             }
         }

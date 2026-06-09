@@ -1,3 +1,4 @@
+use super::notes::Notes;
 use crate::containers::services::{ServiceEvent, ServiceInterval};
 use crate::errors::ServiceMetadataError;
 use chrono::NaiveDate;
@@ -11,7 +12,7 @@ pub(crate) struct ServiceMetdata {
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
     previous_services: Option<Vec<ServiceEvent>>,
-    notes: Option<Vec<String>>,
+    notes: Notes,
 }
 
 impl ServiceMetdata {
@@ -27,7 +28,7 @@ impl ServiceMetdata {
             service_interval,
             next_service,
             previous_services,
-            notes,
+            notes: Notes::new(notes),
         }
     }
 
@@ -55,74 +56,13 @@ impl ServiceMetdata {
         self.next_service
     }
 
+    pub(crate) fn notes_mut(&mut self) -> &mut Notes {
+        &mut self.notes
+    }
+
     pub(crate) fn set_next_service(&mut self, miles: u32, date: NaiveDate) {
         self.next_service.set_miles(miles);
         self.next_service.set_date(date);
-    }
-
-    pub(crate) fn exetend_notes(&mut self, extension: Vec<String>) {
-        match &mut self.notes {
-            Some(notes) => notes.extend(extension),
-            None => self.notes = Some(extension),
-        }
-    }
-
-    fn get_notes(&mut self) -> Result<&mut Vec<String>, ServiceMetadataError> {
-        match &mut self.notes {
-            Some(notes) => Ok(notes),
-            None => Err(ServiceMetadataError::NotesNotSet),
-        }
-    }
-
-    pub(crate) fn replace_note(
-        &mut self,
-        index: usize,
-        contents: &str,
-    ) -> Result<(), ServiceMetadataError> {
-        let notes = self.get_notes()?;
-        match notes.get_mut(index) {
-            Some(val) => {
-                *val = contents.into();
-                Ok(())
-            }
-            None => Err(ServiceMetadataError::NoteIndexNotFound(index)),
-        }
-    }
-
-    pub(crate) fn remove_note(&mut self, index: usize) -> Result<(), ServiceMetadataError> {
-        let notes = self.get_notes()?;
-        match index < notes.len() {
-            true => {
-                notes.remove(index);
-                Ok(())
-            }
-            false => Err(ServiceMetadataError::NoteIndexOutOfRange(
-                index,
-                notes.len(),
-            )),
-        }
-    }
-
-    pub(crate) fn insert_note(
-        &mut self,
-        index: usize,
-        contents: &str,
-    ) -> Result<(), ServiceMetadataError> {
-        let notes = self.get_notes()?;
-        match index <= notes.len() {
-            true => {
-                notes.insert(index, contents.into());
-                Ok(())
-            }
-            false => Err(ServiceMetadataError::NoteIndexOutOfRange(
-                index,
-                notes.len(),
-            )),
-        }
-    }
-
-    pub(crate) fn clear_notes(&mut self) {
-        self.notes = None
     }
 
     pub(crate) fn add_service_event(&mut self, miles: u32, date: NaiveDate) {
@@ -261,7 +201,7 @@ impl fmt::Display for ServiceMetdata {
             None => write!(f, "\nPrevious Services: None")?,
         }
 
-        if let Some(notes) = &self.notes {
+        if let Some(notes) = self.notes.try_get() {
             write!(f, "\nNotes:")?;
             notes
                 .iter()

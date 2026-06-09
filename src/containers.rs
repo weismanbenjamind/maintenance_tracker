@@ -1,4 +1,5 @@
 mod maintenance_log;
+mod notes;
 mod service_metadata;
 mod services;
 
