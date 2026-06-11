@@ -132,13 +132,14 @@ struct UpdateService {
 
 impl UpdateService {
     fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+        let prev_services = metadata.prev_services_mut();
         match self.cmd {
             UpdateServiceCmd::Append(args) => {
-                metadata.add_service_event(args.miles(), args.date());
+                prev_services.add(args.miles(), args.date());
                 Ok(())
             }
             UpdateServiceCmd::Replace(args) => {
-                metadata.replace_service_event(
+                prev_services.replace(
                     args.curr_miles(),
                     args.curr_date(),
                     args.new_miles(),
@@ -147,11 +148,11 @@ impl UpdateService {
                 Ok(())
             }
             UpdateServiceCmd::Remove(args) => {
-                metadata.remove_service_event(args.miles(), args.date())?;
+                prev_services.remove(args.miles(), args.date())?;
                 Ok(())
             }
             UpdateServiceCmd::Clear(_) => {
-                metadata.clear_previous_services();
+                prev_services.clear();
                 Ok(())
             }
         }

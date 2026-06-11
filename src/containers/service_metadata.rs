@@ -1,8 +1,7 @@
 use super::notes::Notes;
+use crate::containers::previous_services::PreviousServices;
 use crate::containers::services::{ServiceEvent, ServiceInterval};
-use crate::errors::ServiceMetadataError;
 use chrono::NaiveDate;
-use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -11,7 +10,7 @@ pub(crate) struct ServiceMetdata {
     name: String,
     service_interval: ServiceInterval,
     next_service: ServiceEvent,
-    previous_services: Option<Vec<ServiceEvent>>,
+    previous_services: PreviousServices,
     notes: Notes,
 }
 
@@ -27,7 +26,7 @@ impl ServiceMetdata {
             name: name.into(),
             service_interval,
             next_service,
-            previous_services,
+            previous_services: PreviousServices::new(previous_services),
             notes: Notes::new(notes),
         }
     }
@@ -60,123 +59,14 @@ impl ServiceMetdata {
         &mut self.notes
     }
 
+    pub(crate) fn prev_services_mut(&mut self) -> &mut PreviousServices {
+        &mut self.previous_services
+    }
+
     pub(crate) fn set_next_service(&mut self, miles: u32, date: NaiveDate) {
         self.next_service.set_miles(miles);
         self.next_service.set_date(date);
     }
-
-    pub(crate) fn add_service_event(&mut self, miles: u32, date: NaiveDate) {
-        let service_event = ServiceEvent::new(miles, date);
-        match &mut self.previous_services {
-            None => self.previous_services = Some(vec![service_event]),
-            Some(previous_services) => previous_services.push(service_event),
-        }
-    }
-
-    fn get_previous_services(&mut self) -> Result<&mut Vec<ServiceEvent>, ServiceMetadataError> {
-        match &mut self.previous_services {
-            Some(prev_services) => Ok(prev_services),
-            None => Err(ServiceMetadataError::PreviousServicesNotSet),
-        }
-    }
-
-    pub(crate) fn replace_service_event(
-        &mut self,
-        curr_miles: Option<u32>,
-        curr_date: Option<NaiveDate>,
-        new_miles: Option<u32>,
-        new_date: Option<NaiveDate>,
-    ) -> Result<(), ServiceMetadataError> {
-        info!("Attempting to replace previous service.");
-        let prev_services = self.get_previous_services()?;
-        let idx = get_prev_service_idx(prev_services, curr_miles, curr_date)?;
-
-        // Note - .get_mut() should never error (return None) because get_prev_service_idx ensures we have the service event
-        // Leaving error as fallback
-        prev_services
-            .get_mut(idx)
-            .ok_or(ServiceMetadataError::ServiceEventNotFound)?
-            .update(new_miles, new_date);
-
-        info!("Replaced previous service.");
-
-        Ok(())
-    }
-
-    pub(crate) fn remove_service_event(
-        &mut self,
-        miles: Option<u32>,
-        date: Option<NaiveDate>,
-    ) -> Result<(), ServiceMetadataError> {
-        info!("Attempting to remove service event.");
-        let prev_services = self.get_previous_services()?;
-        let idx = get_prev_service_idx(prev_services, miles, date)?;
-
-        // Remove can panic
-        // get_prev_service_idx shuould ensure this index exists so the remove call is safe
-        prev_services.remove(idx);
-
-        info!("Removed service event.");
-
-        Ok(())
-    }
-
-    pub(crate) fn clear_previous_services(&mut self) {
-        info!("Clearing previous services");
-        self.previous_services = None
-    }
-}
-
-fn get_prev_service_idx(
-    prev_services: &[ServiceEvent],
-    miles: Option<u32>,
-    date: Option<NaiveDate>,
-) -> Result<usize, ServiceMetadataError> {
-    let idxs = filter_prev_services_idxs(prev_services, miles, date)?;
-    if idxs.is_empty() {
-        debug!("No previous events found for provided filter.");
-        Err(ServiceMetadataError::ServiceEventNotFound)
-    } else if idxs.len() > 1 {
-        debug!("Found multiple previous service events for provided filter.");
-        Err(ServiceMetadataError::MultipleServiceEvents)
-    } else {
-        debug!("Found service event.");
-        Ok(idxs[0])
-    }
-}
-
-fn filter_prev_services_idxs(
-    prev_services: &[ServiceEvent],
-    miles: Option<u32>,
-    date: Option<NaiveDate>,
-) -> Result<Vec<usize>, ServiceMetadataError> {
-    let result: Vec<usize> = match (miles, date) {
-        (Some(miles), None) => prev_services
-            .iter()
-            .enumerate()
-            .filter(|(_idx, service_event)| service_event.miles() == miles)
-            .map(|(idx, _service_event)| idx)
-            .collect(),
-        (None, Some(date)) => prev_services
-            .iter()
-            .enumerate()
-            .filter(|(_idx, service_event)| service_event.date() == date)
-            .map(|(idx, _service_event)| idx)
-            .collect(),
-        (Some(miles), Some(date)) => prev_services
-            .iter()
-            .enumerate()
-            .filter(|(_idx, service_event)| {
-                service_event.miles() == miles && service_event.date() == date
-            })
-            .map(|(idx, _service_event)| idx)
-            .collect(),
-        (None, None) => {
-            return Err(ServiceMetadataError::InvalidOptionalArgs);
-        }
-    };
-
-    Ok(result)
 }
 
 impl fmt::Display for ServiceMetdata {
@@ -191,7 +81,7 @@ impl fmt::Display for ServiceMetdata {
         writeln!(f, "Next Service Miles: {}", self.next_service.miles())?;
         write!(f, "Next Service Date: {}", self.next_service.date())?;
 
-        match &self.previous_services {
+        match self.previous_services.service_events() {
             Some(previous_services) => {
                 write!(f, "\nPrevious Services:")?;
                 previous_services.iter().try_for_each(|service| {

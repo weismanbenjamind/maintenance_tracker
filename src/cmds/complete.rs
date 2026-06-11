@@ -30,7 +30,7 @@ impl Complete {
         let next_service_date = self.date + TimeDelta::days(metadata.service_interval().days());
 
         metadata.set_next_service(next_service_miles, next_service_date);
-        metadata.add_service_event(self.mileage, self.date);
+        metadata.prev_services_mut().add(self.mileage, self.date);
 
         let stdout = io::stdout();
         let mut buf = stdout.lock();

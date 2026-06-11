@@ -31,8 +31,6 @@ impl MaintenanceLog {
         Ok(())
     }
 
-    // Might want iter here instead of calling the dict Keys and Values - that design is a bit confusing
-
     pub(crate) fn ids(&self) -> Keys<'_, String, ServiceMetdata> {
         self.services.keys()
     }

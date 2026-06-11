@@ -101,7 +101,7 @@ pub enum ContainersError {
     MaintenanceLog(#[from] MaintenanceLogError),
 
     #[error(transparent)]
-    ServiceMetadata(#[from] ServiceMetadataError),
+    Notes(#[from] NotesError),
 }
 
 #[derive(Debug, Error)]
@@ -134,7 +134,7 @@ pub enum IdNotFoundError {
 }
 
 #[derive(Debug, Error)]
-pub enum ServiceMetadataError {
+pub enum NotesError {
     #[error("Note not found at index {0}.")]
     NoteIndexNotFound(usize),
 
@@ -143,7 +143,10 @@ pub enum ServiceMetadataError {
 
     #[error("No notes present.")]
     NotesNotSet,
+}
 
+#[derive(Debug, Error)]
+pub enum PreviousServicesError {
     #[error("No previous services present.")]
     PreviousServicesNotSet,
 
@@ -200,8 +203,11 @@ pub enum CompleteError {
 
 #[derive(Debug, Error)]
 pub enum UpdateError {
-    #[error("Failed update operation. Error: {0}")]
-    FailedReplace(#[from] ServiceMetadataError),
+    #[error("Failed note update operation. Error: {0}")]
+    FailedNoteUpdate(#[from] NotesError),
+
+    #[error("Failed service update operation. Error: {0}")]
+    FailedServiceUpdate(#[from] PreviousServicesError),
 }
 
 #[derive(Debug, Error)]

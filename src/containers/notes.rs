@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::errors::ServiceMetadataError;
+// TODO - Return a different error
+use crate::errors::NotesError;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 #[serde(transparent)]
@@ -24,50 +25,42 @@ impl Notes {
         }
     }
 
-    fn try_get_notes_mut(&mut self) -> Result<&mut Vec<String>, ServiceMetadataError> {
+    fn try_get_notes_mut(&mut self) -> Result<&mut Vec<String>, NotesError> {
         match &mut self.notes {
             Some(notes) => Ok(notes),
-            None => Err(ServiceMetadataError::NotesNotSet),
+            None => Err(NotesError::NotesNotSet),
         }
     }
 
-    pub(crate) fn replace(
-        &mut self,
-        idx: usize,
-        contents: &str,
-    ) -> Result<(), ServiceMetadataError> {
+    pub(crate) fn replace(&mut self, idx: usize, contents: &str) -> Result<(), NotesError> {
         match self.try_get_notes_mut()?.get_mut(idx) {
             Some(val) => {
                 *val = contents.into();
                 Ok(())
             }
-            None => Err(ServiceMetadataError::NoteIndexNotFound(idx)),
+            None => Err(NotesError::NoteIndexNotFound(idx)),
         }
     }
 
-    pub(crate) fn remove(&mut self, idx: usize) -> Result<(), ServiceMetadataError> {
+    pub(crate) fn remove(&mut self, idx: usize) -> Result<(), NotesError> {
         let notes = self.try_get_notes_mut()?;
         match idx < notes.len() {
             true => {
                 notes.remove(idx);
                 Ok(())
             }
-            false => Err(ServiceMetadataError::NoteIndexOutOfRange(idx, notes.len())),
+            false => Err(NotesError::NoteIndexOutOfRange(idx, notes.len())),
         }
     }
 
-    pub(crate) fn insert(
-        &mut self,
-        idx: usize,
-        contents: &str,
-    ) -> Result<(), ServiceMetadataError> {
+    pub(crate) fn insert(&mut self, idx: usize, contents: &str) -> Result<(), NotesError> {
         let notes = self.try_get_notes_mut()?;
         match idx < notes.len() {
             true => {
                 notes.insert(idx, contents.into());
                 Ok(())
             }
-            false => Err(ServiceMetadataError::NoteIndexOutOfRange(idx, notes.len())),
+            false => Err(NotesError::NoteIndexOutOfRange(idx, notes.len())),
         }
     }
 
