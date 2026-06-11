@@ -13,10 +13,10 @@ const DELIMITER: &str = ";";
 #[derive(Clone, Debug, Args)]
 #[command(about = "Initialize a service for tracking")]
 pub(crate) struct Init {
-    #[arg(long, help = "Name of service")]
+    #[arg(help = "Name of service")]
     name: String,
 
-    #[arg(long, help = "ID of service")]
+    #[arg(help = "ID of service")]
     id: String,
 
     #[command(flatten)]
@@ -32,7 +32,7 @@ pub(crate) struct Init {
         long,
         short,
         long,
-        help = "Previous service. Should be in format 'miles;YYYY-MM-DD' where miles is a positive integer"
+        help = "Previous services. Should be in format 'miles;YYYY-MM-DD' where miles is a positive integer"
     )]
     previous_services: Option<Vec<PreviousService>>,
 }
@@ -84,12 +84,10 @@ impl Init {
     }
 }
 
-#[derive(Clone, Copy, Debug, Args)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct PreviousService {
-    #[arg(short, long, help = "Mileage on vehicle at previous service event")]
     miles: u32,
 
-    #[arg(short, long, help = "Date of previous service event")]
     date: NaiveDate,
 }
 
@@ -126,10 +124,10 @@ impl FromStr for PreviousService {
 
 #[derive(Clone, Copy, Debug, Args)]
 pub(crate) struct ServiceInterval {
-    #[arg(long, help = "Miles interval service should be completed at")]
+    #[arg(help = "Miles interval service should be completed at")]
     miles_interval: u32,
 
-    #[arg(long, help = "Month interval service should be completed at")]
+    #[arg(help = "Month interval service should be completed at")]
     monthly_interval: u32,
 }
 
@@ -145,13 +143,10 @@ impl ServiceInterval {
 
 #[derive(Clone, Copy, Debug, Args)]
 pub(crate) struct NextService {
-    #[arg(
-        long,
-        help = "Mileage on vehcile when next service should be completed"
-    )]
+    #[arg(help = "Mileage on vehcile when next service should be completed")]
     next_service_miles: u32,
 
-    #[arg(long, help = "Date which next service should be completed")]
+    #[arg(help = "Date which next service should be completed")]
     next_service_date: NaiveDate,
 }
 

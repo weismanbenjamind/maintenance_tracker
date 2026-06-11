@@ -69,7 +69,7 @@ impl PreviousServices {
         let prev_services = self.get_previous_services_mut()?;
         let idx = get_prev_service_idx(prev_services, miles, date)?;
 
-        // swap_remove can panic
+        // remove can panic
         // get_prev_service_idx should ensure this index exists so the removal call is safe
         prev_services.remove(idx);
 

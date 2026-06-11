@@ -5,7 +5,7 @@ use clap::{Args, Subcommand};
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Append a service")]
 pub(super) struct Append {
-    #[arg(short, long, help = "Mileage of service")]
+    #[arg(help = "Mileage of service")]
     miles: u32,
 
     #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Date of service")]

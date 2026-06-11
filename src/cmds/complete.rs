@@ -8,10 +8,10 @@ use std::io::{self, Write};
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
 pub(crate) struct Complete {
-    #[arg(short, long, help = "ID of service")]
+    #[arg(help = "ID of service")]
     id: String,
 
-    #[arg(short, long, help = "Mileage on vehicle upon service completion")]
+    #[arg(help = "Mileage on vehicle upon service completion")]
     mileage: u32,
 
     #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Date on which service was completed")]

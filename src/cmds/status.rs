@@ -15,17 +15,17 @@ pub(crate) struct Status {
     #[arg(
         short,
         long,
-        help = "Override 'today' when calculating the difference between 'today' and the date the service is due",
-        default_value_t = Local::now().date_naive(),
+        help = "Optional id to get status for. If omitted status will be grabbed for all services"
     )]
-    today: NaiveDate,
+    id: Option<String>,
 
     #[arg(
         short,
         long,
-        help = "Optional id to get status for. If omitted status will be grabbed for all services"
+        help = "Override 'today' when calculating the difference between 'today' and the date the service is due",
+        default_value_t = Local::now().date_naive(),
     )]
-    id: Option<String>,
+    today: NaiveDate,
 }
 
 impl Status {
