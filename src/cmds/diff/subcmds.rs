@@ -4,7 +4,6 @@ use crate::errors::DiffError;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 
-// TODO - Might want to add a today override in here
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Get all service requirements by a specific mileage and/or date")]
 pub(super) struct Threshold {

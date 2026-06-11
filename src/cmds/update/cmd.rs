@@ -3,8 +3,9 @@ use super::service::UpdateServiceCmd;
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
 use crate::errors::{CmdsError, UpdateError};
+use chrono::NaiveDate;
 use clap::{Args, Subcommand};
-use log::info;
+use log::{debug, info};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
@@ -36,6 +37,7 @@ impl Update {
             Cmd::Id(args) => id_to_insert = Some(args.id), // Set the id variable so when we insert back into the map we insert with the new id
             Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
             Cmd::MonthInterval(args) => metadata.set_service_interval_months(args.months),
+            Cmd::NextService(update_next_service) => update_next_service.run(&mut metadata)?,
             Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata)?,
             Cmd::Service(update_service_cmd) => update_service_cmd.run(&mut metadata)?,
         }
@@ -54,6 +56,7 @@ enum Cmd {
     Id(UpdateId),
     MilesInterval(UpdateMilesInterval),
     MonthInterval(UpdateMonthInterval),
+    NextService(UpdateNextService),
     Notes(UpdateNotes),
     Service(UpdateService),
 }
@@ -84,6 +87,33 @@ struct UpdateMilesInterval {
 struct UpdateMonthInterval {
     #[arg(help = "New monthly interval")]
     months: u32,
+}
+
+#[derive(Clone, Copy, Debug, Args)]
+#[command(about = "Update next service")]
+#[group(required = true, multiple = true)]
+struct UpdateNextService {
+    #[arg(short, long, help = "Target next service miles")]
+    miles: Option<u32>,
+
+    #[arg(short, long, help = "Target next service date")]
+    date: Option<NaiveDate>,
+}
+
+impl UpdateNextService {
+    fn run(&self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+        match (self.miles, self.date) {
+            (None, None) => return Err(UpdateError::UpdateNextServiceArgs),
+            (Some(_), None) | (None, Some(_)) | (Some(_), Some(_)) => {
+                debug!(
+                    "Updating next service with miles: {:?} and date {:?}",
+                    self.miles, self.date
+                );
+                metadata.next_service_mut().update(self.miles, self.date)
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, Args)]

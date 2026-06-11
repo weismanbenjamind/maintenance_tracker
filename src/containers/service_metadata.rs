@@ -55,6 +55,10 @@ impl ServiceMetdata {
         self.next_service
     }
 
+    pub(crate) fn next_service_mut(&mut self) -> &mut ServiceEvent {
+        &mut self.next_service
+    }
+
     pub(crate) fn notes_mut(&mut self) -> &mut Notes {
         &mut self.notes
     }

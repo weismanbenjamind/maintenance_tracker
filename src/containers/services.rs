@@ -32,7 +32,7 @@ impl ServiceEvent {
         self.date = date
     }
 
-    pub(super) fn update(&mut self, miles: Option<u32>, date: Option<NaiveDate>) {
+    pub(crate) fn update(&mut self, miles: Option<u32>, date: Option<NaiveDate>) {
         if let Some(miles) = miles {
             self.miles = miles
         };

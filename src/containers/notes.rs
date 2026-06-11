@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-// TODO - Return a different error
 use crate::errors::NotesError;
 
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]

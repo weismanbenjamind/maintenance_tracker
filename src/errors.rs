@@ -208,6 +208,9 @@ pub enum UpdateError {
 
     #[error("Failed service update operation. Error: {0}")]
     FailedServiceUpdate(#[from] PreviousServicesError),
+
+    #[error("Must pass one of miles or date when updating next service")]
+    UpdateNextServiceArgs,
 }
 
 #[derive(Debug, Error)]
