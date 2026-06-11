@@ -18,7 +18,6 @@ pub(crate) struct Update {
 }
 
 impl Update {
-    // TODO - need a command to update the next service in here
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
         info!("Updating maintenance log.");
 
