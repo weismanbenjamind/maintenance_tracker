@@ -117,8 +117,6 @@ pub enum MaintenanceLogError {
 
     #[error("Failed to serialize maintenance log to toml. Error: {0}.")]
     FailedSerialize(#[from] toml::ser::Error),
-    // #[error(transparent)]
-    // IdNotFound(#[from] IdNotFoundError),
 }
 
 impl MaintenanceLogError {

@@ -17,7 +17,9 @@ impl MaintenanceLog {
         info!("Reading maintenance log path at {}.", path.display());
         let log = std::fs::read_to_string(path)
             .map_err(|source| MaintenanceLogError::FailedLoad(path.into(), source))?;
-        Ok(toml::from_str::<MaintenanceLog>(&log)?)
+        let log = toml::from_str::<MaintenanceLog>(&log)?;
+        info!("Successfully read maintenance log");
+        Ok(log)
     }
 
     pub(crate) fn write<P: AsRef<Path>>(&self, path: P) -> Result<(), MaintenanceLogError> {
