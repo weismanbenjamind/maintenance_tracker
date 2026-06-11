@@ -107,6 +107,9 @@ fn filter_prev_services_idxs(
     date: Option<NaiveDate>,
 ) -> Result<Vec<usize>, PreviousServicesError> {
     let result: Vec<usize> = match (miles, date) {
+        (None, None) => {
+            return Err(PreviousServicesError::InvalidOptionalArgs);
+        }
         (Some(miles), None) => prev_services
             .iter()
             .enumerate()
@@ -127,9 +130,6 @@ fn filter_prev_services_idxs(
             })
             .map(|(idx, _service_event)| idx)
             .collect(),
-        (None, None) => {
-            return Err(PreviousServicesError::InvalidOptionalArgs);
-        }
     };
 
     Ok(result)
