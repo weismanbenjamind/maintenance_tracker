@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: format
+        name: Format
+        entry: ./scripts/format.sh
+        language: script
+        pass_filenames: false
+
+      - id: clippy
+        name: Clippy
+        entry: ./scripts/clippy.sh
+        language: script
+        pass_filenames: false
+
+      - id: cargo_check
+        name: Cargo Check
+        entry: ./scripts/check.sh
+        language: script
+        pass_filenames: false
