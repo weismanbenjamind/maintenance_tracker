@@ -12,7 +12,7 @@
 - [ ] Create tag this commit at `releases/v<release-version-number>` titled `v<release-version-number>`.
 - [ ] Merge this `releases/v<release-version-number>` branch into `releases/latest`.
 - [ ] Checkout the `master` branch.
-- [ ]  Bump version in `cargo.toml` to `<version-number-bumped-by-minor>-dev.0`.
+- [ ] Bump version in `cargo.toml` to `<version-number-bumped-by-minor>-dev.0`.
 - [ ] Run `cargo update --package maintenance_tracker` to ensure the `Cargo.lock` file gets update with the new version number.
 - [ ] Add a new `## Unreleased` section in the `CHANGELOG.md` file.
 - [ ] Commit these changes into `master`.
