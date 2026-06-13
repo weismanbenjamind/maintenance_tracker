@@ -74,7 +74,7 @@ impl DiffCalculator {
             "Calculating miles diff with next service at {next_service_miles} miles and current miles at {curr_miles}"
         );
         MilesDiffResult {
-            miles_diff: next_service_miles - curr_miles,
+            miles_diff: next_service_miles as i64 - curr_miles as i64,
             curr_miles,
         }
     }
@@ -106,7 +106,7 @@ enum DiffResult {
 
 #[derive(Clone, Copy, Debug)]
 struct MilesDiffResult {
-    miles_diff: u32,
+    miles_diff: i64,
     curr_miles: u32,
 }
 

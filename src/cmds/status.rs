@@ -85,8 +85,8 @@ struct StatusResult<'a> {
 }
 
 impl<'a> StatusResult<'a> {
-    fn miles_diff(&self) -> u32 {
-        self.next_service_miles - self.curr_miles
+    fn miles_diff(&self) -> i64 {
+        self.next_service_miles as i64 - self.curr_miles as i64
     }
 
     fn days_diff(&self) -> i64 {
