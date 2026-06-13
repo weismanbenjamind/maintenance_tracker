@@ -44,7 +44,7 @@ impl Status {
         let stdout = io::stdout();
         let mut buf = stdout.lock();
 
-        write_newline(&mut buf)?;
+        writeln!(buf).map_err(StatusError::FailedStdoutWrite)?;
         metadata.iter().try_for_each(|m| {
             let next_service = m.next_service();
             let status_result = StatusResult {
@@ -56,7 +56,6 @@ impl Status {
             };
             write_to_buf(&mut buf, status_result)
         })?;
-        write_newline(&mut buf)?;
 
         info!("Status operation complete");
 
@@ -64,15 +63,11 @@ impl Status {
     }
 }
 
-fn write_newline(buf: &mut StdoutLock) -> Result<(), StatusError> {
-    writeln!(buf).map_err(StatusError::FailedStdoutWrite)
-}
-
 fn write_to_buf<T: std::fmt::Display>(
     buf: &mut StdoutLock,
     contents: T,
 ) -> Result<(), StatusError> {
-    writeln!(buf, "{contents}").map_err(StatusError::FailedStdoutWrite)
+    writeln!(buf, "{contents}\n").map_err(StatusError::FailedStdoutWrite)
 }
 
 #[derive(Clone, Copy, Debug)]
