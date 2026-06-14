@@ -16,6 +16,9 @@ pub enum MaintenanceTrackerError {
 
     #[error(transparent)]
     Cmds(#[from] CmdsError),
+
+    #[error("{0}")]
+    InvalidState(String),
 }
 
 #[derive(Debug, Error)]
@@ -84,6 +87,12 @@ pub enum CmdsError {
 
     #[error(transparent)]
     IdNotFound(#[from] IdNotFoundError),
+
+    #[error(transparent)]
+    MaintenanceLog(#[from] MaintenanceLogError),
+
+    #[error(transparent)]
+    Log(#[from] LogError),
 
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
@@ -228,5 +237,11 @@ pub enum DiffError {
 #[derive(Debug, Error)]
 pub enum StatusError {
     #[error("Failed to write to stdout. Error: {0}")]
+    FailedStdoutWrite(#[from] std::io::Error),
+}
+
+#[derive(Debug, Error)]
+pub enum LogError {
+    #[error("Failed to write log message to stdout. Error: {0}")]
     FailedStdoutWrite(#[from] std::io::Error),
 }

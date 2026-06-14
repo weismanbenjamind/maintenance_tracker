@@ -12,6 +12,10 @@ pub struct MaintenanceLog {
 }
 
 impl MaintenanceLog {
+    pub(crate) fn new(services: HashMap<String, ServiceMetdata>) -> Self {
+        Self { services }
+    }
+
     pub(crate) fn load<P: AsRef<Path>>(path: P) -> Result<MaintenanceLog, MaintenanceLogError> {
         let path = path.as_ref();
         info!("Reading maintenance log path at {}.", path.display());
