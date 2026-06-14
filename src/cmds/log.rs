@@ -71,27 +71,33 @@ fn write_force_msg(path: &Path) -> Result<(), LogError> {
 fn init_log(path: &Path) -> Result<(), CmdsError> {
     info!("Writing example maintenance log to {}", path.display());
 
-    let time_delta = TimeDelta::days(180);
+    let time_delta = TimeDelta::weeks(13);
     let today = Local::now().date_naive();
     let next_service_date = today + time_delta;
-    let prev_service_date = today - time_delta;
-
     let next_service_miles = 78000;
-    let prev_service_miles = 73000;
 
     let name = "Example Service";
     let service_interval = ServiceInterval::new(5000, 6);
     let next_service = ServiceEvent::new(next_service_miles, next_service_date);
-    let previous_services = Some(vec![ServiceEvent::new(
-        prev_service_miles,
-        prev_service_date,
-    )]);
-    let notes = Some(vec![
-        "This is an example service".to_string(),
-        "Fill out this log with your own services in a similar fashion to this example".to_string(),
-        "Can use 'maintenance_log init' to initialize services with proper scaffolding".to_string(),
-        "Once your services have been initialized delete this example".to_string(),
+
+    let prev_service_1_date = today - time_delta;
+    let prev_service_2_date = prev_service_1_date - TimeDelta::weeks(26);
+    let prev_service_1_miles = 73000;
+    let prev_service_2_miles = 70000;
+    let previous_services = Some(vec![
+        ServiceEvent::new(prev_service_1_miles, prev_service_1_date),
+        ServiceEvent::new(prev_service_2_miles, prev_service_2_date),
     ]);
+
+    let notes = Some([
+        "This is an example service",
+        "Fill out this log with your own services in a similar fashion to this example",
+        "Can use 'maintenance_log init' to initialize services with proper scaffolding",
+        "Notes are optional",
+        "Previous services are optional",
+        "Everything else must be filled out (e.g. name, next service, service interval, and an id defined by [services.id] in the .toml file)",
+        "Once your services have been initialized delete this example",
+    ].iter().map(|note| note.to_string()).collect());
 
     let service_metadata = ServiceMetdata::new(
         name,
