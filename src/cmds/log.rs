@@ -1,0 +1,133 @@
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+
+use crate::constants::DEFAULT_MAINTENANCE_LOG_PATH;
+use crate::containers::{MaintenanceLog, ServiceEvent, ServiceInterval, ServiceMetdata};
+use crate::errors::{CmdsError, LogError};
+use chrono::{Local, TimeDelta};
+use clap::Args;
+use log::{debug, info};
+use std::io::{self, Write};
+
+#[derive(Clone, Debug, Args)]
+#[command(about = "Initializes a maintenance log at a given path")]
+pub(crate) struct Log {
+    #[arg(
+        help = "Path to maintenance log file to be initialized",
+        default_value = DEFAULT_MAINTENANCE_LOG_PATH
+    )]
+    log_path: PathBuf,
+
+    #[arg(
+        short,
+        long,
+        help = "Force an overwrite of a maintenance log if one already exists at the target path"
+    )]
+    force: bool,
+}
+
+impl Log {
+    pub(crate) fn run(self) -> Result<(), CmdsError> {
+        info!(
+            "Attempting to initialize maintenance log at {}.",
+            self.log_path.display()
+        );
+
+        match self.log_path.exists() {
+            true => handle_existing_log(&self.log_path, self.force),
+            false => init_log(&self.log_path),
+        }?;
+
+        info!("Maintenance log initialization process complete");
+        Ok(())
+    }
+}
+
+#[inline]
+fn handle_existing_log(path: &Path, force: bool) -> Result<(), CmdsError> {
+    info!(
+        "Maintenance log exists at {}. Handling with force={force}.",
+        path.display()
+    );
+    match force {
+        true => init_log(path),
+        false => write_force_msg(path).map_err(CmdsError::from),
+    }
+}
+
+#[inline]
+fn write_force_msg(path: &Path) -> Result<(), LogError> {
+    debug!("Informing user to use --force arg.");
+    let stdout = io::stdout();
+    let mut buf = stdout.lock();
+    writeln!(
+        buf,
+        "Maintenance log already exists at {}. Rerun with --force (-f) to override the current maintenance log.",
+        path.display()
+    ).map_err(LogError::from)?;
+    Ok(())
+}
+
+fn init_log(path: &Path) -> Result<(), CmdsError> {
+    info!("Writing example maintenance log to {}", path.display());
+
+    let time_delta = TimeDelta::weeks(13);
+    let today = Local::now().date_naive();
+    let next_service_date = today + time_delta;
+    let next_service_miles = 78000;
+
+    let name = "Example Service";
+    let service_interval = ServiceInterval::new(5000, 6);
+    let next_service = ServiceEvent::new(next_service_miles, next_service_date);
+
+    let prev_service_1_date = today - time_delta;
+    let prev_service_2_date = prev_service_1_date - TimeDelta::weeks(26);
+    let prev_service_1_miles = 73000;
+    let prev_service_2_miles = 70000;
+    let previous_services = Some(vec![
+        ServiceEvent::new(prev_service_1_miles, prev_service_1_date),
+        ServiceEvent::new(prev_service_2_miles, prev_service_2_date),
+    ]);
+
+    let notes = Some([
+        "This is an example service",
+        "Fill out this log with your own services in a similar fashion to this example",
+        "Can use 'maintenance_log init' to initialize services with proper scaffolding",
+        "Notes are optional",
+        "Previous services are optional",
+        "Everything else must be filled out (e.g. name, next service, service interval, and an id defined by [services.id] in the .toml file)",
+        "Once your services have been initialized delete this example",
+    ].iter().map(|note| note.to_string()).collect());
+
+    let service_metadata = ServiceMetdata::new(
+        name,
+        service_interval,
+        next_service,
+        previous_services,
+        notes,
+    );
+
+    let mut services: HashMap<String, ServiceMetdata> = HashMap::with_capacity(1);
+    services.insert("example_service".into(), service_metadata);
+
+    MaintenanceLog::new(services)
+        .write(path)
+        .map_err(CmdsError::from)?;
+
+    let stdout = io::stdout();
+    let mut buf = stdout.lock();
+
+    writeln!(
+        buf,
+        "Successfully initialized maintenance log at {}",
+        path.display()
+    )
+    .map_err(LogError::from)?;
+
+    info!(
+        "Successfully wrote example maintenance log to {}",
+        path.display()
+    );
+
+    Ok(())
+}

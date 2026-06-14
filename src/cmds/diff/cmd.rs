@@ -50,14 +50,14 @@ impl Diff {
             .iter()
             .filter(|m| filter.apply(m))
             .map(|m| calc.diff(m))
-            .for_each(|d| writeln!(buf, "{d}").unwrap_or_else(|_| warn!("Failed to write Diff")));
+            .for_each(|d| writeln!(buf, "{d}\n").unwrap_or_else(|_| warn!("Failed to write Diff")));
 
         let stdout = io::stdout();
         let mut std_out_buf = stdout.lock();
 
         match buf.is_empty() {
             true => writeln!(std_out_buf, "No services due"),
-            false => writeln!(std_out_buf, "\n{buf}"),
+            false => write!(std_out_buf, "\n{buf}"),
         }
         .map_err(DiffError::from)?;
 

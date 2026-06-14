@@ -8,13 +8,22 @@ use crate::verbosity::set_verbosity;
 use log::info;
 
 pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> {
-    set_verbosity(args.verbose())?;
+    // TODO - add into parts for args
+    // Grab the command
+    // Match and everything on it
+    let (maintenance_log, maintenance_log_env, verbose, cmd) = args.into_parts();
+
+    set_verbosity(verbose)?;
     info!("Starting maintenance tracking run.");
 
-    let maintenance_log_path = resolve_cfg(args.maintenance_log(), args.maintenance_log_env())?;
+    if let Cmd::Log(log_cmd) = cmd {
+        return log_cmd.run().map_err(MaintenanceTrackerError::from);
+    }
+
+    let maintenance_log_path = resolve_cfg(&maintenance_log, &maintenance_log_env)?;
     let mut log = MaintenanceLog::load(&maintenance_log_path).map_err(ContainersError::from)?;
 
-    match args.into_cmd() {
+    match cmd {
         Cmd::List(list_cmd) => list_cmd.run(&log)?,
         Cmd::Next(next_cmd) => next_cmd.run(&log)?,
         Cmd::Init(init_cmd) => init_cmd.run(&mut log)?,
@@ -24,6 +33,11 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<(), MaintenanceTrackerError> 
         Cmd::Delete(delete_cmd) => delete_cmd.run(&mut log)?,
         Cmd::Diff(diff_cmd) => diff_cmd.run(&log)?,
         Cmd::Status(status_cmd) => status_cmd.run(&log)?,
+        Cmd::Log(_) => {
+            return Err(MaintenanceTrackerError::InvalidState(
+                "Log command not valid.".into(),
+            ));
+        }
     }
 
     log.write(&maintenance_log_path)

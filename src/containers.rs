@@ -6,3 +6,4 @@ mod services;
 
 pub(crate) use maintenance_log::MaintenanceLog;
 pub(crate) use service_metadata::ServiceMetdata;
+pub(crate) use services::{ServiceEvent, ServiceInterval};

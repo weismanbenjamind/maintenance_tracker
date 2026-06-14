@@ -12,7 +12,7 @@ pub(crate) struct ServiceEvent {
 }
 
 impl ServiceEvent {
-    pub(super) fn new(miles: u32, date: NaiveDate) -> Self {
+    pub(crate) fn new(miles: u32, date: NaiveDate) -> Self {
         Self { miles, date }
     }
 
@@ -69,17 +69,21 @@ impl From<PreviousService> for ServiceEvent {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-pub struct ServiceInterval {
+pub(crate) struct ServiceInterval {
     pub(super) miles: u32,
     pub(super) months: u32,
 }
 
 impl ServiceInterval {
-    pub fn miles(&self) -> u32 {
+    pub(crate) fn new(miles: u32, months: u32) -> Self {
+        Self { miles, months }
+    }
+
+    pub(crate) fn miles(&self) -> u32 {
         self.miles
     }
 
-    pub fn days(&self) -> i64 {
+    pub(crate) fn days(&self) -> i64 {
         months_to_days_floored(self.months)
     }
 }

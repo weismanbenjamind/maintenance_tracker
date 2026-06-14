@@ -1,5 +1,6 @@
 use crate::cmds;
-use std::path::{Path, PathBuf};
+use crate::constants::DEFAULT_MAINTENANCE_LOG_PATH;
+use std::path::PathBuf;
 
 use clap::{ArgAction, Parser, Subcommand};
 
@@ -13,7 +14,7 @@ pub struct MaintenanceTrackerArgs {
     #[arg(
         short,
         long,
-        default_value = "maintenance_log.toml",
+        default_value = DEFAULT_MAINTENANCE_LOG_PATH,
         help = "Path to maintenance log"
     )]
     maintenance_log: PathBuf,
@@ -34,20 +35,13 @@ pub struct MaintenanceTrackerArgs {
 }
 
 impl MaintenanceTrackerArgs {
-    pub(crate) fn maintenance_log(&self) -> &Path {
-        &self.maintenance_log
-    }
-
-    pub(crate) fn maintenance_log_env(&self) -> &str {
-        &self.maintenance_log_env
-    }
-
-    pub(crate) fn verbose(&self) -> u8 {
-        self.verbose
-    }
-
-    pub(crate) fn into_cmd(self) -> Cmd {
-        self.cmd
+    pub(crate) fn into_parts(self) -> (PathBuf, String, u8, Cmd) {
+        (
+            self.maintenance_log,
+            self.maintenance_log_env,
+            self.verbose,
+            self.cmd,
+        )
     }
 }
 
@@ -59,6 +53,7 @@ pub(crate) enum Cmd {
     Diff(cmds::Diff),
     Init(cmds::Init),
     List(cmds::List),
+    Log(cmds::Log),
     Next(cmds::Next),
     Status(cmds::Status),
     Update(cmds::Update),
