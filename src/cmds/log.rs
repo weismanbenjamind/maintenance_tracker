@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use crate::constants::DEFAULT_MAINTENANCE_LOG_PATH;
 use crate::containers::{MaintenanceLog, ServiceEvent, ServiceInterval, ServiceMetdata};
-use crate::errors::{CmdsError, LogError};
+use crate::errors::CmdsError;
 use chrono::{Local, TimeDelta};
 use clap::Args;
 use log::{debug, info};
@@ -51,12 +51,12 @@ fn handle_existing_log(path: &Path, force: bool) -> Result<(), CmdsError> {
     );
     match force {
         true => init_log(path),
-        false => write_force_msg(path).map_err(CmdsError::from),
+        false => write_force_msg(path),
     }
 }
 
 #[inline]
-fn write_force_msg(path: &Path) -> Result<(), LogError> {
+fn write_force_msg(path: &Path) -> Result<(), CmdsError> {
     debug!("Informing user to use --force arg.");
     let stdout = io::stdout();
     let mut buf = stdout.lock();
@@ -64,7 +64,7 @@ fn write_force_msg(path: &Path) -> Result<(), LogError> {
         buf,
         "Maintenance log already exists at {}. Rerun with --force (-f) to override the current maintenance log.",
         path.display()
-    ).map_err(LogError::from)?;
+    )?;
     Ok(())
 }
 
@@ -121,8 +121,7 @@ fn init_log(path: &Path) -> Result<(), CmdsError> {
         buf,
         "Successfully initialized maintenance log at {}",
         path.display()
-    )
-    .map_err(LogError::from)?;
+    )?;
 
     info!(
         "Successfully wrote example maintenance log to {}",

@@ -6,6 +6,8 @@ use crate::errors::{CmdsError, UpdateError};
 use chrono::NaiveDate;
 use clap::{Args, Subcommand};
 use log::{debug, info};
+use std::fmt::Write as FmtWrite;
+use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
@@ -31,18 +33,45 @@ impl Update {
         // At the end just put the metadata back with the proper id
         let mut id_to_insert: Option<String> = None;
 
+        let stdout = io::stdout();
+        let mut buf = stdout.lock();
+
         match self.cmd {
-            Cmd::Name(args) => metadata.set_name(&args.name),
-            Cmd::Id(args) => id_to_insert = Some(args.id), // Set the id variable so when we insert back into the map we insert with the new id
-            Cmd::MilesInterval(args) => metadata.set_service_interval_miles(args.miles),
-            Cmd::MonthInterval(args) => metadata.set_service_interval_months(args.months),
-            Cmd::NextService(update_next_service) => update_next_service.run(&mut metadata)?,
-            Cmd::Notes(update_notes_cmd) => update_notes_cmd.run(&mut metadata)?,
-            Cmd::Service(update_service_cmd) => update_service_cmd.run(&mut metadata)?,
+            Cmd::Name(args) => {
+                metadata.set_name(&args.name);
+                writeln!(buf, "Updated name to {}", args.name)?
+            }
+            Cmd::MilesInterval(args) => {
+                metadata.set_service_interval_miles(args.miles);
+                writeln!(buf, "Set service interval miles to {}", args.miles)?
+            }
+            Cmd::MonthInterval(args) => {
+                metadata.set_service_interval_months(args.months);
+                writeln!(buf, "Set service interval months to {}", args.months)?
+            }
+            Cmd::NextService(update_next_service) => {
+                let msg = update_next_service.run(&mut metadata)?;
+                writeln!(buf, "{msg}")?
+            }
+            Cmd::Notes(update_notes_cmd) => {
+                let msg = update_notes_cmd.run(&mut metadata)?;
+                writeln!(buf, "{msg}")?
+            }
+            Cmd::Service(update_service_cmd) => {
+                let msg = update_service_cmd.run(&mut metadata)?;
+                writeln!(buf, "{msg}")?
+            }
+            // Set the id variable so when we insert back into the map we insert with the new id.
+            // Will inform user of this update below
+            Cmd::Id(args) => id_to_insert = Some(args.id),
         }
 
         // Don't need to check the option return since when we remove above we are sure this key does not exist
         // We also check during the update id cmd that they new id does not exist
+        // log.insert can't fail so okay with informing user of update before it happens
+        if let Some(new_id) = &id_to_insert {
+            writeln!(buf, "Updated id to {new_id}")?;
+        }
         log.insert(&id_to_insert.unwrap_or(self.id), metadata);
 
         Ok(())
@@ -100,18 +129,34 @@ struct UpdateNextService {
 }
 
 impl UpdateNextService {
-    fn run(&self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+    fn run(&self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         match (self.miles, self.date) {
-            (None, None) => return Err(UpdateError::UpdateNextServiceArgs),
+            (None, None) => Err(UpdateError::UpdateNextServiceArgs),
             (Some(_), None) | (None, Some(_)) | (Some(_), Some(_)) => {
                 debug!(
                     "Updating next service with miles: {:?} and date {:?}",
                     self.miles, self.date
                 );
-                metadata.next_service_mut().update(self.miles, self.date)
+                metadata.next_service_mut().update(self.miles, self.date);
+                // Below should never error in practice because we are in the match arm where the (None, None) case cannot occur
+                let msg = get_next_service_update_msg(self.miles, self.date)?;
+                Ok(msg)
             }
         }
-        Ok(())
+    }
+}
+
+fn get_next_service_update_msg(
+    miles: Option<u32>,
+    date: Option<NaiveDate>,
+) -> Result<String, UpdateError> {
+    match (miles, date) {
+        (Some(miles), None) => Ok(format!("Set next service miles to {miles}")),
+        (None, Some(date)) => Ok(format!("Set next service date to {date}")),
+        (Some(miles), Some(date)) => Ok(format!(
+            "Set next service miles to {miles} and date to {date}"
+        )),
+        (None, None) => Err(UpdateError::UpdateNextServiceArgs),
     }
 }
 
@@ -123,30 +168,33 @@ struct UpdateNotes {
 }
 
 impl UpdateNotes {
-    fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+    fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         let notes = metadata.notes_mut();
         match self.cmd {
             UpdateNotesCmd::Append(args) => {
-                notes.extend(args.into_notes());
-                Ok(())
+                let to_append = args.into_notes();
+                let num_notes = to_append.len() as u32;
+                notes.extend(to_append);
+                Ok(format!("Successfully appended {num_notes} notes"))
             }
             UpdateNotesCmd::Replace(args) => {
                 let (idx, contents) = args.into_parts();
                 notes.replace(idx, &contents)?;
-                Ok(())
+                Ok(format!("Successfully replaced note note at index {idx}"))
             }
             UpdateNotesCmd::Insert(args) => {
                 let (idx, contents) = args.into_parts();
                 notes.insert(idx, &contents)?;
-                Ok(())
+                Ok(format!("Successfully replaced note at index {idx}"))
             }
             UpdateNotesCmd::Remove(args) => {
-                notes.remove(args.index())?;
-                Ok(())
+                let idx = args.index();
+                notes.remove(idx)?;
+                Ok(format!("Successfully removed note at index {idx}"))
             }
             UpdateNotesCmd::Clear(_) => {
                 notes.clear();
-                Ok(())
+                Ok("Successfully cleared notes".to_string())
             }
         }
     }
@@ -160,30 +208,86 @@ struct UpdateService {
 }
 
 impl UpdateService {
-    fn run(self, metadata: &mut ServiceMetdata) -> Result<(), UpdateError> {
+    fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         let prev_services = metadata.prev_services_mut();
         match self.cmd {
             UpdateServiceCmd::Append(args) => {
-                prev_services.add(args.miles(), args.date());
-                Ok(())
+                let (miles, date) = (args.miles(), args.date());
+                prev_services.add(miles, date);
+                Ok(format!(
+                    "Successfully added previous service with miles {miles} and date {date}"
+                ))
             }
             UpdateServiceCmd::Replace(args) => {
-                prev_services.replace(
-                    args.curr_miles(),
-                    args.curr_date(),
-                    args.new_miles(),
-                    args.new_date(),
-                )?;
-                Ok(())
+                let (curr_miles, curr_date, new_miles, new_date) = args.into_parts();
+                prev_services.replace(curr_miles, curr_date, new_miles, new_date)?;
+                let msg = get_replaced_service_msg(curr_miles, curr_date, new_miles, new_date)?;
+                Ok(msg)
             }
             UpdateServiceCmd::Remove(args) => {
-                prev_services.remove(args.miles(), args.date())?;
-                Ok(())
+                let (miles, date) = args.into_parts();
+                prev_services.remove(miles, date)?;
+                let msg = get_removed_service_msg(miles, date)?;
+                Ok(msg)
             }
             UpdateServiceCmd::Clear(_) => {
                 prev_services.clear();
-                Ok(())
+                Ok("Successfully cleared previous services".to_string())
             }
         }
     }
+}
+
+fn get_replaced_service_msg(
+    curr_miles: Option<u32>,
+    curr_date: Option<NaiveDate>,
+    new_miles: Option<u32>,
+    new_date: Option<NaiveDate>,
+) -> Result<String, UpdateError> {
+    let mut buf = String::new();
+
+    // Write to string can't fail so unwrap below
+    match (curr_miles, curr_date) {
+        (Some(curr_miles), None) => {
+            write!(buf, "Successfully updated service with miles {curr_miles}").unwrap()
+        }
+        (None, Some(curr_date)) => {
+            write!(buf, "Successfully updated service with date {curr_date}").unwrap()
+        }
+        (Some(curr_miles), Some(curr_date)) => write!(
+            buf,
+            "Successfully updated service with miles {curr_miles} and date {curr_date}"
+        )
+        .unwrap(),
+        // In practice this error should never get hit - clap should take care of input validation
+        (None, None) => return Err(UpdateError::InvalidCurrentServiceIds),
+    };
+
+    // Write to string can't fail so unwrap below
+    match (new_miles, new_date) {
+        (Some(new_miles), None) => write!(buf, " with new miles {new_miles}").unwrap(),
+        (None, Some(new_date)) => write!(buf, " with new date {new_date}").unwrap(),
+        (Some(new_miles), Some(new_date)) => {
+            write!(buf, " with new miles {new_miles} and new date {new_date}").unwrap()
+        }
+        // In practice this error should never get hit - clap should take care of input validation
+        (None, None) => return Err(UpdateError::InvalidServiceUpdateArgs),
+    }
+
+    Ok(buf)
+}
+
+fn get_removed_service_msg(
+    miles: Option<u32>,
+    date: Option<NaiveDate>,
+) -> Result<String, UpdateError> {
+    let msg = match (miles, date) {
+        (Some(miles), None) => format!("Replaced service with miles {miles}"),
+        (None, Some(date)) => format!("Replaced service with date {date}"),
+        (Some(miles), Some(date)) => format!("Replaced service with miles {miles} and date {date}"),
+        // In practice this error should never get hit - clap should take care of input validation
+        (None, None) => return Err(UpdateError::InvalidCurrentServiceIds),
+    };
+
+    Ok(msg)
 }

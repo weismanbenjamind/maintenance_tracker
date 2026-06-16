@@ -4,7 +4,7 @@ use log::{debug, info};
 use std::io::{self, StdoutLock, Write as WriteIO};
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
-use crate::errors::{CmdsError, StatusError};
+use crate::errors::CmdsError;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get the miles/date difference for a specific service or all services")]
@@ -44,7 +44,7 @@ impl Status {
         let stdout = io::stdout();
         let mut buf = stdout.lock();
 
-        writeln!(buf).map_err(StatusError::FailedStdoutWrite)?;
+        writeln!(buf)?;
         metadata.iter().try_for_each(|m| {
             let next_service = m.next_service();
             let status_result = StatusResult {
@@ -66,8 +66,8 @@ impl Status {
 fn write_to_buf<T: std::fmt::Display>(
     buf: &mut StdoutLock,
     contents: T,
-) -> Result<(), StatusError> {
-    writeln!(buf, "{contents}\n").map_err(StatusError::FailedStdoutWrite)
+) -> Result<(), std::io::Error> {
+    writeln!(buf, "{contents}\n")
 }
 
 #[derive(Clone, Copy, Debug)]

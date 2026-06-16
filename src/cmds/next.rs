@@ -1,7 +1,7 @@
 use clap::Args;
 
 use crate::containers::MaintenanceLog;
-use crate::errors::{CmdsError, NextError};
+use crate::errors::CmdsError;
 use log::info;
 use std::io::{self, Write};
 
@@ -20,10 +20,7 @@ impl Next {
         info!("Writing next to stdout.");
         let stdout = io::stdout();
         let mut buf = stdout.lock();
-
-        if let Err(e) = writeln!(buf, "{found}") {
-            return Err(NextError::FailedWrite(self.id, e).into());
-        }
+        writeln!(buf, "{found}")?;
 
         info!("Finished getting next service for id {}.", self.id);
         Ok(())

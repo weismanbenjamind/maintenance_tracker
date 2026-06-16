@@ -1,5 +1,5 @@
+use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
-use crate::{containers::MaintenanceLog, errors::CompleteError};
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 use log::info;
@@ -44,8 +44,7 @@ impl Complete {
             self.date,
             next_service_miles,
             next_service_date
-        )
-        .map_err(|e| CompleteError::FailedWrite(self.id, e))?;
+        )?;
 
         info!("Service logged as complete.");
         Ok(())

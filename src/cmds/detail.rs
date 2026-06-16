@@ -3,7 +3,7 @@ use log::info;
 use std::io::{self, Write};
 
 use crate::containers::MaintenanceLog;
-use crate::errors::{CmdsError, DetailError};
+use crate::errors::CmdsError;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Show details about a specific service")]
@@ -22,7 +22,7 @@ impl Detail {
         let metadata = log.get(&self.id)?;
         let stdout = io::stdout();
         let mut buf = stdout.lock();
-        writeln!(buf, "{metadata}").map_err(|e| DetailError::FailedWrite(self.id, e))?;
+        writeln!(buf, "{metadata}")?;
 
         info!("Successfully got details for maintenance log item.");
 

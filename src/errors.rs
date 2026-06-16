@@ -65,15 +65,6 @@ pub enum CmdsError {
     List(#[from] ListError),
 
     #[error(transparent)]
-    Next(#[from] NextError),
-
-    #[error(transparent)]
-    Detail(#[from] DetailError),
-
-    #[error(transparent)]
-    Complete(#[from] CompleteError),
-
-    #[error(transparent)]
     Containers(#[from] ContainersError),
 
     #[error(transparent)]
@@ -83,16 +74,14 @@ pub enum CmdsError {
     Diff(#[from] DiffError),
 
     #[error(transparent)]
-    Status(#[from] StatusError),
-
-    #[error(transparent)]
     IdNotFound(#[from] IdNotFoundError),
 
     #[error(transparent)]
     MaintenanceLog(#[from] MaintenanceLogError),
 
-    #[error(transparent)]
-    Log(#[from] LogError),
+    // TODO - delete all other sub-errors for this one
+    #[error("Failed to write to stdout. Error: {0}")]
+    FailedStdOutWrite(#[from] std::io::Error),
 
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
@@ -179,33 +168,12 @@ pub enum InitError {
 
     #[error("Could not parse date. Ensure date is in format YYYY-MM-DD. Error: {0}")]
     InvalidDateFormat(#[from] ParseError),
-
-    #[error("Failed to write initialized service details. Error {0}")]
-    FailedWrite(#[from] std::io::Error),
 }
 
 #[derive(Debug, Error)]
 pub enum ListError {
     #[error("Failed to list service ids. Error: {0}")]
     FailedList(#[from] std::io::Error),
-}
-
-#[derive(Debug, Error)]
-pub enum NextError {
-    #[error("Failed to write next service for id {0}. Error: {1}")]
-    FailedWrite(String, #[source] std::io::Error),
-}
-
-#[derive(Debug, Error)]
-pub enum DetailError {
-    #[error("Failed to write details for service with id: {0}. Error: {1}")]
-    FailedWrite(String, #[source] std::io::Error),
-}
-
-#[derive(Debug, Error)]
-pub enum CompleteError {
-    #[error("Failed to write details for service completion for service with id {0}. Error: {1}")]
-    FailedWrite(String, #[source] std::io::Error),
 }
 
 #[derive(Debug, Error)]
@@ -218,6 +186,16 @@ pub enum UpdateError {
 
     #[error("Must pass one of miles or date when updating next service")]
     UpdateNextServiceArgs,
+
+    #[error(
+        "Invalid state for update operation. One or both of current miles/date must be passed to identify the service"
+    )]
+    InvalidCurrentServiceIds,
+
+    #[error(
+        "Invalid state for update operation. One or both of new mils/new date must be passed to update a service"
+    )]
+    InvalidServiceUpdateArgs,
 }
 
 #[derive(Debug, Error)]
@@ -229,19 +207,4 @@ pub enum DiffError {
 
     #[error("Must pass miles and current miles and/or months for an interval diff operation.")]
     InvalidIntervalArgs,
-
-    #[error("Failed to write Diff result to stdout. Error: {0}")]
-    FailedStdOutWrite(#[from] std::io::Error),
-}
-
-#[derive(Debug, Error)]
-pub enum StatusError {
-    #[error("Failed to write to stdout. Error: {0}")]
-    FailedStdoutWrite(#[from] std::io::Error),
-}
-
-#[derive(Debug, Error)]
-pub enum LogError {
-    #[error("Failed to write log message to stdout. Error: {0}")]
-    FailedStdoutWrite(#[from] std::io::Error),
 }

@@ -69,8 +69,7 @@ impl Init {
             buf,
             "Initialized the following service:\n\nId: {}\n{update}\n",
             self.id
-        )
-        .map_err(InitError::FailedWrite)?;
+        )?;
 
         // Don't need to check the return type here because we already check that the id is not present at
         // the start of this function

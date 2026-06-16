@@ -33,20 +33,20 @@ pub(super) struct Replace {
 }
 
 impl Replace {
-    pub(super) fn curr_miles(&self) -> Option<u32> {
-        self.curr_service_specs.miles
-    }
-
-    pub(super) fn curr_date(&self) -> Option<NaiveDate> {
-        self.curr_service_specs.date
-    }
-
-    pub(super) fn new_miles(&self) -> Option<u32> {
-        self.updated_service_specs.new_miles
-    }
-
-    pub(super) fn new_date(&self) -> Option<NaiveDate> {
-        self.updated_service_specs.new_date
+    pub(super) fn into_parts(
+        self,
+    ) -> (
+        Option<u32>,
+        Option<NaiveDate>,
+        Option<u32>,
+        Option<NaiveDate>,
+    ) {
+        (
+            self.curr_service_specs.miles,
+            self.curr_service_specs.date,
+            self.updated_service_specs.new_miles,
+            self.updated_service_specs.new_date,
+        )
     }
 }
 
@@ -58,12 +58,8 @@ pub(super) struct Remove {
 }
 
 impl Remove {
-    pub(super) fn miles(&self) -> Option<u32> {
-        self.service_specs.miles
-    }
-
-    pub(super) fn date(&self) -> Option<NaiveDate> {
-        self.service_specs.date
+    pub(super) fn into_parts(self) -> (Option<u32>, Option<NaiveDate>) {
+        (self.service_specs.miles, self.service_specs.date)
     }
 }
 

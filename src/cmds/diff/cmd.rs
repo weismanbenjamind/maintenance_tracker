@@ -9,7 +9,7 @@ use std::fmt::Write;
 use std::io::{self, Write as WriteStdOut};
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
-use crate::errors::{CmdsError, DiffError};
+use crate::errors::CmdsError;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get info on services due by mileage and/or date intervals")]
@@ -58,8 +58,7 @@ impl Diff {
         match buf.is_empty() {
             true => writeln!(std_out_buf, "No services due"),
             false => write!(std_out_buf, "\n{buf}"),
-        }
-        .map_err(DiffError::from)?;
+        }?;
 
         info!("Finished running diff");
         Ok(())
