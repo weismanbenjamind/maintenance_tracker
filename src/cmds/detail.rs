@@ -22,6 +22,7 @@ impl Detail {
         let metadata = log.get(&self.id)?;
         let stdout = io::stdout();
         let mut buf = stdout.lock();
+        writeln!(buf, "Id: {}", self.id)?;
         writeln!(buf, "{metadata}")?;
 
         info!("Successfully got details for maintenance log item.");

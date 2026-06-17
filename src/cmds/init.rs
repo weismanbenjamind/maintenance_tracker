@@ -67,7 +67,7 @@ impl Init {
         let mut buf = stdout.lock();
         writeln!(
             buf,
-            "Initialized the following service:\n\nId: {}\n{update}\n",
+            "Initialized the following service:\n\nId: {}\n{update}",
             self.id
         )?;
 

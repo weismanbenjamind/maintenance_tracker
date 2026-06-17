@@ -88,7 +88,7 @@ struct UpdatedServiceSpecs {
 }
 
 #[derive(Clone, Copy, Debug, Subcommand)]
-pub(crate) enum UpdateServiceCmd {
+pub(crate) enum UpdatePreviousServicesCmd {
     Append(Append),
     Replace(Replace),
     Remove(Remove),

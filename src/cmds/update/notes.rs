@@ -16,10 +16,10 @@ impl Append {
 #[derive(Clone, Debug, Args)]
 #[command(about = "Replace contetns of a note")]
 pub(super) struct Replace {
-    #[arg(short, long, help = "Index to replace")]
+    #[arg(help = "Index to replace")]
     index: usize,
 
-    #[arg(short, long, help = "Note that should be used for replacement")]
+    #[arg(help = "Note that should be used for replacement")]
     contents: String,
 }
 
@@ -32,10 +32,10 @@ impl Replace {
 #[derive(Clone, Debug, Args)]
 #[command(about = "Insert a note")]
 pub(super) struct Insert {
-    #[arg(short, long, help = "Index to insert note at")]
+    #[arg(help = "Index to insert note at")]
     index: usize,
 
-    #[arg(short, long, help = "Note to insert")]
+    #[arg(help = "Note to insert")]
     contents: String,
 }
 

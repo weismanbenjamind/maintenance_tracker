@@ -1,7 +1,8 @@
 use chrono::{Local, NaiveDate};
 use clap::Args;
 use log::{debug, info};
-use std::io::{self, StdoutLock, Write as WriteIO};
+use std::fmt::Write;
+use std::io::{self, Write as WriteIO};
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
 use crate::errors::CmdsError;
@@ -41,11 +42,9 @@ impl Status {
 
         debug!("Writing status for metadata {:?}", metadata);
 
-        let stdout = io::stdout();
-        let mut buf = stdout.lock();
+        let mut buf = String::new();
 
-        writeln!(buf)?;
-        metadata.iter().try_for_each(|m| {
+        metadata.iter().for_each(|m| {
             let next_service = m.next_service();
             let status_result = StatusResult {
                 name: m.name(),
@@ -54,20 +53,18 @@ impl Status {
                 date: self.today,
                 next_service_date: next_service.date(),
             };
-            write_to_buf(&mut buf, status_result)
-        })?;
+            // Writing to a string can't fail
+            _ = writeln!(buf, "{status_result}\n");
+        });
+
+        let stdout = io::stdout();
+        let mut stdout_buf = stdout.lock();
+        writeln!(stdout_buf, "{}", buf.trim_end())?;
 
         info!("Status operation complete");
 
         Ok(())
     }
-}
-
-fn write_to_buf<T: std::fmt::Display>(
-    buf: &mut StdoutLock,
-    contents: T,
-) -> Result<(), std::io::Error> {
-    writeln!(buf, "{contents}\n")
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -92,15 +89,19 @@ impl<'a> StatusResult<'a> {
 impl<'a> std::fmt::Display for StatusResult<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Name: {}", self.name)?;
-        writeln!(f, "Next Service (miles): {}", self.next_service_miles)?;
-        writeln!(f, "Current Miles: {}", self.curr_miles)?;
+        writeln!(f, "Next service (miles): {} Miles", self.next_service_miles)?;
+        writeln!(f, "Current mileage: {} Miles", self.curr_miles)?;
         writeln!(
             f,
-            "Next Service Miles - Current Miles: {} Miles",
+            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
             self.miles_diff()
         )?;
-        writeln!(f, "Next Service Date: {}", self.next_service_date)?;
+        writeln!(f, "Next service date: {}", self.next_service_date)?;
         writeln!(f, "Today: {}", self.date)?;
-        write!(f, "Next Service Date - Today: {} Days", self.days_diff())
+        write!(
+            f,
+            "Days until next service (Next Service Date - Today): {} Days",
+            self.days_diff()
+        )
     }
 }

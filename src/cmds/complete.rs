@@ -37,8 +37,8 @@ impl Complete {
 
         writeln!(
             buf,
-            "Marked {} as complete at {} miles on {}.\n\
-            Updated next service to {} miles or on {}.",
+            "Marked {} as complete at {} miles on {}\n\
+            Updated next service to {} miles or on {}",
             metadata.name(),
             self.mileage,
             self.date,

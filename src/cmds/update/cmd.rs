@@ -1,5 +1,5 @@
 use super::notes::UpdateNotesCmd;
-use super::service::UpdateServiceCmd;
+use super::prev_services::UpdatePreviousServicesCmd;
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
 use crate::errors::{CmdsError, UpdateError};
@@ -43,11 +43,11 @@ impl Update {
             }
             Cmd::MilesInterval(args) => {
                 metadata.set_service_interval_miles(args.miles);
-                writeln!(buf, "Set service interval miles to {}", args.miles)?
+                writeln!(buf, "Set service interval miles to {} miles", args.miles)?
             }
-            Cmd::MonthInterval(args) => {
+            Cmd::MonthlyInterval(args) => {
                 metadata.set_service_interval_months(args.months);
-                writeln!(buf, "Set service interval months to {}", args.months)?
+                writeln!(buf, "Set service interval months to {} months", args.months)?
             }
             Cmd::NextService(update_next_service) => {
                 let msg = update_next_service.run(&mut metadata)?;
@@ -57,7 +57,7 @@ impl Update {
                 let msg = update_notes_cmd.run(&mut metadata)?;
                 writeln!(buf, "{msg}")?
             }
-            Cmd::Service(update_service_cmd) => {
+            Cmd::PreviousServices(update_service_cmd) => {
                 let msg = update_service_cmd.run(&mut metadata)?;
                 writeln!(buf, "{msg}")?
             }
@@ -83,10 +83,10 @@ enum Cmd {
     Name(UpdateName),
     Id(UpdateId),
     MilesInterval(UpdateMilesInterval),
-    MonthInterval(UpdateMonthInterval),
+    MonthlyInterval(UpdateMonthlyInterval),
     NextService(UpdateNextService),
     Notes(UpdateNotes),
-    Service(UpdateService),
+    PreviousServices(UpdatePreviousServices),
 }
 
 #[derive(Clone, Debug, Args)]
@@ -112,7 +112,7 @@ struct UpdateMilesInterval {
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update monthly interval the service should be completed at")]
-struct UpdateMonthInterval {
+struct UpdateMonthlyInterval {
     #[arg(help = "New monthly interval")]
     months: u32,
 }
@@ -154,7 +154,7 @@ fn get_next_service_update_msg(
         (Some(miles), None) => Ok(format!("Set next service miles to {miles}")),
         (None, Some(date)) => Ok(format!("Set next service date to {date}")),
         (Some(miles), Some(date)) => Ok(format!(
-            "Set next service miles to {miles} and date to {date}"
+            "Set next service miles to {miles} and next service date to {date}"
         )),
         (None, None) => Err(UpdateError::UpdateNextServiceArgs),
     }
@@ -175,7 +175,7 @@ impl UpdateNotes {
                 let to_append = args.into_notes();
                 let num_notes = to_append.len() as u32;
                 notes.extend(to_append);
-                Ok(format!("Successfully appended {num_notes} notes"))
+                Ok(format!("Successfully appended {num_notes} note(s)"))
             }
             UpdateNotesCmd::Replace(args) => {
                 let (idx, contents) = args.into_parts();
@@ -201,36 +201,36 @@ impl UpdateNotes {
 }
 
 #[derive(Clone, Copy, Debug, Args)]
-#[command(about = "Update a previous service")]
-struct UpdateService {
+#[command(about = "Update previous services")]
+struct UpdatePreviousServices {
     #[command(subcommand)]
-    cmd: UpdateServiceCmd,
+    cmd: UpdatePreviousServicesCmd,
 }
 
-impl UpdateService {
+impl UpdatePreviousServices {
     fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         let prev_services = metadata.prev_services_mut();
         match self.cmd {
-            UpdateServiceCmd::Append(args) => {
+            UpdatePreviousServicesCmd::Append(args) => {
                 let (miles, date) = (args.miles(), args.date());
                 prev_services.add(miles, date);
                 Ok(format!(
                     "Successfully added previous service with miles {miles} and date {date}"
                 ))
             }
-            UpdateServiceCmd::Replace(args) => {
+            UpdatePreviousServicesCmd::Replace(args) => {
                 let (curr_miles, curr_date, new_miles, new_date) = args.into_parts();
                 prev_services.replace(curr_miles, curr_date, new_miles, new_date)?;
                 let msg = get_replaced_service_msg(curr_miles, curr_date, new_miles, new_date)?;
                 Ok(msg)
             }
-            UpdateServiceCmd::Remove(args) => {
+            UpdatePreviousServicesCmd::Remove(args) => {
                 let (miles, date) = args.into_parts();
                 prev_services.remove(miles, date)?;
                 let msg = get_removed_service_msg(miles, date)?;
                 Ok(msg)
             }
-            UpdateServiceCmd::Clear(_) => {
+            UpdatePreviousServicesCmd::Clear(_) => {
                 prev_services.clear();
                 Ok("Successfully cleared previous services".to_string())
             }
@@ -282,9 +282,9 @@ fn get_removed_service_msg(
     date: Option<NaiveDate>,
 ) -> Result<String, UpdateError> {
     let msg = match (miles, date) {
-        (Some(miles), None) => format!("Replaced service with miles {miles}"),
-        (None, Some(date)) => format!("Replaced service with date {date}"),
-        (Some(miles), Some(date)) => format!("Replaced service with miles {miles} and date {date}"),
+        (Some(miles), None) => format!("Removed service with miles {miles}"),
+        (None, Some(date)) => format!("Removed service with date {date}"),
+        (Some(miles), Some(date)) => format!("Removed service with miles {miles} and date {date}"),
         // In practice this error should never get hit - clap should take care of input validation
         (None, None) => return Err(UpdateError::InvalidCurrentServiceIds),
     };

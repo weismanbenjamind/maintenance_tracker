@@ -20,7 +20,9 @@ impl Next {
         info!("Writing next to stdout.");
         let stdout = io::stdout();
         let mut buf = stdout.lock();
-        writeln!(buf, "{found}")?;
+        let next_service = found.next_service();
+        writeln!(buf, "Next Service Miles: {}", next_service.miles())?;
+        writeln!(buf, "Next Service Date: {}", next_service.date())?;
 
         info!("Finished getting next service for id {}.", self.id);
         Ok(())

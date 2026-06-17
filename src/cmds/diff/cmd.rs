@@ -4,7 +4,7 @@ use super::subcmds;
 use super::subcmds::ValidatedThreshold;
 
 use clap::{Args, Subcommand};
-use log::{debug, info, warn};
+use log::{debug, info};
 use std::fmt::Write;
 use std::io::{self, Write as WriteStdOut};
 
@@ -50,14 +50,15 @@ impl Diff {
             .iter()
             .filter(|m| filter.apply(m))
             .map(|m| calc.diff(m))
-            .for_each(|d| writeln!(buf, "{d}\n").unwrap_or_else(|_| warn!("Failed to write Diff")));
+            // Writing to string cannot fail so unwrap below
+            .for_each(|d| writeln!(buf, "{d}\n").unwrap());
 
         let stdout = io::stdout();
         let mut std_out_buf = stdout.lock();
 
         match buf.is_empty() {
             true => writeln!(std_out_buf, "No services due"),
-            false => write!(std_out_buf, "\n{buf}"),
+            false => writeln!(std_out_buf, "{}", buf.trim_end()),
         }?;
 
         info!("Finished running diff");

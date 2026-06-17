@@ -119,15 +119,17 @@ struct DaysDiffResult {
 impl<'a> std::fmt::Display for DiffOutput<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Name: {}", self.name)?;
-        writeln!(f, "Next Service Miles: {}", self.next_service_miles)?;
-        writeln!(f, "Next Service Date: {}", self.next_service_date)?;
         match &self.diff_result {
-            DiffResult::Miles(miles_diff_result) => write_miles_diff_result(f, *miles_diff_result),
-            DiffResult::Days(days_diff_result) => write_days_diff_result(f, *days_diff_result),
+            DiffResult::Miles(miles_diff_result) => {
+                write_miles_diff_result(f, *miles_diff_result, self.next_service_miles)
+            }
+            DiffResult::Days(days_diff_result) => {
+                write_days_diff_result(f, *days_diff_result, self.next_service_date)
+            }
             DiffResult::MilesAndDays(miles_diff_result, days_diff_result) => {
-                write_miles_diff_result(f, *miles_diff_result)?;
+                write_miles_diff_result(f, *miles_diff_result, self.next_service_miles)?;
                 writeln!(f)?;
-                write_days_diff_result(f, *days_diff_result)
+                write_days_diff_result(f, *days_diff_result, self.next_service_date)
             }
         }
     }
@@ -136,11 +138,13 @@ impl<'a> std::fmt::Display for DiffOutput<'a> {
 fn write_miles_diff_result(
     f: &mut std::fmt::Formatter<'_>,
     miles_diff_result: MilesDiffResult,
+    next_service_miles: u32,
 ) -> std::fmt::Result {
-    writeln!(f, "Current Miles: {}", miles_diff_result.curr_miles)?;
+    writeln!(f, "Next service miles: {next_service_miles} Miles")?;
+    writeln!(f, "Current miles: {} Miles", miles_diff_result.curr_miles)?;
     write!(
         f,
-        "Miles until next service (Next Service - Current): {}",
+        "Miles until next service (Next Service - Current): {} Miles",
         miles_diff_result.miles_diff
     )
 }
@@ -148,11 +152,13 @@ fn write_miles_diff_result(
 fn write_days_diff_result(
     f: &mut std::fmt::Formatter<'_>,
     days_diff_result: DaysDiffResult,
+    next_service_date: NaiveDate,
 ) -> std::fmt::Result {
-    writeln!(f, "Date Threshold: {}", days_diff_result.date_threshold)?;
+    writeln!(f, "Next service date: {next_service_date}")?;
+    writeln!(f, "Date threshold: {}", days_diff_result.date_threshold)?;
     write!(
         f,
-        "Days until next service (Next Service Date - Target Date): {}",
+        "Days until next service (Next Service Date - Date Threshold): {} Days",
         days_diff_result.days_diff
     )
 }

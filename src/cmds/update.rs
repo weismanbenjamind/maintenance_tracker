@@ -1,5 +1,5 @@
 mod cmd;
 mod notes;
-mod service;
+mod prev_services;
 
 pub(crate) use cmd::Update;

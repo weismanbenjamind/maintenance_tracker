@@ -6,6 +6,7 @@ use clap::Args;
 
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Get all service requirements by a specific mileage and/or date")]
+#[group(required = true, multiple = true)]
 pub(super) struct Threshold {
     #[arg(
         short,
@@ -45,6 +46,7 @@ impl Threshold {
 #[command(
     about = "Get all service requirements from the current mileage and/or date due within some mileage and/or date interval"
 )]
+#[group(required = true, multiple = true)]
 pub(super) struct Interval {
     #[arg(
         short,
