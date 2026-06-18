@@ -41,13 +41,9 @@ impl Update {
                 metadata.set_name(&args.name);
                 writeln!(buf, "Updated name to {}", args.name)?
             }
-            Cmd::MilesInterval(args) => {
-                metadata.set_service_interval_miles(args.miles);
-                writeln!(buf, "Set service interval miles to {} miles", args.miles)?
-            }
-            Cmd::MonthlyInterval(args) => {
-                metadata.set_service_interval_months(args.months);
-                writeln!(buf, "Set service interval months to {} months", args.months)?
+            Cmd::ServiceInterval(args) => {
+                let msg = args.run(&mut metadata)?;
+                writeln!(buf, "{msg}")?
             }
             Cmd::NextService(update_next_service) => {
                 let msg = update_next_service.run(&mut metadata)?;
@@ -82,8 +78,7 @@ impl Update {
 enum Cmd {
     Name(UpdateName),
     Id(UpdateId),
-    MilesInterval(UpdateMilesInterval),
-    MonthlyInterval(UpdateMonthlyInterval),
+    ServiceInterval(UpdateServiceInterval),
     NextService(UpdateNextService),
     Notes(UpdateNotes),
     PreviousServices(UpdatePreviousServices),
@@ -104,17 +99,46 @@ struct UpdateId {
 }
 
 #[derive(Clone, Copy, Debug, Args)]
-#[command(about = "Update miles interval the service should be completed at")]
-struct UpdateMilesInterval {
-    #[arg(help = "New miles interval")]
-    miles: u32,
+#[command(about = "Update service interval")]
+#[group(required = true, multiple = true)]
+struct UpdateServiceInterval {
+    #[arg(short, long, help = "New miles interval")]
+    miles: Option<u32>,
+
+    #[arg(short = 'n', long, help = "New monthly interval")]
+    months: Option<u32>,
 }
 
-#[derive(Clone, Copy, Debug, Args)]
-#[command(about = "Update monthly interval the service should be completed at")]
-struct UpdateMonthlyInterval {
-    #[arg(help = "New monthly interval")]
-    months: u32,
+impl UpdateServiceInterval {
+    fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
+        let service_interval = metadata.service_interval_mut();
+        let (miles, months) = (self.miles, self.months);
+
+        if let Some(miles) = miles {
+            service_interval.set_miles(miles);
+        }
+
+        if let Some(months) = months {
+            service_interval.set_months(months);
+        }
+
+        get_updated_service_interval_msg(miles, months)
+    }
+}
+
+fn get_updated_service_interval_msg(
+    miles: Option<u32>,
+    months: Option<u32>,
+) -> Result<String, UpdateError> {
+    let msg = match (miles, months) {
+        (Some(miles), None) => format!("Updated service interval miles to {miles} miles"),
+        (None, Some(months)) => format!("Updated service interval months to {months} months"),
+        (Some(miles), Some(months)) => format!(
+            "Updated service interval miles to {miles} miles and service interval months to {months} months"
+        ),
+        (None, None) => return Err(UpdateError::InvalidServiceIntervalUpdateArgs),
+    };
+    Ok(msg)
 }
 
 #[derive(Clone, Copy, Debug, Args)]

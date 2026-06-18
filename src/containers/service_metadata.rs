@@ -43,12 +43,8 @@ impl ServiceMetdata {
         self.service_interval
     }
 
-    pub(crate) fn set_service_interval_miles(&mut self, miles: u32) {
-        self.service_interval.miles = miles
-    }
-
-    pub(crate) fn set_service_interval_months(&mut self, months: u32) {
-        self.service_interval.months = months
+    pub(crate) fn service_interval_mut(&mut self) -> &mut ServiceInterval {
+        &mut self.service_interval
     }
 
     pub(crate) fn next_service(&self) -> ServiceEvent {

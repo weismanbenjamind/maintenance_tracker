@@ -79,6 +79,14 @@ impl ServiceInterval {
         Self { miles, months }
     }
 
+    pub(crate) fn set_miles(&mut self, miles: u32) {
+        self.miles = miles
+    }
+
+    pub(crate) fn set_months(&mut self, months: u32) {
+        self.months = months
+    }
+
     pub(crate) fn miles(&self) -> u32 {
         self.miles
     }

@@ -196,6 +196,11 @@ pub enum UpdateError {
         "Invalid state for update operation. One or both of new mils/new date must be passed to update a service"
     )]
     InvalidServiceUpdateArgs,
+
+    #[error(
+        "Invalid state for update operation. One or both of miles/months must be passed to update the service interval"
+    )]
+    InvalidServiceIntervalUpdateArgs,
 }
 
 #[derive(Debug, Error)]
