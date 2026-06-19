@@ -8,7 +8,7 @@ use log::{debug, info};
 use std::fmt::Write;
 use std::io::{self, Write as WriteStdOut};
 
-use crate::containers::{MaintenanceLog, ServiceMetdata};
+use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
 
 #[derive(Clone, Debug, Args)]
@@ -40,7 +40,7 @@ impl Diff {
             Some(id) => {
                 vec![log.get(&id)?]
             }
-            None => log.metadata().collect::<Vec<&ServiceMetdata>>(),
+            None => log.metadata_sorted(),
         };
 
         // Writng to a string won't fail so unwrap below

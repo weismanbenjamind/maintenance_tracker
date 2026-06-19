@@ -4,7 +4,7 @@ use log::{debug, info};
 use std::fmt::Write;
 use std::io::{self, Write as WriteIO};
 
-use crate::containers::{MaintenanceLog, ServiceMetdata};
+use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
 
 #[derive(Clone, Debug, Args)]
@@ -34,10 +34,8 @@ impl Status {
         info!("Starting status operation");
 
         let metadata = match self.id {
-            Some(id) => {
-                vec![log.get(&id)?]
-            }
-            None => log.metadata().collect::<Vec<&ServiceMetdata>>(),
+            Some(id) => vec![log.get(&id)?],
+            None => log.metadata_sorted(),
         };
 
         debug!("Writing status for metadata {:?}", metadata);

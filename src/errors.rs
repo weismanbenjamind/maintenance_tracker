@@ -62,9 +62,6 @@ pub enum CmdsError {
     Init(#[from] InitError),
 
     #[error(transparent)]
-    List(#[from] ListError),
-
-    #[error(transparent)]
     Containers(#[from] ContainersError),
 
     #[error(transparent)]
@@ -168,12 +165,6 @@ pub enum InitError {
 
     #[error("Could not parse date. Ensure date is in format YYYY-MM-DD. Error: {0}")]
     InvalidDateFormat(#[from] ParseError),
-}
-
-#[derive(Debug, Error)]
-pub enum ListError {
-    #[error("Failed to list service ids. Error: {0}")]
-    FailedList(#[from] std::io::Error),
 }
 
 #[derive(Debug, Error)]

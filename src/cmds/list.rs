@@ -1,5 +1,4 @@
 // Using a unit (static) struct hre to follow all command patters
-use crate::errors::ListError;
 use crate::{containers::MaintenanceLog, errors::CmdsError};
 use clap::Args;
 use log::info;
@@ -15,11 +14,15 @@ impl List {
     // So return the level right below MaintenanceLogError - which is Cmds Error
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
         info!("Writing maintenance log ids to stdout.");
+
+        // Keep ids sorted alphabetically - have to collect
+        let mut ids: Vec<&String> = log.ids().collect();
+        ids.sort();
+
         let stdout = io::stdout();
         let mut buf = stdout.lock();
-        log.ids()
-            // Map error to ListError::FailedList to convert to a CmdsError
-            .try_for_each(|id| writeln!(buf, "{id}").map_err(ListError::FailedList))?;
+        ids.iter().try_for_each(|id| writeln!(buf, "{id}"))?;
+
         info!("Successfully wrote maintenance log ids to stdout.");
         Ok(())
     }

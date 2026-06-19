@@ -3,7 +3,7 @@ use crate::errors::{IdNotFoundError, MaintenanceLogError};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::collections::hash_map::{Keys, Values};
+use std::collections::hash_map::Keys;
 use std::path::Path;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -41,8 +41,10 @@ impl MaintenanceLog {
         self.services.keys()
     }
 
-    pub(crate) fn metadata(&self) -> Values<'_, String, ServiceMetdata> {
-        self.services.values()
+    pub(crate) fn metadata_sorted(&self) -> Vec<&ServiceMetdata> {
+        let mut metadata = self.services.values().collect::<Vec<&ServiceMetdata>>();
+        metadata.sort_by_key(|a| a.name().to_lowercase());
+        metadata
     }
 
     pub(crate) fn get(&self, id: &str) -> Result<&ServiceMetdata, IdNotFoundError> {
