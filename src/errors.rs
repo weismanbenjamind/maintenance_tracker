@@ -76,10 +76,6 @@ pub enum CmdsError {
     #[error(transparent)]
     MaintenanceLog(#[from] MaintenanceLogError),
 
-    // TODO - delete all other sub-errors for this one
-    #[error("Failed to write to stdout. Error: {0}")]
-    FailedStdOutWrite(#[from] std::io::Error),
-
     #[error("Id {0} already exists for maintenance item {0}")]
     IdExists(String, String),
 }

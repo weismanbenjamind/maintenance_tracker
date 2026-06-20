@@ -16,9 +16,6 @@ impl SuccessMsg {
 }
 
 pub fn run(args: MaintenanceTrackerArgs) -> Result<SuccessMsg, MaintenanceTrackerError> {
-    // TODO - add into parts for args
-    // Grab the command
-    // Match and everything on it
     let (maintenance_log, maintenance_log_env, verbose, cmd) = args.into_parts();
 
     set_verbosity(verbose)?;
