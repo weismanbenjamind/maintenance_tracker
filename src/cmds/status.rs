@@ -2,7 +2,6 @@ use chrono::{Local, NaiveDate};
 use clap::Args;
 use log::{debug, info};
 use std::fmt::Write;
-use std::io::{self, Write as WriteIO};
 
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
@@ -30,7 +29,7 @@ pub(crate) struct Status {
 }
 
 impl Status {
-    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!("Starting status operation");
 
         let metadata = match self.id {
@@ -55,13 +54,9 @@ impl Status {
             _ = writeln!(buf, "{status_result}\n");
         });
 
-        let stdout = io::stdout();
-        let mut stdout_buf = stdout.lock();
-        writeln!(stdout_buf, "{}", buf.trim_end())?;
-
         info!("Status operation complete");
 
-        Ok(())
+        Ok(buf.trim_end().into())
     }
 }
 

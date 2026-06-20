@@ -3,7 +3,6 @@ use clap::Args;
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
 use log::info;
-use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get the next service event for a given maintenance item")]
@@ -13,18 +12,20 @@ pub(crate) struct Next {
 }
 
 impl Next {
-    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!("Getting next service for id {}.", self.id);
         let found = log.get(&self.id)?;
 
-        info!("Writing next to stdout.");
-        let stdout = io::stdout();
-        let mut buf = stdout.lock();
         let next_service = found.next_service();
-        writeln!(buf, "Next Service Miles: {}", next_service.miles())?;
-        writeln!(buf, "Next Service Date: {}", next_service.date())?;
+
+        let msg = format!(
+            "Next Service Miles: {}\n\
+            Next Service Date: {}",
+            next_service.miles(),
+            next_service.date()
+        );
 
         info!("Finished getting next service for id {}.", self.id);
-        Ok(())
+        Ok(msg)
     }
 }

@@ -1,6 +1,5 @@
 use clap::Args;
 use log::info;
-use std::io::{self, Write};
 
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
@@ -13,20 +12,22 @@ pub(crate) struct Detail {
 }
 
 impl Detail {
-    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!(
             "Getting details for maintenance log item with id {}.",
             self.id
         );
 
         let metadata = log.get(&self.id)?;
-        let stdout = io::stdout();
-        let mut buf = stdout.lock();
-        writeln!(buf, "Id: {}", self.id)?;
-        writeln!(buf, "{metadata}")?;
+        // Writing to a string cannot fail
+        let msg = format!(
+            "Id: {}\n\
+            {metadata}",
+            self.id
+        );
 
         info!("Successfully got details for maintenance log item.");
 
-        Ok(())
+        Ok(msg)
     }
 }

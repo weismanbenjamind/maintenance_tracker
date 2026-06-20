@@ -5,7 +5,6 @@ use crate::errors::{CmdsError, InitError};
 use chrono::NaiveDate;
 use clap::Args;
 use log::{debug, info};
-use std::io::{self, Write};
 
 const YYYY_MM_DD: &str = "%Y-%m-%d";
 const DELIMITER: &str = ";";
@@ -38,7 +37,7 @@ pub(crate) struct Init {
 }
 
 impl Init {
-    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!(
             "Initializing service with id {} and name {}.",
             self.id, self.name
@@ -63,13 +62,10 @@ impl Init {
             self.notes,
         );
 
-        let stdout = io::stdout();
-        let mut buf = stdout.lock();
-        writeln!(
-            buf,
+        let msg = format!(
             "Initialized the following service:\n\nId: {}\n{update}",
             self.id
-        )?;
+        );
 
         // Don't need to check the return type here because we already check that the id is not present at
         // the start of this function
@@ -79,7 +75,7 @@ impl Init {
             self.id, self.name
         );
 
-        Ok(())
+        Ok(msg)
     }
 }
 

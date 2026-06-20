@@ -7,7 +7,6 @@ use crate::errors::CmdsError;
 use chrono::{Local, TimeDelta};
 use clap::Args;
 use log::{debug, info};
-use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Initializes a maintenance log at a given path")]
@@ -27,48 +26,42 @@ pub(crate) struct Log {
 }
 
 impl Log {
-    pub(crate) fn run(self) -> Result<(), CmdsError> {
+    pub(crate) fn run(self) -> Result<String, CmdsError> {
         info!(
             "Attempting to initialize maintenance log at {}.",
             self.log_path.display()
         );
 
-        match self.log_path.exists() {
+        let msg = match self.log_path.exists() {
             true => handle_existing_log(&self.log_path, self.force),
             false => init_log(&self.log_path),
         }?;
 
         info!("Maintenance log initialization process complete");
-        Ok(())
+        Ok(msg)
     }
 }
 
 #[inline]
-fn handle_existing_log(path: &Path, force: bool) -> Result<(), CmdsError> {
+fn handle_existing_log(path: &Path, force: bool) -> Result<String, CmdsError> {
     info!(
         "Maintenance log exists at {}. Handling with force={force}.",
         path.display()
     );
     match force {
         true => init_log(path),
-        false => write_force_msg(path),
+        false => {
+            debug!("Informing user to use --force arg.");
+            let msg = format!(
+                "Maintenance log already exists at {}. Rerun with --force (-f) to override the current maintenance log.",
+                path.display()
+            );
+            Ok(msg)
+        }
     }
 }
 
-#[inline]
-fn write_force_msg(path: &Path) -> Result<(), CmdsError> {
-    debug!("Informing user to use --force arg.");
-    let stdout = io::stdout();
-    let mut buf = stdout.lock();
-    writeln!(
-        buf,
-        "Maintenance log already exists at {}. Rerun with --force (-f) to override the current maintenance log.",
-        path.display()
-    )?;
-    Ok(())
-}
-
-fn init_log(path: &Path) -> Result<(), CmdsError> {
+fn init_log(path: &Path) -> Result<String, CmdsError> {
     info!("Writing example maintenance log to {}", path.display());
 
     let time_delta = TimeDelta::weeks(13);
@@ -114,19 +107,15 @@ fn init_log(path: &Path) -> Result<(), CmdsError> {
         .write(path)
         .map_err(CmdsError::from)?;
 
-    let stdout = io::stdout();
-    let mut buf = stdout.lock();
-
-    writeln!(
-        buf,
+    let msg = format!(
         "Successfully initialized maintenance log at {}",
         path.display()
-    )?;
+    );
 
     info!(
         "Successfully wrote example maintenance log to {}",
         path.display()
     );
 
-    Ok(())
+    Ok(msg)
 }

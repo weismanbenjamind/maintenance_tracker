@@ -6,8 +6,7 @@ use crate::errors::{CmdsError, UpdateError};
 use chrono::NaiveDate;
 use clap::{Args, Subcommand};
 use log::{debug, info};
-use std::fmt::Write as FmtWrite;
-use std::io::{self, Write};
+use std::fmt::Write;
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
@@ -20,7 +19,7 @@ pub(crate) struct Update {
 }
 
 impl Update {
-    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!("Updating maintenance log.");
 
         let mut metadata = match log.remove(&self.id) {
@@ -33,29 +32,29 @@ impl Update {
         // At the end just put the metadata back with the proper id
         let mut id_to_insert: Option<String> = None;
 
-        let stdout = io::stdout();
-        let mut buf = stdout.lock();
+        let mut buf = String::new();
 
+        // In all write! calls below writing to string which cannot fail
         match self.cmd {
             Cmd::Name(args) => {
                 metadata.set_name(&args.name);
-                writeln!(buf, "Updated name to {}", args.name)?
+                _ = write!(buf, "Updated name to {}", args.name);
             }
             Cmd::ServiceInterval(args) => {
                 let msg = args.run(&mut metadata)?;
-                writeln!(buf, "{msg}")?
+                _ = write!(buf, "{msg}")
             }
             Cmd::NextService(update_next_service) => {
                 let msg = update_next_service.run(&mut metadata)?;
-                writeln!(buf, "{msg}")?
+                _ = write!(buf, "{msg}")
             }
             Cmd::Notes(update_notes_cmd) => {
                 let msg = update_notes_cmd.run(&mut metadata)?;
-                writeln!(buf, "{msg}")?
+                _ = write!(buf, "{msg}")
             }
             Cmd::PreviousServices(update_service_cmd) => {
                 let msg = update_service_cmd.run(&mut metadata)?;
-                writeln!(buf, "{msg}")?
+                _ = write!(buf, "{msg}")
             }
             // Set the id variable so when we insert back into the map we insert with the new id.
             // Will inform user of this update below
@@ -66,11 +65,12 @@ impl Update {
         // We also check during the update id cmd that they new id does not exist
         // log.insert can't fail so okay with informing user of update before it happens
         if let Some(new_id) = &id_to_insert {
-            writeln!(buf, "Updated id to {new_id}")?;
+            // Writing to string which cannot fail
+            _ = write!(buf, "Updated id to {new_id}");
         }
         log.insert(&id_to_insert.unwrap_or(self.id), metadata);
 
-        Ok(())
+        Ok(buf)
     }
 }
 

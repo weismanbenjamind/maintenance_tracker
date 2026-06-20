@@ -6,7 +6,6 @@ use super::subcmds::ValidatedThreshold;
 use clap::{Args, Subcommand};
 use log::{debug, info};
 use std::fmt::Write;
-use std::io::{self, Write as WriteStdOut};
 
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
@@ -22,7 +21,7 @@ pub(crate) struct Diff {
 }
 
 impl Diff {
-    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!("Running diff");
 
         let threshold = ValidatedThreshold::try_from(self.cmd)?;
@@ -53,16 +52,13 @@ impl Diff {
             // Writing to string cannot fail so unwrap below
             .for_each(|d| writeln!(buf, "{d}\n").unwrap());
 
-        let stdout = io::stdout();
-        let mut std_out_buf = stdout.lock();
-
-        match buf.is_empty() {
-            true => writeln!(std_out_buf, "No services due"),
-            false => writeln!(std_out_buf, "{}", buf.trim_end()),
-        }?;
+        let msg = match buf.is_empty() {
+            true => "No services due",
+            false => buf.trim_end(),
+        };
 
         info!("Finished running diff");
-        Ok(())
+        Ok(msg.into())
     }
 }
 

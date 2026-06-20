@@ -3,7 +3,6 @@ use crate::errors::CmdsError;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 use log::info;
-use std::io::{self, Write};
 
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
@@ -19,7 +18,7 @@ pub(crate) struct Complete {
 }
 
 impl Complete {
-    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<(), CmdsError> {
+    pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!(
             "Completing service with id '{}' at mileage {} on date {}.",
             self.id, self.mileage, self.date
@@ -32,11 +31,7 @@ impl Complete {
         metadata.set_next_service(next_service_miles, next_service_date);
         metadata.prev_services_mut().add(self.mileage, self.date);
 
-        let stdout = io::stdout();
-        let mut buf = stdout.lock();
-
-        writeln!(
-            buf,
+        let msg = format!(
             "Marked {} as complete at {} miles on {}\n\
             Updated next service to {} miles or on {}",
             metadata.name(),
@@ -44,9 +39,9 @@ impl Complete {
             self.date,
             next_service_miles,
             next_service_date
-        )?;
+        );
 
         info!("Service logged as complete.");
-        Ok(())
+        Ok(msg)
     }
 }
