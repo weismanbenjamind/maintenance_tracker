@@ -1,3 +1,7 @@
+//! # Containers
+//!
+//! Module for all maintenance_log containers.
+
 mod maintenance_log;
 mod notes;
 mod previous_services;

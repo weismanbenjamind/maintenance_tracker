@@ -1,3 +1,7 @@
+//! # Commands
+//!
+//! Houses all top level commands for `maintenance_log` library.
+
 mod complete;
 mod delete;
 mod detail;

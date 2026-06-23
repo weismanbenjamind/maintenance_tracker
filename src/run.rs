@@ -1,3 +1,8 @@
+//! # Run
+//!
+//! Main entry point for maintenance log library.
+//! Meant to be called by `main` in maintenance log binary.
+
 use crate::cfg_resolve::resolve_cfg;
 use crate::cli::Cmd;
 use crate::cli::MaintenanceTrackerArgs;
@@ -6,6 +11,8 @@ use crate::errors::ContainersError;
 use crate::errors::MaintenanceTrackerError;
 use crate::verbosity::set_verbosity;
 use log::info;
+
+const RUST_LOG: &str = "RUST_LOG";
 
 pub struct SuccessMsg(String);
 
@@ -18,7 +25,8 @@ impl SuccessMsg {
 pub fn run(args: MaintenanceTrackerArgs) -> Result<SuccessMsg, MaintenanceTrackerError> {
     let (maintenance_log, maintenance_log_env, verbose, cmd) = args.into_parts();
 
-    set_verbosity(verbose)?;
+    let rust_log = std::env::var(RUST_LOG).ok();
+    set_verbosity(verbose, rust_log)?;
     info!("Starting maintenance tracking run.");
 
     if let Cmd::Log(log_cmd) = cmd {

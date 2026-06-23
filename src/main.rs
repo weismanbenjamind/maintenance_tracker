@@ -1,3 +1,5 @@
+//! # Main entry point for `maintenance_log` binary
+
 use clap::Parser;
 use maintenance_tracker::{MaintenanceTrackerArgs, run};
 use std::io::{Write, stderr, stdout};

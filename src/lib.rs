@@ -1,3 +1,7 @@
+//! # Maintenance Log
+//!
+//! Library for tracking auto maintenance.
+
 mod cfg_resolve;
 mod cli;
 mod cmds;
