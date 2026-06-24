@@ -82,11 +82,16 @@ impl Init {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct PreviousService {
     miles: u32,
-
     date: NaiveDate,
 }
 
 impl PreviousService {
+    // new is used for testing. Allow dead code here
+    #[allow(dead_code)]
+    pub(crate) fn new(miles: u32, date: NaiveDate) -> Self {
+        Self { miles, date }
+    }
+
     pub(crate) fn miles(&self) -> u32 {
         self.miles
     }
@@ -127,6 +132,15 @@ pub(crate) struct ServiceInterval {
 }
 
 impl ServiceInterval {
+    // new is used for testing. Allow dead code here
+    #[allow(dead_code)]
+    pub(crate) fn new(miles_interval: u32, monthly_interval: u32) -> Self {
+        Self {
+            miles_interval,
+            monthly_interval,
+        }
+    }
+
     pub(crate) fn miles_interval(&self) -> u32 {
         self.miles_interval
     }
@@ -146,6 +160,15 @@ pub(crate) struct NextService {
 }
 
 impl NextService {
+    // new is used for testing. Allow dead code here
+    #[allow(dead_code)]
+    pub(crate) fn new(miles: u32, date: NaiveDate) -> Self {
+        Self {
+            next_service_miles: miles,
+            next_service_date: date,
+        }
+    }
+
     pub(crate) fn next_service_miles(&self) -> u32 {
         self.next_service_miles
     }
