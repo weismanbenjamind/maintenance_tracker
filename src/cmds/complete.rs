@@ -28,7 +28,9 @@ impl Complete {
         let next_service_miles = self.mileage + metadata.service_interval().miles();
         let next_service_date = self.date + TimeDelta::days(metadata.service_interval().days());
 
-        metadata.set_next_service(next_service_miles, next_service_date);
+        let next_service_mut = metadata.next_service_mut();
+        next_service_mut.set_miles(next_service_miles);
+        next_service_mut.set_date(next_service_date);
         metadata.prev_services_mut().add(self.mileage, self.date);
 
         let msg = format!(

@@ -18,7 +18,7 @@ pub(crate) struct ServiceEvent {
 
 impl ServiceEvent {
     /// Create a new `ServiceEvent` witht the given `miles` and `date`.
-    pub(crate) fn new(miles: u32, date: NaiveDate) -> Self {
+    pub(crate) const fn new(miles: u32, date: NaiveDate) -> Self {
         Self { miles, date }
     }
 
@@ -29,7 +29,7 @@ impl ServiceEvent {
     }
 
     /// Set the miles of `ServiceEvent`.
-    pub(super) fn set_miles(&mut self, miles: u32) {
+    pub(crate) fn set_miles(&mut self, miles: u32) {
         self.miles = miles
     }
 
@@ -40,7 +40,7 @@ impl ServiceEvent {
     }
 
     /// Set the date of the `ServiceEvent`.
-    pub(super) fn set_date(&mut self, date: NaiveDate) {
+    pub(crate) fn set_date(&mut self, date: NaiveDate) {
         self.date = date
     }
 
@@ -87,7 +87,7 @@ impl From<PreviousService> for ServiceEvent {
 
 /// Struct to represent a service interval.
 /// E.g. miles and months between services.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
 pub(crate) struct ServiceInterval {
     pub(super) miles: u32,
     pub(super) months: u32,
@@ -95,7 +95,7 @@ pub(crate) struct ServiceInterval {
 
 impl ServiceInterval {
     /// Create a new `ServiceInterval`.
-    pub(crate) fn new(miles: u32, months: u32) -> Self {
+    pub(crate) const fn new(miles: u32, months: u32) -> Self {
         Self { miles, months }
     }
 

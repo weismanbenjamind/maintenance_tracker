@@ -1,20 +1,27 @@
+//! # Previous Services
+//!
+//! Houses functionality for dealing with previous services of a maintenance item
+
 use super::services::ServiceEvent;
 use crate::errors::PreviousServicesError;
 use chrono::NaiveDate;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+/// Struct to house previous services.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(transparent)]
 pub(crate) struct PreviousServices {
     service_events: Option<Vec<ServiceEvent>>,
 }
 
 impl PreviousServices {
+    /// Create a new previous service object.
     pub(crate) fn new(service_events: Option<Vec<ServiceEvent>>) -> Self {
         Self { service_events }
     }
 
+    /// Add a completed service to the previous services.
     pub(crate) fn add(&mut self, miles: u32, date: NaiveDate) {
         let service_event = ServiceEvent::new(miles, date);
         match &mut self.service_events {
@@ -23,10 +30,12 @@ impl PreviousServices {
         }
     }
 
+    /// Get all previous services if they exist. Returns None if no previous services exist.
     pub(crate) fn service_events(&self) -> Option<&[ServiceEvent]> {
         self.service_events.as_deref()
     }
 
+    /// Get a mutable borrow to all previous services if they exist. Returns None if no previous services exist.
     fn get_previous_services_mut(
         &mut self,
     ) -> Result<&mut Vec<ServiceEvent>, PreviousServicesError> {
@@ -36,6 +45,8 @@ impl PreviousServices {
         }
     }
 
+    /// Replace a previous service's miles, date, or both
+    /// targetting a specific miles, date, or miles/date combination.
     pub(crate) fn replace(
         &mut self,
         curr_miles: Option<u32>,

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors::NotesError;
 
-#[derive(Clone, Debug, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 #[serde(transparent)]
 pub(crate) struct Notes {
     notes: Option<Vec<String>>,
