@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Struct to house metadata about a given service.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub(crate) struct ServiceMetdata {
     name: String,
     service_interval: ServiceInterval,
