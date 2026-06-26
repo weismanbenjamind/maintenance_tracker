@@ -169,20 +169,231 @@ mod tests {
     const OVERLAP: ServiceEvent = ServiceEvent::new(MILES_DATE.miles(), MILES_DATE.date());
     const PREV_SERVICES: [ServiceEvent; 4] = [MILES, DATE, MILES_DATE, OVERLAP];
 
-    fn build_previous_services() -> PreviousServices {
+    /// Builds PreviousServices with some service events present
+    fn build_previous_services_some() -> PreviousServices {
         PreviousServices {
             service_events: Some(PREV_SERVICES.into()),
         }
     }
 
+    /// Builds PreviousServices with no service events present
+    fn build_previous_services_none() -> PreviousServices {
+        PreviousServices {
+            service_events: None,
+        }
+    }
+
     #[test]
-    fn previous_services_previous_services_add() {
-        todo!("Start with this test")
+    fn previous_services_previous_services_remove_prev_services_no_idx() {
+        let mut previous_services = build_previous_services_some();
+        let target_miles = 1;
+        assert!(
+            previous_services
+                .service_events
+                .as_deref()
+                .unwrap()
+                .iter()
+                .all(|service_event| service_event.miles() != target_miles)
+        );
+
+        let found = previous_services
+            .remove(Some(target_miles), None)
+            .unwrap_err();
+
+        match found {
+            PreviousServicesError::ServiceEventNotFound => (),
+            _ => panic!("Expected PreviousServicesError::ServiceEventNotFound"),
+        }
+    }
+
+    #[test]
+    fn previous_services_previous_services_remove_prev_services_not_set() {
+        let mut prev_services = build_previous_services_none();
+        let found = prev_services
+            .remove(Some(1000), Some(NaiveDate::default()))
+            .unwrap_err();
+
+        match found {
+            PreviousServicesError::PreviousServicesNotSet => (),
+            _ => panic!("Expected PreviousServicesError::PreviousServicesNotSet"),
+        }
+    }
+
+    #[test]
+    fn previous_services_previous_services_remove_ok() {
+        let mut previous_services = build_previous_services_some();
+        let mut original_length: Option<usize> = None;
+        previous_services
+            .service_events
+            .as_deref()
+            .inspect(|service_events| original_length = Some(service_events.len()));
+        let original_length = original_length.unwrap();
+
+        previous_services
+            .remove(Some(MILES.miles()), Some(MILES.date()))
+            .unwrap();
+
+        let service_events = previous_services.service_events.unwrap();
+        assert!(original_length > service_events.len());
+        assert!(
+            service_events
+                .iter()
+                .all(|service_event| *service_event != MILES)
+        );
+    }
+
+    #[test]
+    fn previous_services_previous_services_replace_previous_services_no_idx() {
+        let mut prev_services = build_previous_services_some();
+        let target_miles = 1;
+
+        assert!(
+            prev_services
+                .service_events
+                .as_deref()
+                .unwrap()
+                .iter()
+                .all(|service_event| service_event.miles() != target_miles)
+        );
+
+        let found = prev_services
+            .replace(Some(target_miles), None, Some(80000), None)
+            .unwrap_err();
+
+        match found {
+            PreviousServicesError::ServiceEventNotFound => (),
+            _ => panic!("Expected PreviousServicesError::ServiceEventNotFound error"),
+        }
+    }
+
+    #[test]
+    fn previous_services_previous_services_replace_previous_services_none() {
+        let mut prev_services = build_previous_services_none();
+        let found = prev_services
+            .replace(Some(750000), None, Some(80000), None)
+            .unwrap_err();
+
+        match found {
+            PreviousServicesError::PreviousServicesNotSet => (),
+            _ => panic!("Expected PreviousServicesError::PreviousServicesNotSet error"),
+        }
+    }
+
+    #[test]
+    fn previous_services_previous_services_replace_miles_and_date() {
+        let mut prev_services = build_previous_services_some();
+        let miles_update = 80000;
+        let date_update = NaiveDate::from_ymd_opt(2027, 6, 18).unwrap();
+        let miles_to_update = MILES.miles();
+        let date_to_update = MILES.date();
+        assert_ne!(miles_update, miles_to_update);
+        assert_ne!(date_update, date_to_update);
+
+        prev_services
+            .replace(
+                Some(miles_to_update),
+                Some(date_to_update),
+                Some(miles_update),
+                Some(date_update),
+            )
+            .unwrap();
+
+        let found = prev_services.service_events.unwrap()[0];
+
+        assert_eq!(found.miles(), miles_update);
+        assert_eq!(found.date(), date_update);
+    }
+
+    #[test]
+    fn previous_services_previous_services_replace_date() {
+        let mut prev_services = build_previous_services_some();
+        let date_update = NaiveDate::from_ymd_opt(2027, 6, 18).unwrap();
+        let to_update = DATE.date();
+        assert_ne!(date_update, to_update);
+
+        prev_services
+            .replace(None, Some(to_update), None, Some(date_update))
+            .unwrap();
+
+        assert_eq!(prev_services.service_events.unwrap()[1].date(), date_update);
+    }
+
+    #[test]
+    fn previous_services_previous_services_replace_miles() {
+        let mut prev_services = build_previous_services_some();
+        let miles_update = 80000;
+        let to_update = MILES.miles();
+        assert_ne!(miles_update, to_update);
+
+        prev_services
+            .replace(Some(to_update), None, Some(miles_update), None)
+            .unwrap();
+
+        assert_eq!(
+            prev_services.service_events.unwrap()[0].miles(),
+            miles_update
+        );
+    }
+
+    #[test]
+    fn previous_services_previous_services_get_previous_services_mut_err() {
+        let mut prev_services = build_previous_services_none();
+        match prev_services.get_previous_services_mut().unwrap_err() {
+            PreviousServicesError::PreviousServicesNotSet => (),
+            _ => panic!("Expected PreviousServicesError::PreviousServicesNotSet"),
+        }
+    }
+
+    #[test]
+    fn previous_services_previous_services_get_previous_services_mut_ok() {
+        let mut prev_services = build_previous_services_some();
+        let found = prev_services.get_previous_services_mut().unwrap();
+        let expected: Vec<ServiceEvent> = PREV_SERVICES.into();
+        assert_eq!(*found, expected);
+    }
+
+    #[test]
+    fn previous_services_previous_services_service_events_services_not_present() {
+        let previous_services = build_previous_services_none();
+        assert_eq!(previous_services.service_events(), None)
+    }
+
+    #[test]
+    fn previous_services_previous_services_service_events_services_present() {
+        let previous_services = build_previous_services_some();
+        assert_eq!(previous_services.service_events().unwrap(), &PREV_SERVICES)
+    }
+
+    #[test]
+    fn previous_services_previous_services_add_no_services() {
+        let mut prev_services = build_previous_services_none();
+        let addition = ServiceEvent::new(80000, NaiveDate::from_ymd_opt(2027, 2, 14).unwrap());
+        prev_services.add(addition.miles(), addition.date());
+
+        let updated_services = prev_services.service_events.unwrap();
+        let new_len = updated_services.len();
+
+        assert_eq!(new_len, 1);
+        assert_eq!(updated_services[0], addition);
+    }
+
+    #[test]
+    fn previous_services_previous_services_add_services_present() {
+        let mut prev_services = build_previous_services_some();
+        let original_len = prev_services.service_events.as_deref().unwrap().len();
+        let addition = ServiceEvent::new(80000, NaiveDate::from_ymd_opt(2027, 2, 14).unwrap());
+        prev_services.add(addition.miles(), addition.date());
+
+        let updated_services = prev_services.service_events.unwrap();
+        let new_len = updated_services.len();
+
+        assert_eq!(new_len, original_len + 1);
+        assert_eq!(updated_services[new_len - 1], addition);
     }
 
     #[test]
     fn previous_services_previous_services_clear() {
-        let mut prev_services = build_previous_services();
+        let mut prev_services = build_previous_services_some();
         assert!(prev_services.service_events.is_some());
         prev_services.clear();
         assert!(prev_services.service_events.is_none());
