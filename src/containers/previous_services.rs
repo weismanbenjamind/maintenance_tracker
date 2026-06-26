@@ -70,6 +70,8 @@ impl PreviousServices {
         Ok(())
     }
 
+    /// Removes a previous service for the given miles, date, or miles/date combination.
+    /// Must pass at least one of miles or date.
     pub(crate) fn remove(
         &mut self,
         miles: Option<u32>,
@@ -94,6 +96,10 @@ impl PreviousServices {
     }
 }
 
+/// Given a slice of service events,
+/// Finds the index which equals the miles, date, or miles/date combination.
+/// Will return Err if not exactly one service event is found.
+/// Must pass one of miles, date, or both.
 fn get_prev_service_idx(
     prev_services: &[ServiceEvent],
     miles: Option<u32>,
@@ -112,6 +118,9 @@ fn get_prev_service_idx(
     }
 }
 
+/// Given a slice of service events,
+/// Finds the indices which equals the miles, date, or miles/date combination.
+/// Must pass one of miles, date, or both.
 fn filter_prev_services_idxs(
     prev_services: &[ServiceEvent],
     miles: Option<u32>,
@@ -144,4 +153,140 @@ fn filter_prev_services_idxs(
     };
 
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+
+    const MILES: ServiceEvent =
+        ServiceEvent::new(70000, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap());
+    const DATE: ServiceEvent =
+        ServiceEvent::new(74000, NaiveDate::from_ymd_opt(2026, 10, 14).unwrap());
+    const MILES_DATE: ServiceEvent =
+        ServiceEvent::new(77000, NaiveDate::from_ymd_opt(2027, 2, 14).unwrap());
+    const OVERLAP: ServiceEvent = ServiceEvent::new(MILES_DATE.miles(), MILES_DATE.date());
+    const PREV_SERVICES: [ServiceEvent; 4] = [MILES, DATE, MILES_DATE, OVERLAP];
+
+    fn build_previous_services() -> PreviousServices {
+        PreviousServices {
+            service_events: Some(PREV_SERVICES.into()),
+        }
+    }
+
+    #[test]
+    fn previous_services_previous_services_add() {
+        todo!("Start with this test")
+    }
+
+    #[test]
+    fn previous_services_previous_services_clear() {
+        let mut prev_services = build_previous_services();
+        assert!(prev_services.service_events.is_some());
+        prev_services.clear();
+        assert!(prev_services.service_events.is_none());
+    }
+
+    #[test]
+    fn previous_services_previous_services_constructor_some() {
+        let found = PreviousServices::new(Some(PREV_SERVICES.into()));
+        assert_eq!(found.service_events.unwrap(), PREV_SERVICES);
+    }
+
+    #[test]
+    fn previous_services_previous_services_constructor_none() {
+        let found = PreviousServices::new(None);
+        assert!(found.service_events.is_none());
+    }
+
+    #[test]
+    fn previous_services_get_prev_service_idx_miles() {
+        let found = get_prev_service_idx(&PREV_SERVICES, Some(MILES.miles()), None).unwrap();
+        assert_eq!(found, 0);
+    }
+
+    #[test]
+    fn previous_services_get_prev_service_idx_date() {
+        let found = get_prev_service_idx(&PREV_SERVICES, None, Some(DATE.date())).unwrap();
+        assert_eq!(found, 1);
+    }
+
+    #[test]
+    fn previous_services_get_prev_service_idx_miles_date() {
+        let found =
+            get_prev_service_idx(&PREV_SERVICES, Some(MILES.miles()), Some(MILES.date())).unwrap();
+        assert_eq!(found, 0);
+    }
+
+    #[test]
+    fn previous_services_get_prev_service_idx_invalid_args() {
+        let found = get_prev_service_idx(&PREV_SERVICES, None, None).unwrap_err();
+        match found {
+            PreviousServicesError::InvalidOptionalArgs => (),
+            _ => panic!("Expected PreviousServicesError::InvalidOptionalArgs"),
+        }
+    }
+
+    #[test]
+    fn previous_services_get_prev_service_idx_multi() {
+        let found =
+            get_prev_service_idx(&PREV_SERVICES, Some(OVERLAP.miles()), Some(OVERLAP.date()))
+                .unwrap_err();
+
+        match found {
+            PreviousServicesError::MultipleServiceEvents => (),
+            _ => panic!("Expected PreviousServicesError::MultipleServiceEvents"),
+        }
+    }
+
+    #[test]
+    fn previous_services_get_prev_service_idx_empty() {
+        let target_miles = 100000;
+        let target_date = NaiveDate::from_ymd_opt(2030, 1, 1).unwrap();
+        assert!(
+            !PREV_SERVICES
+                .iter()
+                .any(|service| service.miles() == target_miles || service.date() == target_date)
+        );
+        let found = get_prev_service_idx(&PREV_SERVICES, Some(target_miles), Some(target_date))
+            .unwrap_err();
+
+        match found {
+            PreviousServicesError::ServiceEventNotFound => (),
+            _ => panic!("Expected PreviousServicesError::ServiceEventNotFound"),
+        }
+    }
+
+    #[test]
+    fn previous_services_filter_prev_services_idxs_err() {
+        assert!(filter_prev_services_idxs(&PREV_SERVICES, None, None).is_err());
+    }
+
+    #[test]
+    fn previous_services_filter_miles() {
+        let found = filter_prev_services_idxs(&PREV_SERVICES, Some(MILES.miles()), None).unwrap();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0], 0);
+    }
+
+    #[test]
+    fn previous_services_filter_date() {
+        let found = filter_prev_services_idxs(&PREV_SERVICES, None, Some(DATE.date())).unwrap();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0], 1);
+    }
+
+    #[test]
+    fn previous_services_filter_miles_and_date() {
+        let found = filter_prev_services_idxs(
+            &PREV_SERVICES,
+            Some(MILES_DATE.miles()),
+            Some(MILES_DATE.date()),
+        )
+        .unwrap();
+        assert_eq!(found.len(), 2);
+        assert_eq!(found[0], 2);
+        assert_eq!(found[1], 3);
+    }
 }

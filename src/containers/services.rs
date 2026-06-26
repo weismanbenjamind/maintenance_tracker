@@ -24,7 +24,7 @@ impl ServiceEvent {
 
     /// Get the miles of the `ServiceEvent`.
     /// Returns a copy of the actual miles the object houses.
-    pub(crate) fn miles(&self) -> u32 {
+    pub(crate) const fn miles(&self) -> u32 {
         self.miles
     }
 
@@ -35,7 +35,7 @@ impl ServiceEvent {
 
     /// Get the date of the `ServiceEvent`.
     /// Returns a copy of the actual date the object houses.
-    pub(crate) fn date(&self) -> NaiveDate {
+    pub(crate) const fn date(&self) -> NaiveDate {
         self.date
     }
 
