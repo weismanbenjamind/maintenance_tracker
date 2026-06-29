@@ -1,6 +1,6 @@
 //! # List
 //!
-//! Command to list all possible service interval ids
+//! Command to list all possible service interval ids.
 
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;

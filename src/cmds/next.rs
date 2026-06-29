@@ -1,6 +1,6 @@
 //! # Next
 //!
-//! Command to get a specific service's next miles and date thresholds
+//! Command to get a specific service's next miles and date thresholds.
 
 use clap::Args;
 
