@@ -9,6 +9,9 @@ use crate::containers::{MaintenanceLog, ServiceMetdata};
 
 use std::collections::HashMap;
 
+/// Module which houses constants for testing.
+/// All testing factory functions use these constants
+/// to build their objects.
 pub(crate) mod constants {
     use crate::containers::{ServiceEvent, ServiceInterval};
     use chrono::NaiveDate;

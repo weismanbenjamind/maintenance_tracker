@@ -33,9 +33,33 @@ impl Delete {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn delete_ok() {}
+    use super::*;
+    use crate::testing::build_log;
+    use crate::testing::constants::ID;
 
     #[test]
-    fn delete_err() {}
+    fn delete_ok() {
+        let mut log = build_log();
+        let cmd = Delete { id: ID.into() };
+        assert!(log.contains(ID));
+        let found = cmd.run(&mut log).unwrap();
+        assert!(found.to_lowercase().contains("deleted service"));
+        assert!(!log.contains(ID));
+    }
+
+    #[test]
+    fn delete_err() {
+        let to_delete = "to_delete";
+        let mut log = build_log();
+        assert!(!log.contains(to_delete));
+
+        let cmd = Delete {
+            id: to_delete.into(),
+        };
+
+        match cmd.run(&mut log).unwrap_err() {
+            CmdsError::IdNotFound(_) => (),
+            _ => panic!("Expected CmdsError::IdNotFound"),
+        }
+    }
 }
