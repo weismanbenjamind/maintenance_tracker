@@ -41,39 +41,7 @@ impl List {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::containers::{MaintenanceLog, ServiceEvent, ServiceInterval, ServiceMetdata};
-    use chrono::NaiveDate;
-    use std::collections::HashMap;
-
-    const NAME: &str = "name";
-    const SERVICE_INTERVAL: ServiceInterval = ServiceInterval::new(4000, 5);
-    const NEXT_SERVICE: ServiceEvent =
-        ServiceEvent::new(75000, NaiveDate::from_ymd_opt(2026, 6, 5).unwrap());
-    const PREVIOUS_SERVICE: ServiceEvent =
-        ServiceEvent::new(71000, NaiveDate::from_ymd_opt(2026, 2, 20).unwrap());
-    const NOTE: &str = "Note";
-    const ID: &str = "id";
-
-    fn build_metadata() -> ServiceMetdata {
-        let previous_services = vec![PREVIOUS_SERVICE];
-        let notes = vec![NOTE.to_string()];
-
-        ServiceMetdata::new(
-            NAME.into(),
-            SERVICE_INTERVAL,
-            NEXT_SERVICE,
-            Some(previous_services),
-            Some(notes),
-        )
-    }
-
-    fn build_log() -> MaintenanceLog {
-        let metadata = build_metadata();
-        let mut map: HashMap<String, ServiceMetdata> = HashMap::new();
-        map.insert(ID.into(), metadata);
-
-        MaintenanceLog::new(map)
-    }
+    use crate::testing::{build_log, build_metadata, constants};
 
     #[test]
     fn list_run() {
@@ -85,7 +53,7 @@ mod tests {
 
         let cmd = List;
         let result = cmd.run(&log).unwrap();
-        let expected = format!("{}\n{}", ID, new_id);
+        let expected = format!("{}\n{}", constants::ID, new_id);
         assert_eq!(result, expected);
     }
 }

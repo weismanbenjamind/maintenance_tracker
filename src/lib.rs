@@ -10,6 +10,7 @@ mod containers;
 mod dates;
 pub mod errors;
 mod run;
+mod testing;
 mod verbosity;
 
 pub use cli::MaintenanceTrackerArgs;
