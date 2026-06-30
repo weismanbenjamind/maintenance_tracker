@@ -1,3 +1,7 @@
+//! # Status
+//!
+//! Houses command for getting status of a single ID or multiple IDs
+
 use chrono::{Local, NaiveDate};
 use clap::Args;
 use log::{debug, info};
@@ -6,6 +10,7 @@ use std::fmt::Write;
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
 
+/// Arguments for Status command.
 #[derive(Clone, Debug, Args)]
 #[command(about = "Get the miles/date difference for a specific service or all services")]
 pub(crate) struct Status {
@@ -29,6 +34,7 @@ pub(crate) struct Status {
 }
 
 impl Status {
+    /// Run the status command given the arguments housed in the struct.
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!("Starting status operation");
 
@@ -60,6 +66,8 @@ impl Status {
     }
 }
 
+/// View struct which houses the output of a status calculation.
+/// Allows for easy formatting.
 #[derive(Clone, Copy, Debug)]
 struct StatusResult<'a> {
     name: &'a str,
@@ -70,10 +78,14 @@ struct StatusResult<'a> {
 }
 
 impl<'a> StatusResult<'a> {
+    /// Get the miles differences between the next service miles
+    /// and current miles on the vehicle.
     fn miles_diff(&self) -> i64 {
         self.next_service_miles as i64 - self.curr_miles as i64
     }
 
+    /// Get the difference in days between the next service date
+    /// and the date passed to the StatusResult struct.
     fn days_diff(&self) -> i64 {
         (self.next_service_date - self.date).num_days()
     }
@@ -96,5 +108,158 @@ impl<'a> std::fmt::Display for StatusResult<'a> {
             "Days until next service (Next Service Date - Today): {} Days",
             self.days_diff()
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::TimeDelta;
+
+    use super::*;
+    use crate::testing::constants::{ID, NAME, NEXT_SERVICE};
+    use crate::testing::{build_log, build_metadata};
+
+    #[test]
+    fn status_run_multi_id() {
+        let mut log = build_log();
+        let metadata = build_metadata();
+        let new_id = "new_id";
+        assert!(!log.contains(new_id));
+        log.insert(new_id, metadata);
+
+        let miles_diff = 3000;
+        let miles = NEXT_SERVICE.miles() - miles_diff;
+
+        let days_diff = 30;
+        let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
+
+        let cmd = Status {
+            curr_miles: miles,
+            id: None,
+            today,
+        };
+
+        let found = cmd.run(&log).unwrap();
+
+        let mut buf = String::new();
+        // Writing to String can't fail
+        _ = writeln!(buf, "Name: {}", NAME);
+        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
+        _ = writeln!(buf, "Current mileage: {} Miles", miles);
+        _ = writeln!(
+            buf,
+            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
+            miles_diff
+        );
+        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
+        _ = writeln!(buf, "Today: {}", today);
+        _ = write!(
+            buf,
+            "Days until next service (Next Service Date - Today): {} Days",
+            days_diff
+        );
+
+        _ = writeln!(buf);
+        _ = writeln!(buf);
+
+        _ = writeln!(buf, "Name: {}", NAME);
+        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
+        _ = writeln!(buf, "Current mileage: {} Miles", miles);
+        _ = writeln!(
+            buf,
+            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
+            miles_diff
+        );
+        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
+        _ = writeln!(buf, "Today: {}", today);
+        _ = write!(
+            buf,
+            "Days until next service (Next Service Date - Today): {} Days",
+            days_diff
+        );
+
+        assert_eq!(found, buf);
+    }
+
+    #[test]
+    fn status_run_single_id() {
+        let miles_diff = 3000;
+        let miles = NEXT_SERVICE.miles() - miles_diff;
+
+        let days_diff = 30;
+        let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
+
+        let cmd = Status {
+            curr_miles: miles,
+            id: Some(ID.into()),
+            today,
+        };
+
+        let log = build_log();
+        let found = cmd.run(&log).unwrap();
+
+        let mut buf = String::new();
+        // Writing to String can't fail
+        _ = writeln!(buf, "Name: {}", NAME);
+        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
+        _ = writeln!(buf, "Current mileage: {} Miles", miles);
+        _ = writeln!(
+            buf,
+            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
+            miles_diff
+        );
+        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
+        _ = writeln!(buf, "Today: {}", today);
+        _ = write!(
+            buf,
+            "Days until next service (Next Service Date - Today): {} Days",
+            days_diff
+        );
+
+        assert_eq!(found, buf);
+    }
+
+    #[test]
+    fn status_status_result() {
+        let name = "name";
+        let curr_miles = 1000;
+        let next_service_miles = 1500;
+        let date = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
+        let next_service_date = NaiveDate::from_ymd_opt(2027, 7, 1).unwrap();
+
+        let status_result = StatusResult {
+            name,
+            curr_miles,
+            next_service_miles,
+            date,
+            next_service_date,
+        };
+
+        let miles_diff = next_service_miles as i64 - curr_miles as i64;
+        assert_eq!(status_result.miles_diff(), miles_diff);
+
+        let days_diff = (next_service_date - date).num_days();
+        assert_eq!(status_result.days_diff(), days_diff);
+
+        let mut buf = String::new();
+
+        // String writes can't fail
+        _ = writeln!(buf, "Name: {}", name);
+        _ = writeln!(buf, "Next service (miles): {} Miles", next_service_miles);
+        _ = writeln!(buf, "Current mileage: {} Miles", curr_miles);
+        _ = writeln!(
+            buf,
+            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
+            miles_diff
+        );
+        _ = writeln!(buf, "Next service date: {}", next_service_date);
+        _ = writeln!(buf, "Today: {}", date);
+        _ = write!(
+            buf,
+            "Days until next service (Next Service Date - Today): {} Days",
+            days_diff
+        );
+
+        assert_eq!(format!("{status_result}"), buf);
     }
 }
