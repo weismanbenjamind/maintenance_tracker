@@ -79,7 +79,7 @@ impl Init {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct PreviousService {
     miles: u32,
     date: NaiveDate,
@@ -175,5 +175,179 @@ impl NextService {
 
     pub(crate) fn next_service_date(&self) -> NaiveDate {
         self.next_service_date
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testing::build_log;
+    use crate::testing::constants::ID;
+
+    #[test]
+    fn init_run_ok() {
+        let new_id = "new_id";
+        let mut log = build_log();
+        assert!(!log.contains(new_id));
+
+        let name = "Service";
+        let service_interval = ServiceInterval {
+            miles_interval: 4000,
+            monthly_interval: 5,
+        };
+        let next_service = NextService {
+            next_service_miles: 70000,
+            next_service_date: NaiveDate::from_ymd_opt(2026, 6, 7).unwrap(),
+        };
+        let notes = Some(
+            vec!["note_1", "note_2"]
+                .iter()
+                .map(|n| n.to_string())
+                .collect::<Vec<String>>(),
+        );
+        let previous_services = Some(vec![PreviousService {
+            miles: 66000,
+            date: NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(),
+        }]);
+
+        let cmd = Init {
+            name: name.into(),
+            id: new_id.into(),
+            service_interval,
+            next_service,
+            notes: notes.clone(),
+            previous_services: previous_services.clone(),
+        };
+
+        let _msg = cmd.run(&mut log).unwrap();
+
+        let found = log.get(new_id).unwrap();
+        assert_eq!(found.name(), name);
+
+        let found_service_interval = found.service_interval();
+        assert_eq!(
+            found_service_interval.miles(),
+            service_interval.miles_interval
+        );
+        assert_eq!(
+            found_service_interval.days(),
+            (service_interval.monthly_interval as f64 / 12.0 * 365.0).floor() as i64
+        );
+
+        let found_next_service = found.next_service();
+        assert_eq!(found_next_service.miles(), next_service.next_service_miles);
+        assert_eq!(found_next_service.date(), next_service.next_service_date);
+
+        assert_eq!(found.notes().try_get(), notes.as_deref());
+
+        let found_prev_services = found.prev_services().service_events().unwrap();
+        assert_eq!(found_prev_services.len(), 1);
+        let found_prev_service = found_prev_services[0];
+
+        let expected_prev_service = previous_services.unwrap()[0];
+
+        assert_eq!(
+            (found_prev_service.miles(), found_prev_service.date()),
+            (expected_prev_service.miles(), expected_prev_service.date())
+        );
+    }
+
+    #[test]
+    fn init_run_err() {
+        let cmd = Init {
+            name: "Service".into(),
+            id: ID.into(),
+            service_interval: ServiceInterval {
+                miles_interval: 4000,
+                monthly_interval: 5,
+            },
+            next_service: NextService {
+                next_service_miles: 70000,
+                next_service_date: NaiveDate::from_ymd_opt(2026, 6, 7).unwrap(),
+            },
+            notes: None,
+            previous_services: None,
+        };
+
+        match cmd.run(&mut build_log()).unwrap_err() {
+            CmdsError::IdExists(_, _) => (),
+            _ => panic!("Expected CmdsError::IdExists"),
+        }
+    }
+
+    #[test]
+    fn init_previous_service() {
+        let miles = 1000;
+        let date = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let found = PreviousService::new(miles, date);
+        assert_eq!(found.miles(), miles);
+        assert_eq!(found.date(), date);
+    }
+
+    #[test]
+    fn init_previous_service_from_str_ok() {
+        let to_parse = "100000;2026-06-02";
+        let found = PreviousService::from_str(to_parse).unwrap();
+        assert_eq!(
+            found,
+            PreviousService {
+                miles: 100000,
+                date: NaiveDate::from_ymd_opt(2026, 6, 2).unwrap()
+            }
+        )
+    }
+
+    #[test]
+    fn init_previous_service_from_str_bad_miles_err() {
+        let to_parse = "100s00;2026-06-02";
+        match PreviousService::from_str(to_parse).unwrap_err() {
+            InitError::InvalidMilesFormat(_) => (),
+            _ => panic!("Expected InitError::InvalidMilesFormat"),
+        }
+    }
+
+    #[test]
+    fn init_previous_service_from_str_bad_date_err() {
+        let to_parse = "100000;2026-0a-02";
+        match PreviousService::from_str(to_parse).unwrap_err() {
+            InitError::InvalidDateFormat(_) => (),
+            _ => panic!("Expected InitError::InvalidDateFormat"),
+        }
+    }
+
+    #[test]
+    fn init_previous_service_from_str_bad_delimiter() {
+        let to_parse = "100000:2026-06-02";
+        match PreviousService::from_str(to_parse).unwrap_err() {
+            InitError::FailedPreviousServiceParse => (),
+            _ => panic!("InitError::FailedPreviousServiceParse"),
+        }
+    }
+
+    #[test]
+    fn init_previous_service_from_str_multi_delimiter() {
+        let to_parse = "100000;;2026-06-02";
+        match PreviousService::from_str(to_parse).unwrap_err() {
+            InitError::FailedPreviousServiceParse => (),
+            _ => panic!("InitError::FailedPreviousServiceParse"),
+        }
+    }
+
+    #[test]
+    fn init_service_interval() {
+        let miles = 1000;
+        let monthly_interval = 5;
+        let found = ServiceInterval::new(miles, monthly_interval);
+        assert_eq!(found.miles_interval(), miles);
+        assert_eq!(found.monthly_interval(), monthly_interval);
+    }
+
+    #[test]
+    fn init_next_service() {
+        let miles = 1000;
+        let date = NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let found = NextService::new(miles, date);
+        assert_eq!(found.next_service_miles(), miles);
+        assert_eq!(found.next_service_date, date);
     }
 }

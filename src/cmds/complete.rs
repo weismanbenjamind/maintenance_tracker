@@ -85,13 +85,13 @@ mod tests {
         let next_service_miles = mileage + SERVICE_INTERVAL.miles();
         let next_service_date = date + TimeDelta::days(SERVICE_INTERVAL.days());
         let previous_service = ServiceEvent::new(mileage, date);
-        let updated_service = log.get_mut(ID).unwrap();
+        let updated_service = log.get(ID).unwrap();
         let next_service = updated_service.next_service();
 
         assert_eq!(next_service.miles(), next_service_miles);
         assert_eq!(next_service.date(), next_service_date);
         updated_service
-            .prev_services_mut()
+            .prev_services()
             .service_events()
             .unwrap()
             .iter()

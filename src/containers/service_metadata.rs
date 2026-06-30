@@ -66,9 +66,21 @@ impl ServiceMetdata {
         &mut self.next_service
     }
 
+    /// Borrow the notes. Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn notes(&self) -> &Notes {
+        &self.notes
+    }
+
     /// Gets a mutable borrow to the notes.
     pub(crate) fn notes_mut(&mut self) -> &mut Notes {
         &mut self.notes
+    }
+
+    /// Borrow the previous services. Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn prev_services(&self) -> &PreviousServices {
+        &self.previous_services
     }
 
     /// Gets a mutable borrow to the previous services.
@@ -173,14 +185,17 @@ mod tests {
         assert_eq!(*service_metadata.service_interval_mut(), SERVICE_INTERVAL);
         assert_eq!(service_metadata.next_service(), NEXT_SERVICE);
         assert_eq!(*service_metadata.next_service_mut(), NEXT_SERVICE);
-        assert_eq!(
-            *service_metadata.notes_mut(),
-            Notes::new(Some(vec![NOTE.to_string()]))
-        );
+
+        let expected_notes = Notes::new(Some(vec![NOTE.to_string()]));
+        let expected_prev_services = PreviousServices::new(Some(vec![PREVIOUS_SERVICE]));
+
+        assert_eq!(*service_metadata.notes_mut(), expected_notes);
         assert_eq!(
             *service_metadata.prev_services_mut(),
-            PreviousServices::new(Some(vec![PREVIOUS_SERVICE]))
+            expected_prev_services
         );
+        assert_eq!(*service_metadata.notes(), expected_notes);
+        assert_eq!(*service_metadata.prev_services(), expected_prev_services);
     }
 
     #[test]

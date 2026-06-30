@@ -13,7 +13,7 @@ impl Notes {
         Self { notes }
     }
 
-    pub(super) fn try_get(&self) -> Option<&[String]> {
+    pub(crate) fn try_get(&self) -> Option<&[String]> {
         self.notes.as_deref()
     }
 
