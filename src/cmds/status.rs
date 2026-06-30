@@ -127,8 +127,8 @@ mod tests {
         assert!(!log.contains(new_id));
         log.insert(new_id, metadata);
 
-        let miles_diff = 3000;
-        let miles = NEXT_SERVICE.miles() - miles_diff;
+        let miles_diff: i32 = 3000;
+        let miles = NEXT_SERVICE.miles() - miles_diff as u32;
 
         let days_diff = 30;
         let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
@@ -142,49 +142,18 @@ mod tests {
         let found = cmd.run(&log).unwrap();
 
         let mut buf = String::new();
-        // Writing to String can't fail
-        _ = writeln!(buf, "Name: {}", NAME);
-        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
-        _ = writeln!(buf, "Current mileage: {} Miles", miles);
-        _ = writeln!(
-            buf,
-            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
-            miles_diff
-        );
-        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
-        _ = writeln!(buf, "Today: {}", today);
-        _ = write!(
-            buf,
-            "Days until next service (Next Service Date - Today): {} Days",
-            days_diff
-        );
-
+        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff);
         _ = writeln!(buf);
         _ = writeln!(buf);
-
-        _ = writeln!(buf, "Name: {}", NAME);
-        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
-        _ = writeln!(buf, "Current mileage: {} Miles", miles);
-        _ = writeln!(
-            buf,
-            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
-            miles_diff
-        );
-        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
-        _ = writeln!(buf, "Today: {}", today);
-        _ = write!(
-            buf,
-            "Days until next service (Next Service Date - Today): {} Days",
-            days_diff
-        );
+        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff);
 
         assert_eq!(found, buf);
     }
 
     #[test]
     fn status_run_single_id() {
-        let miles_diff = 3000;
-        let miles = NEXT_SERVICE.miles() - miles_diff;
+        let miles_diff: i32 = 3000;
+        let miles = NEXT_SERVICE.miles() - miles_diff as u32;
 
         let days_diff = 30;
         let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
@@ -199,22 +168,7 @@ mod tests {
         let found = cmd.run(&log).unwrap();
 
         let mut buf = String::new();
-        // Writing to String can't fail
-        _ = writeln!(buf, "Name: {}", NAME);
-        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
-        _ = writeln!(buf, "Current mileage: {} Miles", miles);
-        _ = writeln!(
-            buf,
-            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
-            miles_diff
-        );
-        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
-        _ = writeln!(buf, "Today: {}", today);
-        _ = write!(
-            buf,
-            "Days until next service (Next Service Date - Today): {} Days",
-            days_diff
-        );
+        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff);
 
         assert_eq!(found, buf);
     }
@@ -261,5 +215,30 @@ mod tests {
         );
 
         assert_eq!(format!("{status_result}"), buf);
+    }
+
+    fn output_string_to_buf(
+        buf: &mut String,
+        miles: u32,
+        today: NaiveDate,
+        miles_diff: i32,
+        days_diff: i64,
+    ) {
+        // Writes to a string can't fail
+        _ = writeln!(buf, "Name: {}", NAME);
+        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
+        _ = writeln!(buf, "Current mileage: {} Miles", miles);
+        _ = writeln!(
+            buf,
+            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
+            miles_diff
+        );
+        _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
+        _ = writeln!(buf, "Today: {}", today);
+        _ = write!(
+            buf,
+            "Days until next service (Next Service Date - Today): {} Days",
+            days_diff
+        );
     }
 }
