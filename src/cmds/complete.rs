@@ -1,9 +1,15 @@
+//! # Complete
+//!
+//! Command to mark a service as complete, update it's next service mileage/date,
+//! and add a previous service to its service history.
+
 use crate::containers::MaintenanceLog;
 use crate::errors::CmdsError;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 use log::info;
 
+/// Houses args for the `Complete` command.
 #[derive(Clone, Debug, Args)]
 #[command(about = "Complete a service on specific day and mileage")]
 pub(crate) struct Complete {
@@ -18,6 +24,7 @@ pub(crate) struct Complete {
 }
 
 impl Complete {
+    /// Run the `Complete` command.
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!(
             "Completing service with id '{}' at mileage {} on date {}.",
@@ -45,5 +52,73 @@ impl Complete {
 
         info!("Service logged as complete.");
         Ok(msg)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::containers::ServiceEvent;
+    use crate::testing::build_log;
+    use crate::testing::constants::{ID, NAME, NEXT_SERVICE, PREVIOUS_SERVICE, SERVICE_INTERVAL};
+    use chrono::{NaiveDate, TimeDelta};
+
+    #[test]
+    fn complete_ok() {
+        let mut log = build_log();
+
+        let mileage = PREVIOUS_SERVICE.miles() + SERVICE_INTERVAL.miles() - 250;
+        assert!(mileage > PREVIOUS_SERVICE.miles());
+
+        let date = NEXT_SERVICE.date() - TimeDelta::days(30);
+        assert!(date > PREVIOUS_SERVICE.date());
+
+        let cmd = Complete {
+            id: ID.into(),
+            mileage,
+            date,
+        };
+
+        let msg = cmd.run(&mut log).unwrap();
+
+        let next_service_miles = mileage + SERVICE_INTERVAL.miles();
+        let next_service_date = date + TimeDelta::days(SERVICE_INTERVAL.days());
+        let previous_service = ServiceEvent::new(mileage, date);
+        let updated_service = log.get_mut(ID).unwrap();
+        let next_service = updated_service.next_service();
+
+        assert_eq!(next_service.miles(), next_service_miles);
+        assert_eq!(next_service.date(), next_service_date);
+        updated_service
+            .prev_services_mut()
+            .service_events()
+            .unwrap()
+            .iter()
+            .any(|s| *s == previous_service);
+
+        let expected_msg = format!(
+            "Marked {} as complete at {} miles on {}\n\
+            Updated next service to {} miles or on {}",
+            NAME, mileage, date, next_service_miles, next_service_date
+        );
+
+        assert_eq!(msg, expected_msg);
+    }
+
+    #[test]
+    fn complete_err() {
+        let mut log = build_log();
+        let target_id = "some_id";
+        assert!(!log.contains(target_id));
+        let cmd = Complete {
+            id: target_id.into(),
+            mileage: 100000,
+            date: NaiveDate::from_ymd_opt(2026, 6, 7).unwrap(),
+        };
+        match cmd.run(&mut log).unwrap_err() {
+            CmdsError::IdNotFound(_) => (),
+            _ => panic!("Expected CmdsError::IdNotFound"),
+        }
     }
 }
