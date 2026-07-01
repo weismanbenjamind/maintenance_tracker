@@ -1,8 +1,10 @@
 # All Changes to Package Housed Here
 
+## Unreleased
+
 ## 0.2.0
 
-## Added
+### Added
 
 - Messages for results of all commands
 - Command for initializing maintenance log
