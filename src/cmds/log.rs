@@ -1,3 +1,7 @@
+//! # Log
+//!
+//! Initializes a maintenance log
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -8,6 +12,7 @@ use chrono::{Local, TimeDelta};
 use clap::Args;
 use log::{debug, info};
 
+/// Houses arguments for initializing the maintenance log.
 #[derive(Clone, Debug, Args)]
 #[command(about = "Initializes a maintenance log at a given path")]
 pub(crate) struct Log {
@@ -26,6 +31,7 @@ pub(crate) struct Log {
 }
 
 impl Log {
+    /// Run the Log command to initialize a maintenance log.
     pub(crate) fn run(self) -> Result<String, CmdsError> {
         info!(
             "Attempting to initialize maintenance log at {}.",
@@ -42,6 +48,10 @@ impl Log {
     }
 }
 
+/// Handles a situation where a maintenance log already exists.
+/// If the force argument is true the log will be created.
+/// If the force argument is false the user will be informed to pass the --force arg
+/// to overwrite the maintenance log.
 #[inline]
 fn handle_existing_log(path: &Path, force: bool) -> Result<String, CmdsError> {
     info!(
@@ -61,6 +71,7 @@ fn handle_existing_log(path: &Path, force: bool) -> Result<String, CmdsError> {
     }
 }
 
+/// Initializes a maintenance log at the given path.
 fn init_log(path: &Path) -> Result<String, CmdsError> {
     info!("Writing example maintenance log to {}", path.display());
 
@@ -118,4 +129,78 @@ fn init_log(path: &Path) -> Result<String, CmdsError> {
     );
 
     Ok(msg)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::{NamedTempFile, TempDir};
+
+    #[test]
+    fn log_test_handle_non_existing_log_force() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("log.toml");
+        assert!(!path.exists());
+
+        let found = handle_existing_log(&path, true).unwrap();
+
+        assert_eq!(
+            found,
+            format!(
+                "Successfully initialized maintenance log at {}",
+                path.display()
+            )
+        );
+        assert!(path.exists());
+        assert!(!std::fs::read_to_string(path).unwrap().is_empty());
+    }
+
+    #[test]
+    fn log_test_handle_existing_log_force() {
+        let temp_file = NamedTempFile::with_suffix(".toml").unwrap();
+        let path = temp_file.path();
+        assert!(path.exists());
+        assert!(std::fs::read_to_string(path).unwrap().is_empty());
+
+        let found = handle_existing_log(path, true).unwrap();
+
+        assert_eq!(
+            found,
+            format!(
+                "Successfully initialized maintenance log at {}",
+                path.display()
+            )
+        );
+        assert!(!std::fs::read_to_string(path).unwrap().is_empty());
+    }
+
+    #[test]
+    fn log_test_handle_existing_log_no_force() {
+        let found = handle_existing_log(&PathBuf::from("some_path"), false).unwrap();
+        assert!(found.to_lowercase().contains("rerun with --force (-f)"))
+    }
+
+    #[test]
+    fn log_init_log() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("log.toml");
+        assert!(!path.exists());
+
+        let found = init_log(&path).unwrap();
+
+        assert_eq!(
+            found,
+            format!(
+                "Successfully initialized maintenance log at {}",
+                path.display()
+            )
+        );
+        assert!(path.exists());
+        assert!(
+            std::fs::read_to_string(path)
+                .unwrap()
+                .to_lowercase()
+                .contains("this is an example service")
+        );
+    }
 }
