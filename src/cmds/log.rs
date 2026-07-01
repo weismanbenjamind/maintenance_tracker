@@ -137,7 +137,66 @@ mod tests {
     use tempfile::{NamedTempFile, TempDir};
 
     #[test]
-    fn log_test_handle_non_existing_log_force() {
+    fn log_run_build_no_force() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().join("log.toml");
+        let cmd = Log {
+            log_path: path.clone(),
+            force: false,
+        };
+
+        let found = cmd.run().unwrap();
+
+        assert_eq!(
+            found,
+            format!(
+                "Successfully initialized maintenance log at {}",
+                path.display()
+            )
+        );
+        assert!(path.exists());
+        assert!(!std::fs::read_to_string(path).unwrap().is_empty());
+    }
+
+    #[test]
+    fn log_run_build_force() {
+        let temp_file = NamedTempFile::with_suffix(".toml").unwrap();
+        let path = temp_file.path();
+        assert!(path.exists());
+        let cmd = Log {
+            log_path: path.into(),
+            force: true,
+        };
+
+        let found = cmd.run().unwrap();
+
+        assert_eq!(
+            found,
+            format!(
+                "Successfully initialized maintenance log at {}",
+                path.display()
+            )
+        );
+        assert!(path.exists());
+        assert!(!std::fs::read_to_string(path).unwrap().is_empty());
+    }
+
+    #[test]
+    fn log_run_prompt_force() {
+        let temp_file = NamedTempFile::with_suffix(".toml").unwrap();
+        let path = temp_file.path();
+        assert!(path.exists());
+        let cmd = Log {
+            log_path: path.into(),
+            force: false,
+        };
+
+        let found = cmd.run().unwrap();
+        assert!(found.to_lowercase().contains("rerun with --force (-f)"))
+    }
+
+    #[test]
+    fn log_handle_non_existing_log_force() {
         let temp_dir = TempDir::new().unwrap();
         let path = temp_dir.path().join("log.toml");
         assert!(!path.exists());
@@ -156,7 +215,7 @@ mod tests {
     }
 
     #[test]
-    fn log_test_handle_existing_log_force() {
+    fn log_handle_existing_log_force() {
         let temp_file = NamedTempFile::with_suffix(".toml").unwrap();
         let path = temp_file.path();
         assert!(path.exists());
@@ -175,7 +234,7 @@ mod tests {
     }
 
     #[test]
-    fn log_test_handle_existing_log_no_force() {
+    fn log_handle_existing_log_no_force() {
         let found = handle_existing_log(&PathBuf::from("some_path"), false).unwrap();
         assert!(found.to_lowercase().contains("rerun with --force (-f)"))
     }
