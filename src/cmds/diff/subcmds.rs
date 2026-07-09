@@ -34,6 +34,30 @@ pub(super) struct Threshold {
 }
 
 impl Threshold {
+    /// Build a new threshold args
+    #[cfg(test)]
+    pub(super) fn new(
+        miles: Option<u32>,
+        curr_miles: Option<u32>,
+        date: Option<NaiveDate>,
+    ) -> Result<Self, DiffError> {
+        if miles.is_some() && curr_miles.is_none() {
+            return Err(DiffError::InvalidThresholdArgs);
+        }
+        if miles.is_none() && curr_miles.is_some() {
+            return Err(DiffError::InvalidThresholdArgs);
+        }
+        if miles.is_none() && curr_miles.is_none() && date.is_none() {
+            return Err(DiffError::InvalidThresholdArgs);
+        }
+
+        Ok(Self {
+            miles,
+            curr_miles,
+            date,
+        })
+    }
+
     /// Get a copy of the miles attribute
     pub(super) fn miles(&self) -> Option<u32> {
         self.miles
@@ -82,6 +106,31 @@ pub(super) struct Interval {
 
     #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Allows for overriding today's date if passing --months")]
     today: NaiveDate,
+}
+
+impl Interval {
+    #[cfg(test)]
+    pub(super) fn new(
+        miles: Option<u32>,
+        curr_miles: Option<u32>,
+        months: Option<u32>,
+        today: Option<NaiveDate>,
+    ) -> Result<Self, DiffError> {
+        if (miles.is_none() && curr_miles.is_some()) | (miles.is_some() && curr_miles.is_none()) {
+            return Err(DiffError::InvalidIntervalArgs);
+        }
+
+        if miles.is_none() & curr_miles.is_none() & months.is_none() {
+            return Err(DiffError::InvalidIntervalArgs);
+        }
+
+        Ok(Self {
+            miles,
+            curr_miles,
+            months,
+            today: today.unwrap_or(Local::now().date_naive()),
+        })
+    }
 }
 
 /// Enum which houses validated arguments for a Threshold diff
@@ -166,6 +215,68 @@ impl TryFrom<DiffCmd> for ValidatedThreshold {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn subcmds_test_threshold_new_ok() {
+        let miles = Some(1000);
+        let curr_miles = Some(1500);
+        let date = None;
+
+        let found = Threshold::new(miles, curr_miles, date).unwrap();
+
+        assert_eq!(found.miles, miles);
+        assert_eq!(found.curr_miles, curr_miles);
+        assert_eq!(found.date, date);
+    }
+
+    #[test]
+    fn subcmds_test_threshold_new_err() {
+        match Threshold::new(None, None, None).unwrap_err() {
+            DiffError::InvalidThresholdArgs => (),
+            _ => panic!("Expected DiffError::InvalidThresholdArgs"),
+        }
+
+        match Threshold::new(Some(100), None, None).unwrap_err() {
+            DiffError::InvalidThresholdArgs => (),
+            _ => panic!("Expected DiffError::InvalidThresholdArgs"),
+        }
+
+        match Threshold::new(None, Some(100), None).unwrap_err() {
+            DiffError::InvalidThresholdArgs => (),
+            _ => panic!("Expected DiffError::InvalidThresholdArgs"),
+        }
+    }
+
+    #[test]
+    fn subcmds_test_interval_new_ok() {
+        let miles = Some(1000);
+        let curr_miles = Some(1500);
+        let months = Some(6);
+
+        let found = Interval::new(miles, curr_miles, months, None).unwrap();
+
+        assert_eq!(found.miles, miles);
+        assert_eq!(found.curr_miles, curr_miles);
+        assert_eq!(found.months, months);
+    }
+
+    #[test]
+    fn subcmds_test_interval_new_err() {
+        match Threshold::new(None, None, None).unwrap_err() {
+            DiffError::InvalidThresholdArgs => (),
+            _ => panic!("Expected DiffError::InvalidThresholdArgs"),
+        }
+
+        match Threshold::new(Some(100), None, None).unwrap_err() {
+            DiffError::InvalidThresholdArgs => (),
+            _ => panic!("Expected DiffError::InvalidThresholdArgs"),
+        }
+
+        match Threshold::new(None, Some(100), None).unwrap_err() {
+            DiffError::InvalidThresholdArgs => (),
+            _ => panic!("Expected DiffError::InvalidThresholdArgs"),
+        }
+    }
 
     #[test]
     fn subcmds_threshold_getters() {
