@@ -1,3 +1,7 @@
+//! # Command
+//!
+//! Houses commands, utilities, and functions for updating previous services
+
 use super::notes::UpdateNotesCmd;
 use super::prev_services::UpdatePreviousServicesCmd;
 
@@ -8,6 +12,7 @@ use clap::{Args, Subcommand};
 use log::{debug, info};
 use std::fmt::Write;
 
+/// Args for updating a service.
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update a service")]
 pub(crate) struct Update {
@@ -19,6 +24,7 @@ pub(crate) struct Update {
 }
 
 impl Update {
+    /// Run the update service command
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!("Updating maintenance log.");
 
@@ -74,6 +80,7 @@ impl Update {
     }
 }
 
+/// Enum to house all potential commands and their args for a service update
 #[derive(Clone, Debug, Subcommand)]
 enum Cmd {
     Name(UpdateName),
@@ -84,6 +91,7 @@ enum Cmd {
     PreviousServices(UpdatePreviousServices),
 }
 
+/// Args for updating a service name
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update name")]
 struct UpdateName {
@@ -91,6 +99,7 @@ struct UpdateName {
     name: String,
 }
 
+/// Args for updating a service id
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update id")]
 struct UpdateId {
@@ -98,6 +107,7 @@ struct UpdateId {
     id: String,
 }
 
+/// Args for updating a service interval
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update service interval")]
 #[group(required = true, multiple = true)]
@@ -110,6 +120,7 @@ struct UpdateServiceInterval {
 }
 
 impl UpdateServiceInterval {
+    /// Run the update service interval command
     fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         let service_interval = metadata.service_interval_mut();
         let (miles, months) = (self.miles, self.months);
@@ -126,6 +137,7 @@ impl UpdateServiceInterval {
     }
 }
 
+/// Get the message the user will see when a service interval is updates
 fn get_updated_service_interval_msg(
     miles: Option<u32>,
     months: Option<u32>,
@@ -141,6 +153,7 @@ fn get_updated_service_interval_msg(
     Ok(msg)
 }
 
+/// Args for updating the next service
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update next service")]
 #[group(required = true, multiple = true)]
@@ -153,6 +166,7 @@ struct UpdateNextService {
 }
 
 impl UpdateNextService {
+    /// Run the update next service command
     fn run(&self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         match (self.miles, self.date) {
             (None, None) => Err(UpdateError::UpdateNextServiceArgs),
@@ -170,6 +184,7 @@ impl UpdateNextService {
     }
 }
 
+/// Get the message a user will see when updating the next service
 fn get_next_service_update_msg(
     miles: Option<u32>,
     date: Option<NaiveDate>,
@@ -184,6 +199,7 @@ fn get_next_service_update_msg(
     }
 }
 
+/// Args for updating notes
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update notes")]
 struct UpdateNotes {
@@ -192,6 +208,7 @@ struct UpdateNotes {
 }
 
 impl UpdateNotes {
+    /// Run the update notes command
     fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         let notes = metadata.notes_mut();
         match self.cmd {
@@ -224,6 +241,7 @@ impl UpdateNotes {
     }
 }
 
+/// Args for updating a previous service
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update previous services")]
 struct UpdatePreviousServices {
@@ -232,6 +250,7 @@ struct UpdatePreviousServices {
 }
 
 impl UpdatePreviousServices {
+    /// Run the update previous services command
     fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
         let prev_services = metadata.prev_services_mut();
         match self.cmd {
@@ -262,6 +281,7 @@ impl UpdatePreviousServices {
     }
 }
 
+/// Get the message the user will see when a service get replaced
 fn get_replaced_service_msg(
     curr_miles: Option<u32>,
     curr_date: Option<NaiveDate>,
@@ -301,6 +321,7 @@ fn get_replaced_service_msg(
     Ok(buf)
 }
 
+/// Get the message a user will see when a service gets removed
 fn get_removed_service_msg(
     miles: Option<u32>,
     date: Option<NaiveDate>,
@@ -314,4 +335,111 @@ fn get_removed_service_msg(
     };
 
     Ok(msg)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cmd_get_replaced_service_msg_new_miles_and_new_date() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 3);
+        let found = get_replaced_service_msg(Some(70000), date, Some(70000), date).unwrap();
+        assert!(found.contains("with new miles"));
+        assert!(found.contains("and new date"));
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_new_date() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 3);
+        let found = get_replaced_service_msg(None, date, None, date)
+            .unwrap()
+            .to_lowercase();
+        assert!(found.contains("with new date"));
+        assert!(!found.contains("with new miles"));
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_new_miles() {
+        let found = get_replaced_service_msg(Some(1000), None, Some(1000), None)
+            .unwrap()
+            .to_lowercase();
+        assert!(found.contains("with new miles"));
+        assert!(!found.contains("with new date"));
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_new_args_err() {
+        let _found = get_replaced_service_msg(Some(1000), None, None, None).unwrap_err();
+        assert!(matches!(UpdateError::InvalidServiceUpdateArgs, _found));
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_curr_miles_and_curr_date() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 3);
+        let found = get_replaced_service_msg(Some(75000), date, Some(1000), date)
+            .unwrap()
+            .to_lowercase();
+
+        assert!(found.contains("successfully updated service with miles"));
+        assert!(found.contains(" and new date "))
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_curr_date() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 3);
+        let found = get_replaced_service_msg(None, date, None, date)
+            .unwrap()
+            .to_lowercase();
+
+        assert!(found.contains("successfully updated service with date"));
+        assert!(!found.contains(" miles "));
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_curr_miles() {
+        let found = get_replaced_service_msg(Some(75000), None, Some(1000), None)
+            .unwrap()
+            .to_lowercase();
+
+        assert!(found.contains("successfully updated service with miles"));
+        assert!(!found.contains(" date "));
+    }
+
+    #[test]
+    fn cmd_get_replaced_service_msg_curr_args_err() {
+        let _found =
+            get_replaced_service_msg(None, None, Some(1000), NaiveDate::from_ymd_opt(2026, 6, 3))
+                .unwrap_err();
+        assert!(matches!(UpdateError::InvalidCurrentServiceIds, _found));
+    }
+
+    #[test]
+    fn cmd_get_removed_service_msg_miles_and_date() {
+        let found = get_removed_service_msg(Some(1000), NaiveDate::from_ymd_opt(2026, 6, 3))
+            .unwrap()
+            .to_lowercase();
+        assert!(found.contains("removed service with miles"));
+        assert!(found.contains("and date"))
+    }
+
+    #[test]
+    fn cmd_get_removed_service_msg_date() {
+        let found = get_removed_service_msg(None, NaiveDate::from_ymd_opt(2026, 6, 3)).unwrap();
+        assert!(found.to_lowercase().contains("removed service with date"));
+    }
+
+    #[test]
+    fn cmd_get_removed_service_msg_miles() {
+        let found = get_removed_service_msg(Some(1000), None).unwrap();
+        assert!(found.to_lowercase().contains("removed service with miles"));
+    }
+
+    #[test]
+    fn cmd_get_removed_service_msg_err() {
+        assert!(matches!(
+            get_removed_service_msg(None, None).unwrap_err(),
+            UpdateError::InvalidCurrentServiceIds
+        ));
+    }
 }
