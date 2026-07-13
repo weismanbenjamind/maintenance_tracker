@@ -339,7 +339,93 @@ fn get_removed_service_msg(
 
 #[cfg(test)]
 mod tests {
+    use chrono::TimeDelta;
+
     use super::*;
+    use crate::cmds::update::prev_services::{Append, Clear, Remove, Replace};
+    use crate::testing::build_metadata;
+    use crate::testing::constants::PREVIOUS_SERVICE;
+
+    #[test]
+    fn cmd_update_prev_services_clear() {
+        let mut metadata = build_metadata();
+
+        let args = UpdatePreviousServices {
+            cmd: UpdatePreviousServicesCmd::Clear(Clear),
+        };
+
+        let found = args.run(&mut metadata).unwrap();
+        assert!(found.to_lowercase().contains("cleared previous services"));
+        assert!(metadata.prev_services().service_events().is_none());
+    }
+
+    #[test]
+    fn cmd_update_prev_services_run_remove() {
+        let mut metadata = build_metadata();
+
+        let remove_args = Remove::new(Some(PREVIOUS_SERVICE.miles()), None);
+        let args = UpdatePreviousServices {
+            cmd: UpdatePreviousServicesCmd::Remove(remove_args),
+        };
+
+        let found = args.run(&mut metadata).unwrap();
+        assert!(found.to_lowercase().contains("removed service with miles"));
+        assert!(
+            metadata
+                .prev_services()
+                .service_events()
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn cmd_update_prev_services_run_replace() {
+        let mut metadata = build_metadata();
+        let prev_service_miles = PREVIOUS_SERVICE.miles();
+        let prev_service_date = PREVIOUS_SERVICE.date();
+
+        let new_miles = prev_service_miles + 5000;
+        let new_date = prev_service_date + TimeDelta::days(120);
+
+        let replace_args = Replace::new(
+            Some(prev_service_miles),
+            Some(prev_service_date),
+            Some(new_miles),
+            Some(new_date),
+        );
+        let args = UpdatePreviousServices {
+            cmd: UpdatePreviousServicesCmd::Replace(replace_args),
+        };
+
+        let result = args.run(&mut metadata).unwrap().to_lowercase();
+        assert!(result.contains("with miles"));
+        assert!(result.contains("and date"));
+        assert!(result.contains("with new miles"));
+        assert!(result.contains("and new date"));
+
+        let prev_services = metadata.prev_services().service_events().unwrap();
+        assert!(prev_services.len() == 1);
+
+        let prev_service = prev_services[0];
+        assert_eq!(prev_service.miles(), new_miles);
+        assert_eq!(prev_service.date(), new_date);
+    }
+
+    #[test]
+    fn cmd_update_prev_services_run_append() {
+        let mut metadata = build_metadata();
+        assert!(metadata.prev_services().service_events().unwrap().len() == 1);
+
+        let append_args = Append::new(100000, NaiveDate::from_ymd_opt(2026, 7, 1).unwrap());
+        let args = UpdatePreviousServices {
+            cmd: UpdatePreviousServicesCmd::Append(append_args),
+        };
+
+        let result = args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("added previous service"));
+        assert!(metadata.prev_services().service_events().unwrap().len() == 2);
+    }
 
     #[test]
     fn cmd_get_replaced_service_msg_new_miles_and_new_date() {
