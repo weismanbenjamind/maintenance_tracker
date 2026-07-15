@@ -114,6 +114,13 @@ impl ServiceInterval {
         self.miles
     }
 
+    /// Get a copy of the months on the `ServiceInterval`.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn months(&self) -> u32 {
+        self.months
+    }
+
     /// Get the days between services.
     /// Will floor the result when converting to days.
     /// Ensures never overshoot on maintenance.
@@ -269,6 +276,7 @@ mod tests {
     fn services_service_interval_getters() {
         let service_interval = build_service_interval();
         assert_eq!(service_interval.miles(), SERVICE_EVENT_MILES);
+        assert_eq!(service_interval.months(), SERVICE_INTERVAL_MONTHS);
     }
 
     #[test]

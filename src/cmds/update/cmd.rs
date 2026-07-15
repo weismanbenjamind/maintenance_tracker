@@ -122,6 +122,11 @@ struct UpdateServiceInterval {
 impl UpdateServiceInterval {
     /// Run the update service interval command
     fn run(self, metadata: &mut ServiceMetdata) -> Result<String, UpdateError> {
+        // Clap should enforce this constraint - but still check
+        if self.miles.is_none() && self.months.is_none() {
+            return Err(UpdateError::InvalidServiceIntervalUpdateArgs);
+        };
+
         let service_interval = metadata.service_interval_mut();
         let (miles, months) = (self.miles, self.months);
 
@@ -345,6 +350,156 @@ mod tests {
     use crate::cmds::update::{notes, prev_services};
     use crate::testing::build_metadata;
     use crate::testing::constants::{NEXT_SERVICE, NOTE, PREVIOUS_SERVICE};
+
+    #[test]
+    fn update_service_interval_run_miles_and_months() {
+        let mut metadata = build_metadata();
+        let service_interval = metadata.service_interval();
+
+        let miles = service_interval.miles() - 100;
+        let months = service_interval.months() - 1;
+        let args = UpdateServiceInterval {
+            miles: Some(miles),
+            months: Some(months),
+        };
+
+        let found = args.run(&mut metadata).unwrap().to_lowercase();
+        assert!(found.contains("service interval miles"));
+        assert!(found.contains("service interval months"));
+
+        let service_interval = metadata.service_interval();
+        assert_eq!(service_interval.miles(), miles);
+        assert_eq!(service_interval.months(), months);
+    }
+
+    #[test]
+    fn update_service_interval_run_months() {
+        let mut metadata = build_metadata();
+        let service_interval = metadata.service_interval();
+
+        let original_miles = service_interval.miles();
+        let months = service_interval.months() - 1;
+        let args = UpdateServiceInterval {
+            miles: None,
+            months: Some(months),
+        };
+
+        let found = args.run(&mut metadata).unwrap().to_lowercase();
+        assert!(found.contains("service interval months"));
+
+        let service_interval = metadata.service_interval();
+        assert_eq!(service_interval.miles(), original_miles);
+        assert_eq!(service_interval.months(), months);
+    }
+
+    #[test]
+    fn update_service_interval_run_miles() {
+        let mut metadata = build_metadata();
+        let service_interval = metadata.service_interval();
+
+        let miles = service_interval.miles() - 100;
+        let original_months = service_interval.months();
+        let args = UpdateServiceInterval {
+            miles: Some(miles),
+            months: None,
+        };
+
+        let found = args.run(&mut metadata).unwrap().to_lowercase();
+        assert!(found.contains("service interval miles"));
+
+        let service_interval = metadata.service_interval();
+        assert_eq!(service_interval.miles(), miles);
+        assert_eq!(service_interval.months(), original_months);
+    }
+
+    #[test]
+    fn update_service_interval_err() {
+        let mut metadata = build_metadata();
+        let args = UpdateServiceInterval {
+            miles: None,
+            months: None,
+        };
+
+        let found = args.run(&mut metadata).unwrap_err();
+        assert!(matches!(
+            found,
+            UpdateError::InvalidServiceIntervalUpdateArgs
+        ));
+    }
+
+    #[test]
+    fn get_updated_service_interval_msg_miles_and_months() {
+        let miles = 4000;
+        let months = 5;
+        let found = get_updated_service_interval_msg(Some(miles), Some(months)).unwrap();
+        assert_eq!(
+            found,
+            format!(
+                "Updated service interval miles to {miles} miles and service interval months to {months} months"
+            )
+        )
+    }
+
+    #[test]
+    fn get_updated_service_interval_msg_date() {
+        let months = 5;
+        let found = get_updated_service_interval_msg(None, Some(months)).unwrap();
+        assert_eq!(
+            found,
+            format!("Updated service interval months to {months} months")
+        )
+    }
+
+    #[test]
+    fn get_updated_service_interval_msg_miles() {
+        let miles = 4000;
+        let found = get_updated_service_interval_msg(Some(miles), None).unwrap();
+        assert_eq!(
+            found,
+            format!("Updated service interval miles to {miles} miles")
+        )
+    }
+
+    #[test]
+    fn get_updated_service_interval_msg_err() {
+        let found = get_updated_service_interval_msg(None, None).unwrap_err();
+        assert!(matches!(
+            found,
+            UpdateError::InvalidServiceIntervalUpdateArgs
+        ))
+    }
+
+    #[test]
+    fn update_next_service_run_miles_and_date() {
+        let miles = NEXT_SERVICE.miles() + 100;
+        let date = NEXT_SERVICE.date() + TimeDelta::days(100);
+        let args = UpdateNextService {
+            miles: Some(miles),
+            date: Some(date),
+        };
+        let mut metdata = build_metadata();
+
+        let found = args.run(&mut metdata).unwrap();
+        assert!(found.to_lowercase().contains("next service miles"));
+        assert!(found.to_lowercase().contains("next service date"));
+        let next_service = metdata.next_service();
+        assert_eq!(next_service.miles(), miles);
+        assert_eq!(next_service.date(), date);
+    }
+
+    #[test]
+    fn update_next_service_run_date() {
+        let date = NEXT_SERVICE.date() + TimeDelta::days(100);
+        let args = UpdateNextService {
+            miles: None,
+            date: Some(date),
+        };
+        let mut metdata = build_metadata();
+
+        let found = args.run(&mut metdata).unwrap();
+        assert!(found.to_lowercase().contains("set next service date"));
+        assert_eq!(metdata.next_service().date(), date)
+    }
 
     #[test]
     fn update_next_service_run_miles() {
