@@ -13,6 +13,15 @@ pub(super) struct Append {
 }
 
 impl Append {
+    /// Build a new Append struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(super) fn new(notes: &[String]) -> Self {
+        Self {
+            notes: notes.into(),
+        }
+    }
+
     /// Turns the Append args into a Vec<String> representing notes
     pub(super) fn into_notes(self) -> Vec<String> {
         self.notes
@@ -31,6 +40,16 @@ pub(super) struct Replace {
 }
 
 impl Replace {
+    /// Build a new Replace struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(super) fn new(index: usize, contents: &str) -> Self {
+        Self {
+            index,
+            contents: contents.into(),
+        }
+    }
+
     /// Consume the Replace struct and turn it into a tuple of (usize, String)
     /// which maps to (index, contents)
     pub(super) fn into_parts(self) -> (usize, String) {
@@ -50,6 +69,16 @@ pub(super) struct Insert {
 }
 
 impl Insert {
+    /// Build a new Insert struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(super) fn new(index: usize, contents: &str) -> Self {
+        Self {
+            index,
+            contents: contents.into(),
+        }
+    }
+
     /// Consume the Insert struct and turn it into a tuple of (usize, String)
     /// which maps to (index, contents)
     pub(super) fn into_parts(self) -> (usize, String) {
@@ -66,6 +95,13 @@ pub(super) struct Remove {
 }
 
 impl Remove {
+    /// Build a new Remove struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(super) fn new(index: usize) -> Self {
+        Self { index }
+    }
+
     /// Get a copy of on the index attribute
     pub(super) fn index(&self) -> usize {
         self.index
@@ -93,12 +129,28 @@ mod tests {
     use super::*;
 
     #[test]
+    fn notes_append_new() {
+        let to_add = vec!["note".to_string()];
+        let found = Append::new(&to_add);
+        assert_eq!(found.notes, to_add)
+    }
+
+    #[test]
     fn notes_append_into_notes() {
         let notes = vec!["note".to_string()];
         let cmd = Append {
             notes: notes.clone(),
         };
         assert_eq!(cmd.into_notes(), notes);
+    }
+
+    #[test]
+    fn notes_replace_new() {
+        let to_replace = "note";
+        let idx: usize = 1;
+        let found = Replace::new(idx, to_replace);
+        assert_eq!(found.index, idx);
+        assert_eq!(found.contents, to_replace);
     }
 
     #[test]
@@ -112,6 +164,15 @@ mod tests {
         };
 
         assert_eq!(cmd.into_parts(), (index, contents));
+    }
+
+    #[test]
+    fn notes_insert_new() {
+        let to_insert = "note";
+        let idx: usize = 1;
+        let found = Insert::new(idx, to_insert);
+        assert_eq!(found.index, idx);
+        assert_eq!(found.contents, to_insert);
     }
 
     #[test]

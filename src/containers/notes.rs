@@ -1,7 +1,13 @@
+//! # Notes
+//!
+//! Container for dealing with notes.
+
 use serde::{Deserialize, Serialize};
 
 use crate::errors::NotesError;
 
+/// Notes struct. Wraps an Option<Vec<String>> and provides
+/// utility methods that operate on the wrapped type.
 #[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 #[serde(transparent)]
 pub(crate) struct Notes {
@@ -9,14 +15,18 @@ pub(crate) struct Notes {
 }
 
 impl Notes {
+    /// Build a new Notes struct.
     pub(super) fn new(notes: Option<Vec<String>>) -> Self {
         Self { notes }
     }
 
+    /// Get a mutable borrow to the notes Option.
     pub(crate) fn try_get(&self) -> Option<&[String]> {
         self.notes.as_deref()
     }
 
+    /// Extend the notes vector.
+    /// If the notes vector is not set, it will be set to this extension.
     pub(crate) fn extend(&mut self, extension: Vec<String>) {
         match &mut self.notes {
             Some(notes) => notes.extend(extension),
@@ -24,6 +34,8 @@ impl Notes {
         }
     }
 
+    /// Get a mutable borrow to the notes vector.
+    /// Returns Err if the the notes vector is None
     fn try_get_notes_mut(&mut self) -> Result<&mut Vec<String>, NotesError> {
         match &mut self.notes {
             Some(notes) => Ok(notes),
@@ -31,6 +43,8 @@ impl Notes {
         }
     }
 
+    /// Removes a note.
+    /// Notes must be set and the index must be present in the notes vector
     pub(crate) fn replace(&mut self, idx: usize, contents: &str) -> Result<(), NotesError> {
         match self.try_get_notes_mut()?.get_mut(idx) {
             Some(val) => {
@@ -41,17 +55,25 @@ impl Notes {
         }
     }
 
+    /// Removes a note.
+    /// Notes must be set and the index must be less than the length of the notes vector
     pub(crate) fn remove(&mut self, idx: usize) -> Result<(), NotesError> {
         let notes = self.try_get_notes_mut()?;
         match idx < notes.len() {
             true => {
                 notes.remove(idx);
+                // TODO - need similar pattern for previous services
+                if notes.is_empty() {
+                    self.clear();
+                };
                 Ok(())
             }
             false => Err(NotesError::NoteIndexOutOfRange(idx, notes.len())),
         }
     }
 
+    /// Inserts a note at the given index.
+    /// Notes must be set and the index must be less than the length of the notes vector
     pub(crate) fn insert(&mut self, idx: usize, contents: &str) -> Result<(), NotesError> {
         let notes = self.try_get_notes_mut()?;
         match idx < notes.len() {
@@ -63,8 +85,17 @@ impl Notes {
         }
     }
 
+    /// Sets the `.notes` attribute to `None`
     pub(crate) fn clear(&mut self) {
         self.notes = None
+    }
+
+    /// Gets the length of the notes if the notes are set (e.g. Some()).
+    /// If the notes are not set (e.g. None) returns None.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn len(&self) -> Option<usize> {
+        self.notes.as_ref().and_then(|vec| Some(vec.len()))
     }
 }
 
@@ -211,7 +242,24 @@ mod tests {
     }
 
     #[test]
-    fn notes_remove_ok() {
+    fn notes_remove_one() {
+        let mut notes = build_notes_some();
+        notes.notes.as_mut().unwrap().push("note_2".into());
+        let mut original_len: Option<usize> = None;
+
+        notes
+            .notes
+            .as_deref()
+            .inspect(|notes| original_len = Some(notes.len()));
+
+        assert_eq!(original_len.unwrap(), 2);
+
+        notes.remove(0).unwrap();
+        assert_eq!(notes.notes.as_deref().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn notes_remove_all() {
         let mut notes = build_notes_some();
         let mut original_len: Option<usize> = None;
 
@@ -223,8 +271,7 @@ mod tests {
         assert_eq!(original_len.unwrap(), 1);
 
         notes.remove(0).unwrap();
-
-        assert_eq!(notes.notes.unwrap().len(), 0);
+        assert!(notes.notes.is_none());
     }
 
     #[test]
@@ -311,5 +358,15 @@ mod tests {
         assert!(notes.notes.is_some());
         notes.clear();
         assert!(notes.notes.is_none());
+    }
+
+    #[test]
+    fn notes_len_some() {
+        assert_eq!(build_notes_some().len().unwrap(), 1);
+    }
+
+    #[test]
+    fn notes_len_none() {
+        assert!(build_notes_none().len().is_none());
     }
 }

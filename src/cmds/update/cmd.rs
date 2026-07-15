@@ -226,7 +226,7 @@ impl UpdateNotes {
             UpdateNotesCmd::Insert(args) => {
                 let (idx, contents) = args.into_parts();
                 notes.insert(idx, &contents)?;
-                Ok(format!("Successfully replaced note at index {idx}"))
+                Ok(format!("Successfully inserted note at index {idx}"))
             }
             UpdateNotesCmd::Remove(args) => {
                 let idx = args.index();
@@ -342,16 +342,114 @@ mod tests {
     use chrono::TimeDelta;
 
     use super::*;
-    use crate::cmds::update::prev_services::{Append, Clear, Remove, Replace};
+    use crate::cmds::update::{notes, prev_services};
     use crate::testing::build_metadata;
-    use crate::testing::constants::PREVIOUS_SERVICE;
+    use crate::testing::constants::{NOTE, PREVIOUS_SERVICE};
+
+    #[test]
+    fn cmd_update_notes_clear() {
+        let mut metadata = build_metadata();
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+
+        let clear_args = notes::Clear;
+        let clear_cmd = UpdateNotesCmd::Clear(clear_args);
+        let clear_notes_args = UpdateNotes { cmd: clear_cmd };
+
+        let result = clear_notes_args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("successfully cleared"));
+        assert!(metadata.notes().try_get().is_none())
+    }
+
+    #[test]
+    fn cmd_update_notes_remove_one() {
+        let mut metadata = build_metadata();
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+        metadata.notes_mut().insert(0, "note").unwrap();
+        assert_eq!(metadata.notes().len().unwrap(), 2);
+
+        let remove_args = notes::Remove::new(1);
+        let remove_cmd = UpdateNotesCmd::Remove(remove_args);
+        let update_notes_args = UpdateNotes { cmd: remove_cmd };
+
+        let result = update_notes_args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("successfully removed"));
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+    }
+
+    #[test]
+    fn cmd_update_notes_remove_all() {
+        let mut metadata = build_metadata();
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+
+        let remove_args = notes::Remove::new(0);
+        let remove_cmd = UpdateNotesCmd::Remove(remove_args);
+        let update_notes_args = UpdateNotes { cmd: remove_cmd };
+
+        let result = update_notes_args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("successfully removed"));
+        let notes = metadata.notes();
+        assert!(notes.try_get().is_none());
+    }
+
+    #[test]
+    fn cmd_update_notes_insert() {
+        let mut metadata = build_metadata();
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+
+        let to_insert = "note_1";
+        let insert_args = notes::Insert::new(0, to_insert);
+        let insert_cmd = UpdateNotesCmd::Insert(insert_args);
+        let update_notes_args = UpdateNotes { cmd: insert_cmd };
+
+        let result = update_notes_args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("successfully inserted"));
+        let notes = metadata.notes();
+        assert_eq!(notes.len().unwrap(), 2);
+        assert_eq!(notes.try_get().unwrap()[0], to_insert);
+    }
+
+    #[test]
+    fn cmd_update_notes_replace() {
+        let mut metadata = build_metadata();
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+
+        let replacement = "note";
+        assert_ne!(replacement, NOTE);
+        let replace_args = notes::Replace::new(0, replacement);
+        let replace_cmd = UpdateNotesCmd::Replace(replace_args);
+        let update_notes_args = UpdateNotes { cmd: replace_cmd };
+
+        let result = update_notes_args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("successfully replaced note"));
+        let notes = metadata.notes();
+        assert_eq!(notes.len().unwrap(), 1);
+        assert_eq!(notes.try_get().unwrap()[0], replacement);
+    }
+
+    #[test]
+    fn cmd_update_notes_append() {
+        let mut metadata = build_metadata();
+        assert_eq!(metadata.notes().len().unwrap(), 1);
+
+        let to_append = ["note_1", "note_2"]
+            .iter()
+            .map(|note| note.to_string())
+            .collect::<Vec<String>>();
+        let append_args = notes::Append::new(&to_append);
+        let args = UpdateNotesCmd::Append(append_args);
+        let args = UpdateNotes { cmd: args };
+
+        let result = args.run(&mut metadata).unwrap();
+        assert!(result.to_lowercase().contains("successfully appended"));
+        assert_eq!(metadata.notes().len().unwrap(), 3);
+    }
 
     #[test]
     fn cmd_update_prev_services_clear() {
         let mut metadata = build_metadata();
 
         let args = UpdatePreviousServices {
-            cmd: UpdatePreviousServicesCmd::Clear(Clear),
+            cmd: UpdatePreviousServicesCmd::Clear(prev_services::Clear),
         };
 
         let found = args.run(&mut metadata).unwrap();
@@ -363,20 +461,14 @@ mod tests {
     fn cmd_update_prev_services_run_remove() {
         let mut metadata = build_metadata();
 
-        let remove_args = Remove::new(Some(PREVIOUS_SERVICE.miles()), None);
+        let remove_args = prev_services::Remove::new(Some(PREVIOUS_SERVICE.miles()), None);
         let args = UpdatePreviousServices {
             cmd: UpdatePreviousServicesCmd::Remove(remove_args),
         };
 
         let found = args.run(&mut metadata).unwrap();
         assert!(found.to_lowercase().contains("removed service with miles"));
-        assert!(
-            metadata
-                .prev_services()
-                .service_events()
-                .unwrap()
-                .is_empty()
-        );
+        assert!(metadata.prev_services().service_events().is_none());
     }
 
     #[test]
@@ -388,7 +480,7 @@ mod tests {
         let new_miles = prev_service_miles + 5000;
         let new_date = prev_service_date + TimeDelta::days(120);
 
-        let replace_args = Replace::new(
+        let replace_args = prev_services::Replace::new(
             Some(prev_service_miles),
             Some(prev_service_date),
             Some(new_miles),
@@ -415,16 +507,17 @@ mod tests {
     #[test]
     fn cmd_update_prev_services_run_append() {
         let mut metadata = build_metadata();
-        assert!(metadata.prev_services().service_events().unwrap().len() == 1);
+        assert!(metadata.prev_services().len().unwrap() == 1);
 
-        let append_args = Append::new(100000, NaiveDate::from_ymd_opt(2026, 7, 1).unwrap());
+        let append_args =
+            prev_services::Append::new(100000, NaiveDate::from_ymd_opt(2026, 7, 1).unwrap());
         let args = UpdatePreviousServices {
             cmd: UpdatePreviousServicesCmd::Append(append_args),
         };
 
         let result = args.run(&mut metadata).unwrap();
         assert!(result.to_lowercase().contains("added previous service"));
-        assert!(metadata.prev_services().service_events().unwrap().len() == 2);
+        assert!(metadata.prev_services().len().unwrap() == 2);
     }
 
     #[test]

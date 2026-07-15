@@ -86,6 +86,10 @@ impl PreviousServices {
         // get_prev_service_idx should ensure this index exists so the removal call is safe
         prev_services.remove(idx);
 
+        if prev_services.is_empty() {
+            self.clear();
+        }
+
         info!("Removed service event");
 
         Ok(())
@@ -93,6 +97,16 @@ impl PreviousServices {
 
     pub(crate) fn clear(&mut self) {
         self.service_events = None
+    }
+
+    /// Gets the number of previous services if set.
+    /// If no previous services returns None.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn len(&self) -> Option<usize> {
+        self.service_events
+            .as_deref()
+            .and_then(|service_events| Some(service_events.len()))
     }
 }
 
@@ -243,6 +257,16 @@ mod tests {
     }
 
     #[test]
+    fn previous_services_previous_services_remove_all() {
+        let miles = 70000;
+        let prev_service = ServiceEvent::new(miles, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap());
+        let mut previous_services = PreviousServices::new(Some(vec![prev_service]));
+
+        previous_services.remove(Some(MILES.miles()), None).unwrap();
+        assert!(previous_services.service_events.is_none());
+    }
+
+    #[test]
     fn previous_services_previous_services_replace_previous_services_no_idx() {
         let mut prev_services = build_previous_services_some();
         let target_miles = 1;
@@ -380,7 +404,7 @@ mod tests {
     #[test]
     fn previous_services_previous_services_add_services_present() {
         let mut prev_services = build_previous_services_some();
-        let original_len = prev_services.service_events.as_deref().unwrap().len();
+        let original_len = prev_services.len().unwrap();
         let addition = ServiceEvent::new(80000, NaiveDate::from_ymd_opt(2027, 2, 14).unwrap());
         prev_services.add(addition.miles(), addition.date());
 
