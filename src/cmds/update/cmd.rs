@@ -344,7 +344,67 @@ mod tests {
     use super::*;
     use crate::cmds::update::{notes, prev_services};
     use crate::testing::build_metadata;
-    use crate::testing::constants::{NOTE, PREVIOUS_SERVICE};
+    use crate::testing::constants::{NEXT_SERVICE, NOTE, PREVIOUS_SERVICE};
+
+    #[test]
+    fn update_next_service_run_miles() {
+        let miles = NEXT_SERVICE.miles() + 100;
+        let args = UpdateNextService {
+            miles: Some(miles),
+            date: None,
+        };
+        let mut metdata = build_metadata();
+
+        let found = args.run(&mut metdata).unwrap();
+        assert!(found.to_lowercase().contains("set next service"));
+        assert_eq!(metdata.next_service().miles(), miles)
+    }
+
+    #[test]
+    fn update_next_service_run_err() {
+        let args = UpdateNextService {
+            miles: None,
+            date: None,
+        };
+        let found = args.run(&mut build_metadata()).unwrap_err();
+        assert!(matches!(found, UpdateError::UpdateNextServiceArgs))
+    }
+
+    #[test]
+    fn get_next_service_update_msg_miles_and_date() {
+        let miles = 1000;
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1);
+        let found = get_next_service_update_msg(Some(miles), date).unwrap();
+        assert_eq!(
+            found,
+            format!(
+                "Set next service miles to {miles} and next service date to {}",
+                date.unwrap()
+            )
+        )
+    }
+
+    #[test]
+    fn get_next_service_update_msg_date() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1);
+        let found = get_next_service_update_msg(None, date).unwrap();
+        assert_eq!(found, format!("Set next service date to {}", date.unwrap()))
+    }
+
+    #[test]
+    fn get_next_service_update_msg_miles() {
+        let miles = 1000;
+        let found = get_next_service_update_msg(Some(miles), None).unwrap();
+        assert_eq!(found, format!("Set next service miles to {miles}"))
+    }
+
+    #[test]
+    fn get_next_service_update_msg_err() {
+        assert!(matches!(
+            get_next_service_update_msg(None, None).unwrap_err(),
+            UpdateError::UpdateNextServiceArgs
+        ))
+    }
 
     #[test]
     fn cmd_update_notes_clear() {
