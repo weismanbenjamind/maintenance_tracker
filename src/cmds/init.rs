@@ -1,3 +1,7 @@
+//! # Init module
+//!
+//! Housing functionality for initializing a new service
+
 use std::str::FromStr;
 
 use crate::containers::{MaintenanceLog, ServiceMetdata};
@@ -9,6 +13,7 @@ use log::{debug, info};
 const YYYY_MM_DD: &str = "%Y-%m-%d";
 const DELIMITER: &str = ";";
 
+/// Struct housing args for initializing a new service.
 #[derive(Clone, Debug, Args)]
 #[command(about = "Initialize a service for tracking")]
 pub(crate) struct Init {
@@ -37,6 +42,7 @@ pub(crate) struct Init {
 }
 
 impl Init {
+    /// Run service initialization logic.
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!(
             "Initializing service with id {} and name {}.",
@@ -79,6 +85,7 @@ impl Init {
     }
 }
 
+/// Struct to house previous service info.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct PreviousService {
     miles: u32,
@@ -86,16 +93,19 @@ pub(crate) struct PreviousService {
 }
 
 impl PreviousService {
-    // new is used for testing. Allow dead code here
-    #[allow(dead_code)]
+    /// Build a new PreviousService struct.
+    /// Only used for testing.
+    #[cfg(test)]
     pub(crate) fn new(miles: u32, date: NaiveDate) -> Self {
         Self { miles, date }
     }
 
+    /// Get a copy of the miles attribute.
     pub(crate) fn miles(&self) -> u32 {
         self.miles
     }
 
+    /// Get a copy of the date attribute.
     pub(crate) fn date(self) -> NaiveDate {
         self.date
     }
@@ -122,6 +132,7 @@ impl FromStr for PreviousService {
     }
 }
 
+/// Houses service interval args.
 #[derive(Clone, Copy, Debug, Args)]
 pub(crate) struct ServiceInterval {
     #[arg(help = "Miles interval service should be completed at")]
@@ -132,8 +143,9 @@ pub(crate) struct ServiceInterval {
 }
 
 impl ServiceInterval {
-    // new is used for testing. Allow dead code here
-    #[allow(dead_code)]
+    /// Build a new ServiceInterval struct.
+    /// Only used for testing.
+    #[cfg(test)]
     pub(crate) fn new(miles_interval: u32, monthly_interval: u32) -> Self {
         Self {
             miles_interval,
@@ -141,15 +153,18 @@ impl ServiceInterval {
         }
     }
 
+    /// Get a copy of the miles interval.
     pub(crate) fn miles_interval(&self) -> u32 {
         self.miles_interval
     }
 
+    /// Get a copy of the monthly interval.
     pub(crate) fn monthly_interval(&self) -> u32 {
         self.monthly_interval
     }
 }
 
+/// Houses args for next service.
 #[derive(Clone, Copy, Debug, Args)]
 pub(crate) struct NextService {
     #[arg(help = "Mileage on vehcile when next service should be completed")]
@@ -160,8 +175,9 @@ pub(crate) struct NextService {
 }
 
 impl NextService {
-    // new is used for testing. Allow dead code here
-    #[allow(dead_code)]
+    /// Build a NextService struct.
+    /// Only used for testing.
+    #[cfg(test)]
     pub(crate) fn new(miles: u32, date: NaiveDate) -> Self {
         Self {
             next_service_miles: miles,
@@ -169,10 +185,12 @@ impl NextService {
         }
     }
 
+    /// Get a clone of the next service miles.
     pub(crate) fn next_service_miles(&self) -> u32 {
         self.next_service_miles
     }
 
+    /// Get a clone of the next service date.
     pub(crate) fn next_service_date(&self) -> NaiveDate {
         self.next_service_date
     }

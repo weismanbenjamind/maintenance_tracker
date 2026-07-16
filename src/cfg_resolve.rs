@@ -1,4 +1,4 @@
-//! Cfg Resolve
+//! # Cfg Resolve
 //!
 //! Module housing utilites to resolve the path to the config
 
