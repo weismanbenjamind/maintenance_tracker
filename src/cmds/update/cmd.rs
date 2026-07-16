@@ -348,8 +348,135 @@ mod tests {
 
     use super::*;
     use crate::cmds::update::{notes, prev_services};
-    use crate::testing::build_metadata;
-    use crate::testing::constants::{NEXT_SERVICE, NOTE, PREVIOUS_SERVICE};
+    use crate::testing::constants::{
+        ID, NAME, NEXT_SERVICE, NOTE, PREVIOUS_SERVICE, SERVICE_INTERVAL,
+    };
+    use crate::testing::{build_log, build_metadata};
+
+    #[test]
+    fn upate_cmd_run_prev_services() {
+        let update_args = Update {
+            id: ID.into(),
+            cmd: Cmd::PreviousServices(UpdatePreviousServices {
+                cmd: UpdatePreviousServicesCmd::Clear(prev_services::Clear),
+            }),
+        };
+        let mut log = build_log();
+        assert!(log.get(ID).unwrap().prev_services().len().is_some());
+
+        let found = update_args.run(&mut log).unwrap();
+        assert_eq!(found, "Successfully cleared previous services");
+        assert!(log.get(ID).unwrap().prev_services().len().is_none());
+    }
+
+    #[test]
+    fn upate_cmd_run_notes() {
+        let update_args = Update {
+            id: ID.into(),
+            cmd: Cmd::Notes(UpdateNotes {
+                cmd: UpdateNotesCmd::Clear(notes::Clear),
+            }),
+        };
+        let mut log = build_log();
+        assert!(log.get(ID).unwrap().notes().len().is_some());
+
+        let found = update_args.run(&mut log).unwrap();
+        assert_eq!(found, "Successfully cleared notes");
+        assert!(log.get(ID).unwrap().notes().len().is_none());
+    }
+
+    #[test]
+    fn upate_cmd_run_next_service() {
+        let miles = 1000;
+        assert_ne!(NEXT_SERVICE.miles(), miles);
+
+        let update_args = Update {
+            id: ID.into(),
+            cmd: Cmd::NextService(UpdateNextService {
+                miles: Some(miles),
+                date: None,
+            }),
+        };
+        let mut log = build_log();
+
+        let found = update_args.run(&mut log).unwrap();
+        assert!(found.to_lowercase().contains("set next service miles"));
+        assert_eq!(log.get(ID).unwrap().next_service().miles(), miles);
+    }
+
+    #[test]
+    fn upate_cmd_run_service_interval() {
+        let miles = 1000;
+        assert_ne!(SERVICE_INTERVAL.miles(), miles);
+
+        let update_args = Update {
+            id: ID.into(),
+            cmd: Cmd::ServiceInterval(UpdateServiceInterval {
+                miles: Some(miles),
+                months: None,
+            }),
+        };
+        let mut log = build_log();
+
+        let found = update_args.run(&mut log).unwrap();
+        assert!(
+            found
+                .to_lowercase()
+                .contains("updated service interval miles")
+        );
+        assert_eq!(log.get(ID).unwrap().service_interval().miles(), miles);
+    }
+
+    #[test]
+    fn upate_cmd_run_id() {
+        let new_id = "new_id";
+        assert_ne!(new_id, ID);
+
+        let update_args = Update {
+            id: ID.into(),
+            cmd: Cmd::Id(UpdateId { id: new_id.into() }),
+        };
+        let mut log = build_log();
+
+        let found = update_args.run(&mut log).unwrap();
+        assert_eq!(found, format!("Updated id to {new_id}"));
+        assert!(log.get(new_id).is_ok());
+        assert!(log.get(ID).is_err());
+    }
+
+    #[test]
+    fn upate_cmd_run_name() {
+        let new_name = "new_name";
+        assert_ne!(new_name, NAME);
+
+        let update_args = Update {
+            id: ID.into(),
+            cmd: Cmd::Name(UpdateName {
+                name: new_name.into(),
+            }),
+        };
+        let mut log = build_log();
+
+        let found = update_args.run(&mut log).unwrap();
+        assert_eq!(found, format!("Updated name to {new_name}"));
+        assert_eq!(log.get(ID).unwrap().name(), new_name);
+    }
+
+    #[test]
+    fn upate_cmd_run_id_not_found() {
+        let id = "non_found";
+        assert_ne!(id, ID);
+
+        let update_args = Update {
+            id: id.into(),
+            cmd: Cmd::Name(UpdateName {
+                name: "some_name".into(),
+            }),
+        };
+
+        let found = update_args.run(&mut build_log()).unwrap_err();
+        assert!(matches!(found, CmdsError::IdNotFound(_)))
+    }
 
     #[test]
     fn update_service_interval_run_miles_and_months() {
