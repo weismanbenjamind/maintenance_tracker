@@ -10,7 +10,7 @@ fn main() -> ExitCode {
         Ok(success_msg) => {
             let stdout_ = stdout();
             let mut buf = stdout_.lock();
-            writeln!(buf, "{}", success_msg.as_str()).expect("Failed to write result to stdout");
+            writeln!(buf, "{success_msg}").expect("Failed to write result to stdout");
             ExitCode::SUCCESS
         }
         Err(error_msg) => {

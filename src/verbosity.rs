@@ -2,10 +2,14 @@
 //!
 //! # Module to house functionality for setting verbosit for CLI runs.
 
-use crate::errors::VerbosityError;
+use std::sync::OnceLock;
+
+use log::info;
+use std::fmt::Write;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt as tracing_subscriber_fmt;
 
+static LOG_LEVEL: OnceLock<String> = OnceLock::new();
 const WARN: &str = "warn";
 const INFO: &str = "info";
 const DEBUG: &str = "debug";
@@ -18,9 +22,10 @@ const DEBUG: &str = "debug";
 ///
 /// If the rust_log argument is passed it will be used instead of the verbosity arg.
 /// The rust log arg should be one of th valid values from the `RUST_LOG` environment variable.
-pub(crate) fn set_verbosity(verbosity: u8, rust_log: Option<String>) -> Result<(), VerbosityError> {
+pub(crate) fn set_verbosity(verbosity: u8, rust_log: Option<String>) {
     let log_level = get_log_level(verbosity, rust_log);
-    init_tracing_subscriber(&log_level)
+    init_tracing_subscriber(&log_level);
+    _ = LOG_LEVEL.set(log_level);
 }
 
 /// Gets the log level for a given verbosity and rust_log variable.
@@ -49,11 +54,19 @@ fn get_log_level(verbosity: u8, rust_log: Option<String>) -> String {
 // For library crates - never panic. Someone else is using the code we can't panic and crash their code
 // Not panicing below for practice writing a library
 /// Initializes a tracing subscriber from the `tracing_subscriber` crate at the given log level.
-fn init_tracing_subscriber(log_level: &str) -> Result<(), VerbosityError> {
+fn init_tracing_subscriber(log_level: &str) {
     tracing_subscriber_fmt()
         .with_env_filter(EnvFilter::new(log_level))
         .try_init()
-        .map_err(|e| VerbosityError::FailedInitialization(e.to_string()))
+        .unwrap_or_else(|_| {
+            let mut buf = String::new();
+            _ = write!(buf, "Verbosity already set");
+            if let Some(log_level) = LOG_LEVEL.get() {
+                _ = write!(buf, " to {log_level}");
+            }
+            _ = write!(buf, ". Skipping vebosity initialization.");
+            info!("{buf}");
+        })
 }
 
 #[cfg(test)]

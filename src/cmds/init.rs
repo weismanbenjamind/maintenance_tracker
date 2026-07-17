@@ -42,6 +42,28 @@ pub(crate) struct Init {
 }
 
 impl Init {
+    // TODO - Test this
+    /// Create a new Init struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(
+        name: &str,
+        id: &str,
+        service_interval: ServiceInterval,
+        next_service: NextService,
+        notes: Option<Vec<String>>,
+        previous_services: Option<Vec<PreviousService>>,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            id: id.into(),
+            service_interval,
+            next_service,
+            notes,
+            previous_services,
+        }
+    }
+
     /// Run service initialization logic.
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!(

@@ -31,6 +31,17 @@ pub(crate) struct Log {
 }
 
 impl Log {
+    // TODO - Test this
+    /// Create a new Log Struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(log_path: &Path, force: bool) -> Self {
+        Self {
+            log_path: log_path.into(),
+            force,
+        }
+    }
+
     /// Run the Log command to initialize a maintenance log.
     pub(crate) fn run(self) -> Result<String, CmdsError> {
         info!(

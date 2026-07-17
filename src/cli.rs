@@ -6,6 +6,9 @@ use crate::cmds;
 use crate::constants::DEFAULT_MAINTENANCE_LOG_PATH;
 use std::path::PathBuf;
 
+#[cfg(test)]
+use std::path::Path;
+
 use clap::{ArgAction, Parser, Subcommand};
 
 /// Top level args for the maintenance_log CLI.
@@ -40,6 +43,28 @@ pub struct MaintenanceTrackerArgs {
 }
 
 impl MaintenanceTrackerArgs {
+    // TODO - Test this
+    /// Create a new MaintenanceTrackerArgs struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(
+        maintenance_log: Option<&Path>,
+        maintenance_log_env: Option<&str>,
+        verbose: Option<u8>,
+        cmd: Cmd,
+    ) -> Self {
+        Self {
+            maintenance_log: maintenance_log.map_or_else(
+                || PathBuf::from(DEFAULT_MAINTENANCE_LOG_PATH),
+                |v| PathBuf::from(v),
+            ),
+            maintenance_log_env: maintenance_log_env
+                .map_or_else(|| String::from("MAINTENANCE_LOG"), |v| String::from(v)),
+            verbose: verbose.unwrap_or(0),
+            cmd,
+        }
+    }
+
     /// Consumes the MaintenanceTrackerArgs object returning a tuple in the format
     /// `PathBuf`, `String`, `u8`, `Cmd`
     ///

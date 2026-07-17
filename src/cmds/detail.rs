@@ -17,6 +17,14 @@ pub(crate) struct Detail {
 }
 
 impl Detail {
+    // TODO - Test this
+    /// Construct a new Detail command.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(id: &str) -> Self {
+        Self { id: id.into() }
+    }
+
     /// Run the detail command to get info about services with a given id.
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!(

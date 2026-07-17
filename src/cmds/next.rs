@@ -17,6 +17,14 @@ pub(crate) struct Next {
 }
 
 impl Next {
+    // TODO - Test this
+    /// Create a new next struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(id: &str) -> Self {
+        Self { id: id.into() }
+    }
+
     /// Run the next command. Get's a specific service's next miles and date thresholds
     /// as a human readible string.
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {

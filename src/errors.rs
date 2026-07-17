@@ -14,9 +14,6 @@ pub enum MaintenanceTrackerError {
     Containers(#[from] ContainersError),
 
     #[error(transparent)]
-    Verbosity(#[from] VerbosityError),
-
-    #[error(transparent)]
     CfgResolve(#[from] CfgResolveError),
 
     #[error(transparent)]
@@ -26,17 +23,6 @@ pub enum MaintenanceTrackerError {
     /// Typically not reachable due to type system, especially for args are coming from clap.
     #[error("{0}")]
     InvalidState(String),
-}
-
-/// Error to be raised if have failure state when setting verbosity for application.
-#[derive(Debug, Error)]
-pub enum VerbosityError {
-    // Must use normal error below
-    // try_init() off tracing subscriber returns a Box<dyn ...>
-    // At this point just grab the string error message and lose error chain
-    /// Error when verbosity initialization fails.
-    #[error("Failed to initialize tracing subscriber. Error: {0}.")]
-    FailedInitialization(String),
 }
 
 /// Error to be raised when resolving the path to the configuration file housing maintenance records.
