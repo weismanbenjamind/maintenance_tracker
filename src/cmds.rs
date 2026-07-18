@@ -23,3 +23,7 @@ pub(crate) use log::Log;
 pub(crate) use next::Next;
 pub(crate) use status::Status;
 pub(crate) use update::Update;
+
+// Expose some modules only for testing
+#[cfg(test)]
+pub(crate) use update::testing as update_testing;

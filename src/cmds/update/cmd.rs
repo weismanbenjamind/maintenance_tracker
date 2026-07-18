@@ -24,6 +24,14 @@ pub(crate) struct Update {
 }
 
 impl Update {
+    // TODO - test this
+    /// Build a new update struct.
+    /// Only used for testing
+    #[cfg(test)]
+    pub(crate) fn new(id: &str, cmd: Cmd) -> Self {
+        Self { id: id.into(), cmd }
+    }
+
     /// Run the update service command
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!("Updating maintenance log.");
@@ -80,9 +88,11 @@ impl Update {
     }
 }
 
+// Cmd enum is public to the crate only for testing purposes.
+// Only exposed internally to test behind a test guard.
 /// Enum to house all potential commands and their args for a service update
 #[derive(Clone, Debug, Subcommand)]
-enum Cmd {
+pub(crate) enum Cmd {
     Name(UpdateName),
     Id(UpdateId),
     ServiceInterval(UpdateServiceInterval),
@@ -91,27 +101,43 @@ enum Cmd {
     PreviousServices(UpdatePreviousServices),
 }
 
+// public(crate) only for testing purposes.
+// Only exposed internally to test behind a test guard.
 /// Args for updating a service name
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update name")]
-struct UpdateName {
+pub(crate) struct UpdateName {
     #[arg(help = "New name of service")]
     name: String,
 }
 
+impl UpdateName {
+    // TODO - test this
+    /// Create a new Name struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(name: &str) -> Self {
+        Self { name: name.into() }
+    }
+}
+
+// public(crate) only for testing purposes.
+// Actually never exposed at module level.
 /// Args for updating a service id
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update id")]
-struct UpdateId {
+pub(crate) struct UpdateId {
     #[arg(help = "New id of service")]
     id: String,
 }
 
+// public(crate) only for testing purposes.
+// Actually never exposed at module level
 /// Args for updating a service interval
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update service interval")]
 #[group(required = true, multiple = true)]
-struct UpdateServiceInterval {
+pub(crate) struct UpdateServiceInterval {
     #[arg(short, long, help = "New miles interval")]
     miles: Option<u32>,
 
@@ -158,11 +184,13 @@ fn get_updated_service_interval_msg(
     Ok(msg)
 }
 
+// public(crate) only for testing purposes.
+// Actually never exposed at module level
 /// Args for updating the next service
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update next service")]
 #[group(required = true, multiple = true)]
-struct UpdateNextService {
+pub(crate) struct UpdateNextService {
     #[arg(short, long, help = "Target next service miles")]
     miles: Option<u32>,
 
@@ -204,10 +232,12 @@ fn get_next_service_update_msg(
     }
 }
 
+// public(crate) only for testing purposes.
+// Actually never exposed at module level
 /// Args for updating notes
 #[derive(Clone, Debug, Args)]
 #[command(about = "Update notes")]
-struct UpdateNotes {
+pub(crate) struct UpdateNotes {
     #[command(subcommand)]
     cmd: UpdateNotesCmd,
 }
@@ -246,10 +276,12 @@ impl UpdateNotes {
     }
 }
 
+// public(crate) only for testing purposes.
+// Actually never exposed at module level
 /// Args for updating a previous service
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Update previous services")]
-struct UpdatePreviousServices {
+pub(crate) struct UpdatePreviousServices {
     #[command(subcommand)]
     cmd: UpdatePreviousServicesCmd,
 }

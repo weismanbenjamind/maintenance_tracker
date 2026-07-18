@@ -24,6 +24,18 @@ pub(crate) struct Complete {
 }
 
 impl Complete {
+    // TODO - Test this
+    /// Build a new Complete struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(id: &str, mileage: u32, date: NaiveDate) -> Self {
+        Self {
+            id: id.into(),
+            mileage,
+            date,
+        }
+    }
+
     /// Run the `Complete` command.
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!(

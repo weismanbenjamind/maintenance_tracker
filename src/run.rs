@@ -76,11 +76,12 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<SuccessMsg, MaintenanceTracke
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cmds::update_testing;
     use crate::cmds::{self, NextService, ServiceInterval};
     use crate::testing::build_log;
-    use crate::testing::constants::{ID, NOTE};
+    use crate::testing::constants::{ID, NAME, NEXT_SERVICE, NOTE, SERVICE_INTERVAL};
 
-    use chrono::NaiveDate;
+    use chrono::{NaiveDate, TimeDelta};
     use tempfile::{NamedTempFile, TempDir};
 
     fn init_log_file() -> NamedTempFile {
@@ -91,8 +92,42 @@ mod tests {
     }
 
     #[test]
+    fn run_update_cmd() {
+        let new_name = "new_name";
+        assert_ne!(new_name, NAME);
+
+        let cmd = Cmd::Update(cmds::Update::new(
+            ID,
+            update_testing::Cmd::Name(update_testing::UpdateName::new(new_name)),
+        ));
+
+        let tmpfile = init_log_file();
+        let args = MaintenanceTrackerArgs::new(tmpfile.path().into(), None, None, cmd);
+        let found = run(args).unwrap();
+        assert!(found.to_string().to_lowercase().contains("updated name"));
+
+        let contents = std::fs::read_to_string(tmpfile).unwrap();
+        assert!(contents.contains(&format!("name = \"{new_name}\"")));
+        assert!(!contents.contains(&format!("name = {NAME}")));
+    }
+
+    #[test]
     fn run_complete_cmd() {
-        todo!("Write this test");
+        let mileage = NEXT_SERVICE.miles();
+        let date = NEXT_SERVICE.date();
+        let cmd = Cmd::Complete(cmds::Complete::new(ID, mileage, date));
+        let tmpfile = init_log_file();
+
+        let args = MaintenanceTrackerArgs::new(tmpfile.path().into(), None, None, cmd);
+        let found = run(args).unwrap().to_string().to_lowercase();
+        assert!(found.contains("as complete at"));
+        assert!(found.contains("updated next service to"));
+
+        let target_next_service_miles = mileage + SERVICE_INTERVAL.miles();
+        let target_next_service_date = date + TimeDelta::days(SERVICE_INTERVAL.days());
+        let contents = std::fs::read_to_string(tmpfile).unwrap();
+        assert!(contents.contains(&format!("miles = {target_next_service_miles}")));
+        assert!(contents.contains(&format!("date = \"{target_next_service_date}\"")));
     }
 
     #[test]
