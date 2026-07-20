@@ -17,6 +17,14 @@ pub(crate) struct Delete {
 }
 
 impl Delete {
+    // TODO - test this
+    /// Create a new Delete struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(id: &str) -> Self {
+        Self { id: id.into() }
+    }
+
     /// Delete a service with a given ID.
     pub(crate) fn run(self, log: &mut MaintenanceLog) -> Result<String, CmdsError> {
         info!("Attempting to delete service with id {}", self.id);

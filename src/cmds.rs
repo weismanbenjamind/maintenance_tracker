@@ -26,4 +26,6 @@ pub(crate) use update::Update;
 
 // Expose some modules only for testing
 #[cfg(test)]
+pub(crate) use diff::testing as diff_testing;
+#[cfg(test)]
 pub(crate) use update::testing as update_testing;

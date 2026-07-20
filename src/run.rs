@@ -76,6 +76,7 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<SuccessMsg, MaintenanceTracke
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cmds::diff_testing;
     use crate::cmds::update_testing;
     use crate::cmds::{self, NextService, ServiceInterval};
     use crate::testing::build_log;
@@ -89,6 +90,54 @@ mod tests {
         let log = build_log();
         log.write(&tmpfile).unwrap();
         tmpfile
+    }
+
+    #[test]
+    fn test_run_status() {
+        let cmd = Cmd::Status(cmds::Status::new(
+            NEXT_SERVICE.miles() - 100,
+            Some(ID.to_string()),
+            Some(NEXT_SERVICE.date() - TimeDelta::days(30)),
+        ));
+
+        let tmpfile = init_log_file();
+        let args = MaintenanceTrackerArgs::new(tmpfile.path().into(), None, None, cmd);
+
+        let found = run(args).unwrap().as_str().to_lowercase();
+        assert!(found.contains("miles until next service"));
+        assert!(found.contains("days until next service"))
+    }
+
+    #[test]
+    fn test_run_diff() {
+        let miles = NEXT_SERVICE.miles();
+        let thresh_cmd = diff_testing::Cmd::Threshold(
+            diff_testing::Threshold::new(Some(miles), Some(miles - 100), None).unwrap(),
+        );
+
+        let cmd = Cmd::Diff(cmds::Diff::new(Some(ID.to_string()), thresh_cmd));
+        let tmpfile = init_log_file();
+        let args = MaintenanceTrackerArgs::new(tmpfile.path().into(), None, None, cmd);
+
+        let found = run(args).unwrap();
+        assert!(
+            found
+                .as_str()
+                .to_lowercase()
+                .contains("miles until next service")
+        )
+    }
+
+    #[test]
+    fn run_delete_cmd() {
+        let cmd = Cmd::Delete(cmds::Delete::new(ID));
+        let tmpfile = init_log_file();
+        let args = MaintenanceTrackerArgs::new(tmpfile.path().into(), None, None, cmd);
+
+        let found = run(args).unwrap();
+        assert!(found.to_string().to_lowercase().contains("deleted service"));
+        let contents = std::fs::read_to_string(tmpfile).unwrap();
+        assert!(!contents.contains(ID));
     }
 
     #[test]

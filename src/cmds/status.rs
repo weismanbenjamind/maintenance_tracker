@@ -34,6 +34,18 @@ pub(crate) struct Status {
 }
 
 impl Status {
+    // TODO - test this
+    /// Build a new Status struct
+    /// Only used for testing
+    #[cfg(test)]
+    pub(crate) fn new(curr_miles: u32, id: Option<String>, today: Option<NaiveDate>) -> Self {
+        Self {
+            curr_miles,
+            id,
+            today: today.unwrap_or(chrono::Local::now().date_naive()),
+        }
+    }
+
     /// Run the status command given the arguments housed in the struct.
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!("Starting status operation");

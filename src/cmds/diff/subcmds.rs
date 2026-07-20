@@ -12,7 +12,7 @@ use clap::Args;
 #[derive(Clone, Copy, Debug, Args)]
 #[command(about = "Get all service requirements by a specific mileage and/or date")]
 #[group(required = true, multiple = true)]
-pub(super) struct Threshold {
+pub(crate) struct Threshold {
     #[arg(
         short,
         long,
@@ -36,7 +36,7 @@ pub(super) struct Threshold {
 impl Threshold {
     /// Build a new threshold args
     #[cfg(test)]
-    pub(super) fn new(
+    pub(crate) fn new(
         miles: Option<u32>,
         curr_miles: Option<u32>,
         date: Option<NaiveDate>,
@@ -80,7 +80,7 @@ impl Threshold {
     about = "Get all service requirements from the current mileage and/or date due within some mileage and/or date interval"
 )]
 #[group(required = true, multiple = true)]
-pub(super) struct Interval {
+pub(crate) struct Interval {
     #[arg(
         short,
         long,
@@ -110,7 +110,7 @@ pub(super) struct Interval {
 
 impl Interval {
     #[cfg(test)]
-    pub(super) fn new(
+    pub(crate) fn new(
         miles: Option<u32>,
         curr_miles: Option<u32>,
         months: Option<u32>,

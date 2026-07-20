@@ -26,6 +26,14 @@ pub(crate) struct Diff {
 }
 
 impl Diff {
+    // TODO - Test this
+    /// Create a new Diff Struct.
+    /// Only used for testing.
+    #[cfg(test)]
+    pub(crate) fn new(id: Option<String>, cmd: Cmd) -> Self {
+        Self { id, cmd }
+    }
+
     /// Run the diff command
     pub(crate) fn run(self, log: &MaintenanceLog) -> Result<String, CmdsError> {
         info!("Running diff");
@@ -70,7 +78,7 @@ impl Diff {
 
 /// Enum for diff subcommands
 #[derive(Clone, Copy, Debug, Subcommand)]
-pub(super) enum Cmd {
+pub(crate) enum Cmd {
     Threshold(subcmds::Threshold),
     Interval(subcmds::Interval),
 }
