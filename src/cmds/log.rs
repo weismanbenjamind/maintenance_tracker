@@ -31,7 +31,6 @@ pub(crate) struct Log {
 }
 
 impl Log {
-    // TODO - Test this
     /// Create a new Log Struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -146,6 +145,16 @@ fn init_log(path: &Path) -> Result<String, CmdsError> {
 mod tests {
     use super::*;
     use tempfile::{NamedTempFile, TempDir};
+
+    #[test]
+    fn log_new() {
+        let log_path = Path::new("path");
+        let force = true;
+
+        let found = Log::new(log_path, force);
+        assert_eq!(found.log_path, log_path);
+        assert_eq!(found.force, force);
+    }
 
     #[test]
     fn log_run_build_no_force() {

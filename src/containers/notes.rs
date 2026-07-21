@@ -62,7 +62,6 @@ impl Notes {
         match idx < notes.len() {
             true => {
                 notes.remove(idx);
-                // TODO - need similar pattern for previous services
                 if notes.is_empty() {
                     self.clear();
                 };

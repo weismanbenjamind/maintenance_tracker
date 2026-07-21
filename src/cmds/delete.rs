@@ -17,7 +17,6 @@ pub(crate) struct Delete {
 }
 
 impl Delete {
-    // TODO - test this
     /// Create a new Delete struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -44,6 +43,12 @@ mod tests {
     use super::*;
     use crate::testing::build_log;
     use crate::testing::constants::ID;
+
+    #[test]
+    fn delete_new() {
+        let found = Delete::new(ID.into());
+        assert_eq!(found.id, ID.to_string());
+    }
 
     #[test]
     fn delete_ok() {

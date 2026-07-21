@@ -17,7 +17,6 @@ pub(crate) struct Next {
 }
 
 impl Next {
-    // TODO - Test this
     /// Create a new next struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -50,6 +49,12 @@ mod tests {
     use super::*;
     use crate::testing::constants::ID;
     use crate::testing::{build_log, constants};
+
+    #[test]
+    fn next_new() {
+        let next = Next::new(ID);
+        assert_eq!(&next.id, ID);
+    }
 
     #[test]
     fn test_next_run_ok() {

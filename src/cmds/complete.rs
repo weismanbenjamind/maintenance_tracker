@@ -24,7 +24,6 @@ pub(crate) struct Complete {
 }
 
 impl Complete {
-    // TODO - Test this
     /// Build a new Complete struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -75,6 +74,17 @@ mod tests {
     use crate::testing::build_log;
     use crate::testing::constants::{ID, NAME, NEXT_SERVICE, PREVIOUS_SERVICE, SERVICE_INTERVAL};
     use chrono::{NaiveDate, TimeDelta};
+
+    #[test]
+    fn complete_new() {
+        let miles = NEXT_SERVICE.miles();
+        let date = NEXT_SERVICE.date();
+        let found = Complete::new(ID, miles, date);
+
+        assert_eq!(found.id, ID.to_string());
+        assert_eq!(found.mileage, miles);
+        assert_eq!(found.date, date);
+    }
 
     #[test]
     fn complete_ok() {

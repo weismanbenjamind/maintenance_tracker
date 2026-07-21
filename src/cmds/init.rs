@@ -42,7 +42,6 @@ pub(crate) struct Init {
 }
 
 impl Init {
-    // TODO - Test this
     /// Create a new Init struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -155,7 +154,7 @@ impl FromStr for PreviousService {
 }
 
 /// Houses service interval args.
-#[derive(Clone, Copy, Debug, Args)]
+#[derive(Clone, Copy, Debug, PartialEq, Args)]
 pub(crate) struct ServiceInterval {
     #[arg(help = "Miles interval service should be completed at")]
     miles_interval: u32,
@@ -223,6 +222,37 @@ mod tests {
     use super::*;
     use crate::testing::build_log;
     use crate::testing::constants::ID;
+
+    #[test]
+    fn init_new() {
+        let name = "name";
+        let id = "id";
+        let service_interval = ServiceInterval {
+            miles_interval: 4000,
+            monthly_interval: 5,
+        };
+        let next_service = NextService {
+            next_service_miles: 3000,
+            next_service_date: NaiveDate::from_ymd_opt(2026, 6, 15).unwrap(),
+        };
+        let notes = None;
+        let previous_services = None;
+
+        let args = Init::new(
+            name,
+            id,
+            service_interval,
+            next_service,
+            notes.clone(),
+            previous_services.clone(),
+        );
+
+        assert_eq!(&args.name, name);
+        assert_eq!(&args.id, id);
+        assert_eq!(args.service_interval, service_interval);
+        assert_eq!(args.notes, notes);
+        assert_eq!(args.previous_services, previous_services);
+    }
 
     #[test]
     fn init_run_ok() {

@@ -43,7 +43,6 @@ pub struct MaintenanceTrackerArgs {
 }
 
 impl MaintenanceTrackerArgs {
-    // TODO - Test this
     /// Create a new MaintenanceTrackerArgs struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -102,6 +101,19 @@ pub(crate) enum Cmd {
 mod tests {
     use super::*;
     use std::matches;
+
+    #[test]
+    fn maintenance_tracker_args_new() {
+        let log = Path::new("some_path");
+        let maintenance_log_env = "env";
+        let cmd = Cmd::List(cmds::List);
+
+        let found = MaintenanceTrackerArgs::new(Some(log), Some(maintenance_log_env), None, cmd);
+        assert_eq!(found.maintenance_log, log);
+        assert_eq!(found.maintenance_log_env, maintenance_log_env);
+        assert_eq!(found.verbose, 0);
+        assert!(matches!(found.cmd, Cmd::List(_)));
+    }
 
     #[test]
     fn test_cli_into_parts() {

@@ -34,7 +34,6 @@ pub(crate) struct Status {
 }
 
 impl Status {
-    // TODO - test this
     /// Build a new Status struct
     /// Only used for testing
     #[cfg(test)]
@@ -130,6 +129,18 @@ mod tests {
     use super::*;
     use crate::testing::constants::{ID, NAME, NEXT_SERVICE};
     use crate::testing::{build_log, build_metadata};
+
+    #[test]
+    fn status_new() {
+        let curr_miles = 70000;
+        let id = ID;
+        let today = NaiveDate::from_ymd_opt(2026, 6, 15);
+
+        let status = Status::new(curr_miles, Some(id.into()), today);
+        assert_eq!(status.curr_miles, curr_miles);
+        assert_eq!(&status.id.unwrap(), ID);
+        assert_eq!(status.today, today.unwrap());
+    }
 
     #[test]
     fn status_run_multi_id() {

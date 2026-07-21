@@ -24,7 +24,6 @@ pub(crate) struct Update {
 }
 
 impl Update {
-    // TODO - test this
     /// Build a new update struct.
     /// Only used for testing
     #[cfg(test)]
@@ -112,7 +111,6 @@ pub(crate) struct UpdateName {
 }
 
 impl UpdateName {
-    // TODO - test this
     /// Create a new Name struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -384,6 +382,26 @@ mod tests {
         ID, NAME, NEXT_SERVICE, NOTE, PREVIOUS_SERVICE, SERVICE_INTERVAL,
     };
     use crate::testing::{build_log, build_metadata};
+
+    #[test]
+    fn update_new() {
+        let update = Update::new(
+            ID,
+            Cmd::Name(UpdateName {
+                name: "name".into(),
+            }),
+        );
+
+        assert_eq!(&update.id, ID);
+        assert!(matches!(update.cmd, Cmd::Name(_)))
+    }
+
+    #[test]
+    fn update_name_new() {
+        let name = "name";
+        let update_name = UpdateName::new(name);
+        assert_eq!(&update_name.name, name);
+    }
 
     #[test]
     fn upate_cmd_run_prev_services() {

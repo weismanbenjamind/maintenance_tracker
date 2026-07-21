@@ -17,7 +17,6 @@ pub(crate) struct Detail {
 }
 
 impl Detail {
-    // TODO - Test this
     /// Construct a new Detail command.
     /// Only used for testing.
     #[cfg(test)]
@@ -51,6 +50,12 @@ mod tests {
     use super::*;
     use crate::testing::constants::ID;
     use crate::testing::{build_log, build_metadata};
+
+    #[test]
+    fn detail_new() {
+        let found = Detail::new(ID.into());
+        assert_eq!(found.id, ID.to_string());
+    }
 
     #[test]
     fn detail_ok() {

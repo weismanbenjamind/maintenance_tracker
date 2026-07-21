@@ -26,7 +26,6 @@ pub(crate) struct Diff {
 }
 
 impl Diff {
-    // TODO - Test this
     /// Create a new Diff Struct.
     /// Only used for testing.
     #[cfg(test)]
@@ -90,6 +89,17 @@ mod tests {
     use super::*;
     use crate::testing::constants::{ID, NEXT_SERVICE};
     use crate::testing::{build_log, build_metadata};
+
+    #[test]
+    fn cmd_new() {
+        let cmd = Diff::new(
+            Some(ID.to_string()),
+            Cmd::Threshold(subcmds::Threshold::new(Some(75000), Some(70000), None).unwrap()),
+        );
+
+        assert_eq!(&cmd.id.unwrap(), ID);
+        assert!(matches!(cmd.cmd, Cmd::Threshold(_)));
+    }
 
     #[test]
     fn cmd_thresh_id() {
