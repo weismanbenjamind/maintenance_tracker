@@ -104,7 +104,7 @@ pub(crate) struct Interval {
     )]
     months: Option<u32>,
 
-    #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Allows for overriding today's date if passing --months")]
+    #[arg(short, long, default_value_t = Local::now().date_naive(), help = "Allows for overriding today's date if passing --months. If --months is not passed, this arg is a no-op")]
     today: NaiveDate,
 }
 
