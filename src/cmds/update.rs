@@ -1,3 +1,7 @@
+//! # Update
+//!
+//! Houses top level logic for the update command
+
 mod cmd;
 mod notes;
 mod prev_services;

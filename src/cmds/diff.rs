@@ -1,3 +1,7 @@
+//! # Diff
+//!
+//! Houses to level logic for the diff command
+
 mod cmd;
 mod diff_calculator;
 mod metadata_filter;

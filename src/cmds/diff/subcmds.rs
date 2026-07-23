@@ -109,6 +109,8 @@ pub(crate) struct Interval {
 }
 
 impl Interval {
+    /// Build a new Interval struct.
+    /// Only used for testing.
     #[cfg(test)]
     pub(crate) fn new(
         miles: Option<u32>,
