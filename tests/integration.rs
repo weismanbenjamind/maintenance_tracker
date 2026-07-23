@@ -7,7 +7,7 @@ use std::path::Path;
 use assert_cmd::Command;
 use indoc::indoc;
 use predicates;
-use tempfile::NamedTempFile;
+use tempfile::{NamedTempFile, tempdir};
 
 fn build_log() -> NamedTempFile {
     let tmpfile = NamedTempFile::with_suffix(".toml").unwrap();
@@ -56,12 +56,14 @@ fn test_run_no_log() {
         ));
 }
 
-// THIS TEST WILL ATTEMPT TO READ THE ENVIRONMENT
-// ENVIRONMENT VARIABLES ARE PROCESS WIDE ACROSS THREADS
-// IF TWO THREADS ATTEMPT TO SET/UNSET maintenance_log_env
-// THEY WILL INTERFERE WITH EACH OTHER
-// RUN cargo test -- --test-threads=1 TO AVOID RACE CONDITIONS
-// LIKE THE ONE JUST DESCRIBED
+/*
+ * THIS TEST WILL ATTEMPT TO READ THE ENVIRONMENT
+ * ENVIRONMENT VARIABLES ARE PROCESS WIDE ACROSS THREADS
+ * IF TWO THREADS ATTEMPT TO SET/UNSET maintenance_log_env
+ * THEY WILL INTERFERE WITH EACH OTHER
+ * RUN cargo test -- --test-threads=1 TO AVOID RACE CONDITIONS
+ * LIKE THE ONE JUST DESCRIBED
+*/
 #[test]
 fn test_run_use_env() {
     let tempfile = build_log();
@@ -434,4 +436,215 @@ fn test_init_err() {
         .arg("100000;2027-01-01")
         .assert()
         .failure();
+}
+
+#[test]
+fn test_log_ok() {
+    let tmpdir = tempdir().unwrap();
+    let log = tmpdir.path().join("maintenance_log.toml");
+    assert!(!log.exists());
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("log")
+        .arg(&log)
+        .assert()
+        .success();
+
+    assert!(log.exists());
+    assert!(!std::fs::read(log).unwrap().is_empty())
+}
+
+#[test]
+fn test_log_err() {
+    let log = NamedTempFile::with_suffix(".toml").unwrap();
+    let log_path = log.path();
+    assert!(log_path.exists());
+    assert!(std::fs::read_to_string(log_path).unwrap().is_empty());
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("log")
+        .arg(log_path)
+        .assert()
+        .success()
+        .stdout(predicates::str::contains("Maintenance log already exists"));
+
+    assert!(std::fs::read_to_string(log_path).unwrap().is_empty());
+}
+
+#[test]
+fn test_next_ok() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("next")
+        .arg("oil_change")
+        .assert()
+        .success();
+}
+
+#[test]
+fn test_next_err() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("next")
+        .assert()
+        .failure();
+}
+
+#[test]
+fn test_status_all() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("status")
+        .arg("97000")
+        .arg("-t")
+        .arg("2026-12-15")
+        .assert()
+        .success();
+}
+
+#[test]
+fn test_status_id() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("status")
+        .arg("97000")
+        .arg("-i")
+        .arg("oil_change")
+        .arg("-t")
+        .arg("2026-12-15")
+        .assert()
+        .success();
+}
+
+#[test]
+fn test_status_today_defaut() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("status")
+        .arg("97000")
+        .assert()
+        .success();
+}
+
+#[test]
+fn test_status_err() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("status")
+        .assert()
+        .failure();
+}
+
+#[test]
+fn test_update_ok() {
+    let log = build_log();
+    let new_name = "new_name";
+    let path = log.path();
+    assert!(!std::fs::read_to_string(path).unwrap().contains(new_name));
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(path)
+        .arg("update")
+        .arg("oil_change")
+        .arg("name")
+        .arg(new_name)
+        .assert()
+        .success();
+
+    assert!(std::fs::read_to_string(path).unwrap().contains(new_name));
+}
+
+#[test]
+fn test_update_err() {
+    let log = build_log();
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(log.path())
+        .arg("update")
+        .arg("name")
+        .arg("lol")
+        .assert()
+        .failure();
+}
+
+#[test]
+fn test_update_notes() {
+    let log = build_log();
+    let new_note = "new_note";
+    let path = log.path();
+    assert!(!std::fs::read_to_string(path).unwrap().contains(new_note));
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(path)
+        .arg("update")
+        .arg("oil_change")
+        .arg("notes")
+        .arg("append")
+        .arg(new_note)
+        .assert()
+        .success();
+
+    assert!(std::fs::read_to_string(path).unwrap().contains(new_note));
+}
+
+#[test]
+fn test_update_previous_services() {
+    let log = build_log();
+    let new_miles = "50000";
+    let new_date = "2026-04-11";
+
+    let path = log.path();
+    let path_contents = std::fs::read_to_string(path).unwrap();
+    assert!(!path_contents.contains(new_miles));
+    assert!(!path_contents.contains(new_date));
+
+    Command::cargo_bin("maintenance_tracker")
+        .unwrap()
+        .arg("-m")
+        .arg(path)
+        .arg("update")
+        .arg("oil_change")
+        .arg("previous-services")
+        .arg("append")
+        .arg(new_miles)
+        .arg("-d")
+        .arg(new_date)
+        .assert()
+        .success();
+
+    let path_contents = std::fs::read_to_string(path).unwrap();
+    assert!(path_contents.contains(new_miles));
+    assert!(path_contents.contains(new_date));
 }
