@@ -2,6 +2,20 @@
 
 `maintenance_tracker` is a lightweight CLI tool to track auto maintenance.
 
+## Installation
+
+Simply clone the repo, checkout your desired version tag, build the binary, put it in desired deployment location (maybe on your `PATH`), and delete the repo. _Note: the installation assumes you have git installed and can clone a repo and also have the rust toolchain (e.g. cargo) installed._
+
+For example:
+
+```sh
+git clone https://github.com/weismanbenjamind/maintenance_tracker.git
+git checkout v1.0.0
+cargo build -r
+mv ./target/release/maintenance_tracker /your/desired/deployment/location/maybe/on/PATH
+rm -r maintenance_tracker
+```
+
 ## Usage
 
 The below steps outline how to use the tool.
