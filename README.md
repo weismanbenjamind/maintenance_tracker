@@ -151,21 +151,21 @@ Example using the log file we constructed in step 2 above:
 maintenance_tracker status 70000
 
 # Outputs:
-Name: Oil Change
-Next service (miles): 80000 Miles
-Current mileage: 70000 Miles
-Miles until next service (Next Service Miles - Current Miles): 10000 Miles
-Next service date: 2026-11-24
-Today: 2026-07-24
-Days until next service (Next Service Date - Today): 123 Days
+# Name: Oil Change
+# Next service (miles): 80000 Miles
+# Current mileage: 70000 Miles
+# Miles until next service (Next Service Miles - Current Miles): 10000 Miles
+# Next service date: 2026-11-24
+# Today: 2026-07-24
+# Days until next service (Next Service Date - Today): 123 Days
 
-Name: Transmission Fluid
-Next service (miles): 90000 Miles
-Current mileage: 70000 Miles
-Miles until next service (Next Service Miles - Current Miles): 20000 Miles
-Next service date: 2027-11-24
-Today: 2026-07-24
-Days until next service (Next Service Date - Today): 488 Days
+# Name: Transmission Fluid
+# Next service (miles): 90000 Miles
+# Current mileage: 70000 Miles
+# Miles until next service (Next Service Miles - Current Miles): 20000 Miles
+# Next service date: 2027-11-24
+# Today: 2026-07-24
+# Days until next service (Next Service Date - Today): 488 Days
 ```
 
 ```sh
