@@ -8,7 +8,7 @@ Simply clone the repo, checkout your desired version tag, build the binary, put 
 
 For example:
 
-```
+```sh
 git clone https://github.com/weismanbenjamind/maintenance_tracker.git
 git checkout v1.0.0
 cargo build -r
@@ -72,7 +72,7 @@ The following fields are optional:
 
 Running `maintenance_tracker init` will automatically read your log file and initialize a service to be tracked. To initialize an oil change service using 5000 mile/6 month intervals, a next service at 80000 miles/on 2026-11-24, a couple of notes (these are optional), and a couple of previous services (also optional) run the following:
 
-```
+```sh
 maintenance_tracker init "Oil Change" oil_change 5000 6 80000 2026-11-24 -n "Doing 5000 mile intervals" --notes "Doing 6 month intervals" --previous-services "70000;2025-07-24" -p "75000;2026-1-24"
 ```
 
@@ -107,7 +107,7 @@ date = "2025-07-24"
 
 Let's also track the transmission fluid service with the following (No notes or previous services):
 
-```
+```sh
 maintenance_tracker init "Transmission Fluid" transmission_fluid 30000 36 90000 2027-11-24
 ```
 
@@ -130,7 +130,7 @@ date = "2027-11-24"
 
 To delete a service from the log simply run `maintenance_tracker delete <ID>`. Now that we have actual services in our log (`oil_change` and `transmission_fluid`) - let's go ahead and delete the example service with:
 
-```
+```sh
 maintenance_tracker delete example_service
 ```
 
@@ -146,7 +146,7 @@ Status is the most useful command. It checks next service thresholds compared to
 
 Example using the log file we constructed in step 2 above:
 
-```
+```sh
 # Status of all services vs today's date assuming 70000 miles on the vehicle and that today's date is 2026-07-24
 maintenance_tracker status 70000
 
@@ -168,7 +168,7 @@ Today: 2026-07-24
 Days until next service (Next Service Date - Today): 488 Days
 ```
 
-```
+```sh
 # Status of only an oil change assuming 70000 miles on the vehicle and comparing to 2026-07-24
 maintenance_tracker status 70000 --id oil_change --today 2026-07-24
 
@@ -186,7 +186,7 @@ Days until next service (Next Service Date - Today): 123 Days
 
 `Detail` prints details about a service. For example using the log file we constructed in step 2 above:
 
-```
+```sh
 # Command:
 maintenance_tracker detail oil_change
 
@@ -209,7 +209,7 @@ Notes:
 
 `Next` will get the next service miles and date for a given maintenance item. For example using the log file we constructed in step 2 above:
 
-```
+```sh
 # Command:
 maintenance_tracker next transmission_fluid
 
@@ -224,7 +224,7 @@ A `diff` can be performed vs a threshold miles and/or date (e.g. what services n
 
 Example using the log file we constructed in step 2 above:
 
-```
+```sh
 # Threshold diff
 # See if an oil change is due by 86000 miles and/or 2027-02-22
 # Assuming 84000 miles on the vehicle
@@ -240,7 +240,7 @@ Date threshold: 2027-02-22
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
 
-```
+```sh
 # Interval diff
 # See if transmission fluid service is due in the 7000 miles or 13 months
 # Assuming 84000 miles on the vehicle and that today's date is 2026-11-25
@@ -256,7 +256,7 @@ Date threshold: 2027-12-25
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
 
-```
+```sh
 # See which services are due by 86000 miles and/or 2027-02-22
 # Assuming 84000 miles on the vehicle
 maintenance_tracker diff threshold -m 86000 -c 84000 -d 2027-02-22
@@ -271,7 +271,7 @@ Date threshold: 2027-02-22
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
 
-```
+```sh
 # See which services are due in the 7000 miles or 13 months
 # Assuming 84000 miles on the vehicle and that today's date is 2026-11-25
 maintenance_tracker diff interval -m 7000 -c 84000 --months 13 -t 2026-11-25
@@ -300,7 +300,7 @@ Completing a service is simple. Just provide the ID of the service to be complet
 
 Example using the log file we constructed in step 2 above:
 
-```
+```sh
 # Complete an oil change at 80000 miles on 2026-07-24
 maintenance_tracker complete oil_change 80000 -d 2026-07-24
 
@@ -338,7 +338,7 @@ To update a service use the `update` command; `update` allows for the following 
 
 Example using the log file we constructed in step 2 above:
 
-```
+```sh
 # Change the service interval on the oil change service
 maintenance_tracker update oil_change service-interval -m 4000 --months 5
 
@@ -353,7 +353,7 @@ maintenance_tracker update oil_change previous-services replace -m 70000 -n 6950
 
 After the above changes have been made, inspect the oil change service with:
 
-```
+```sh
 # Detail the oil change to see updates that were just made
 maintenance_tracker detail oil_change
 
@@ -384,7 +384,7 @@ There is an argument for `--maintenance-log-env` (`-e`) which can be used specif
 
 Some examples:
 
-```
+```sh
 # Use the (default) value at the MAINTENANCE_LOG environment variable to try to infer the log path
 maintenance_tracker -m non-existent-log-path.toml list
 
@@ -399,7 +399,7 @@ maintenance_tracker -m non-existent-log-path.toml -e skip list
 
 Verbosity can simply be changed with the `--verbosity` or `-v` flags. Note - the verbosity setting max out at debug. Any number of verbose flags greater than or equal to two will result in debug logs. Examples below.
 
-```
+```sh
 # Verbosity at info
 ./maintenance_tracker --verbose list
 
