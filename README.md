@@ -230,7 +230,7 @@ Example using the log file we constructed in step 2 above:
 # Assuming 84000 miles on the vehicle
 maintenance_tracker diff oil_change threshold -m 86000 -c 84000 -d 2027-02-22
 
-# Outputs
+# Outputs:
 # Name: Oil Change
 # Next service miles: 85000 Miles
 # Current miles: 84000 Miles
@@ -246,7 +246,7 @@ maintenance_tracker diff oil_change threshold -m 86000 -c 84000 -d 2027-02-22
 # Assuming 84000 miles on the vehicle and that today's date is 2026-11-25
 maintenance_tracker diff transmission_fluid interval -m 7000 -c 84000 --months 13 -t 2026-11-25
 
-# Outputs
+# Outputs:
 # Name: Transmission Fluid
 # Next service miles: 90000 Miles
 # Current miles: 84000 Miles
@@ -261,7 +261,7 @@ maintenance_tracker diff transmission_fluid interval -m 7000 -c 84000 --months 1
 # Assuming 84000 miles on the vehicle
 maintenance_tracker diff threshold -m 86000 -c 84000 -d 2027-02-22
 
-# Outputs
+# Outputs:
 # Name: Oil Change
 # Next service miles: 85000 Miles
 # Current miles: 84000 Miles
@@ -276,7 +276,7 @@ maintenance_tracker diff threshold -m 86000 -c 84000 -d 2027-02-22
 # Assuming 84000 miles on the vehicle and that today's date is 2026-11-25
 maintenance_tracker diff interval -m 7000 -c 84000 --months 13 -t 2026-11-25
 
-# Outputs
+# Outputs:
 # Name: Oil Change
 # Next service miles: 85000 Miles
 # Current miles: 84000 Miles
