@@ -16,5 +16,7 @@
 - [ ] Run `cargo update --package maintenance_tracker` to ensure the `Cargo.lock` file gets update with the new version number.
 - [ ] Add a new `## Unreleased` section in the `CHANGELOG.md` file.
 - [ ] Commit these changes into `master`.
+- [ ] Push all new branches/updates to existing branches to remote
+- [ ] Make a GitHub release off the `v<release-version-number>` tag where the release description is the changelog contents for the target version
 - [ ] Build binary off the `v<release-version-number>` tag
 - [ ] Move binary to proper deployment location
