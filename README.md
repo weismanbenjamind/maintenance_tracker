@@ -146,12 +146,11 @@ Status is the most useful command. It checks next service thresholds compared to
 
 Example using the log file we constructed in step 2 above:
 
-````sh
+```sh
 # Status of all services vs today's date assuming 70000 miles on the vehicle and that today's date is 2026-07-24
 maintenance_tracker status 70000
 
 # Outputs:
-```
 Name: Oil Change
 Next service (miles): 80000 Miles
 Current mileage: 70000 Miles
@@ -168,14 +167,12 @@ Next service date: 2027-11-24
 Today: 2026-07-24
 Days until next service (Next Service Date - Today): 488 Days
 ```
-````
 
-````sh
+```sh
 # Status of only an oil change assuming 70000 miles on the vehicle and comparing to 2026-07-24
 maintenance_tracker status 70000 --id oil_change --today 2026-07-24
 
 # Outputs:
-```
 Name: Oil Change
 Next service (miles): 80000 Miles
 Current mileage: 70000 Miles
@@ -184,18 +181,16 @@ Next service date: 2026-11-24
 Today: 2026-07-24
 Days until next service (Next Service Date - Today): 123 Days
 ```
-````
 
 #### Detail
 
 `Detail` prints details about a service. For example using the log file we constructed in step 2 above:
 
-````sh
+```sh
 # Command:
 maintenance_tracker detail oil_change
 
 # Outputs:
-```
 Id: oil_change
 Name: Oil Change
 Service Interval Miles: 5000
@@ -209,22 +204,19 @@ Notes:
   - Doing 5000 mile intervals
   - Doing 6 month intervals
 ```
-````
 
 #### Next
 
 `Next` will get the next service miles and date for a given maintenance item. For example using the log file we constructed in step 2 above:
 
-````sh
+```sh
 # Command:
 maintenance_tracker next transmission_fluid
 
 # Outputs:
-```
 Next Service Miles: 90000
 Next Service Date: 2027-11-24
 ```
-````
 
 #### Diff
 
@@ -232,14 +224,13 @@ A `diff` can be performed vs a threshold miles and/or date (e.g. what services n
 
 Example using the log file we constructed in step 2 above:
 
-````sh
+```sh
 # Threshold diff
 # See if an oil change is due by 86000 miles and/or 2027-02-22
 # Assuming 84000 miles on the vehicle
 maintenance_tracker diff oil_change threshold -m 86000 -c 84000 -d 2027-02-22
 
 # Outputs
-```
 Name: Oil Change
 Next service miles: 85000 Miles
 Current miles: 84000 Miles
@@ -248,16 +239,14 @@ Next service date: 2027-01-22
 Date threshold: 2027-02-22
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
-````
 
-````sh
+```sh
 # Interval diff
 # See if transmission fluid service is due in the 7000 miles or 13 months
 # Assuming 84000 miles on the vehicle and that today's date is 2026-11-25
 maintenance_tracker diff transmission_fluid interval -m 7000 -c 84000 --months 13 -t 2026-11-25
 
 # Outputs
-```
 Name: Transmission Fluid
 Next service miles: 90000 Miles
 Current miles: 84000 Miles
@@ -266,15 +255,13 @@ Next service date: 2027-11-24
 Date threshold: 2027-12-25
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
-````
 
-````sh
+```sh
 # See which services are due by 86000 miles and/or 2027-02-22
 # Assuming 84000 miles on the vehicle
 maintenance_tracker diff threshold -m 86000 -c 84000 -d 2027-02-22
 
 # Outputs
-```
 Name: Oil Change
 Next service miles: 85000 Miles
 Current miles: 84000 Miles
@@ -283,15 +270,13 @@ Next service date: 2027-01-22
 Date threshold: 2027-02-22
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
-````
 
-````sh
+```sh
 # See which services are due in the 7000 miles or 13 months
 # Assuming 84000 miles on the vehicle and that today's date is 2026-11-25
 maintenance_tracker diff interval -m 7000 -c 84000 --months 13 -t 2026-11-25
 
 # Outputs
-```
 Name: Oil Change
 Next service miles: 85000 Miles
 Current miles: 84000 Miles
@@ -308,7 +293,6 @@ Next service date: 2027-11-24
 Date threshold: 2027-12-25
 Days until next service (Next Service Date - Date Threshold): -31 Days
 ```
-````
 
 ### Step 4: Completing a Service
 
@@ -316,16 +300,14 @@ Completing a service is simple. Just provide the ID of the service to be complet
 
 Example using the log file we constructed in step 2 above:
 
-````sh
+```sh
 # Complete an oil change at 80000 miles on 2026-07-24
 maintenance_tracker complete oil_change 80000 -d 2026-07-24
 
 # Outputs:
-```
 Marked Oil Change as complete at 80000 miles on 2026-07-24
 Updated next service to 85000 miles or on 2027-01-22
 ```
-````
 
 Note that `complete` will automatically use the service interval to update the next service. Also `complete` will always round down the date when doing date arithmatic. There is some error in the date arithmatic when converting between months, days, weeks, etc; intervals between them; and finally into dates . Rounding down was a design choice made to ensure the error always results in a situation where the service should be performed a little early vs. a little late
 
@@ -371,12 +353,11 @@ maintenance_tracker update oil_change previous-services replace -m 70000 -n 6950
 
 After the above changes have been made, inspect the oil change service with:
 
-````sh
+```sh
 # Detail the oil change to see updates that were just made
 maintenance_tracker detail oil_change
 
 # Outputs:
-```
 Id: oil_change
 Name: Oil Change
 Service Interval Miles: 4000
@@ -391,7 +372,6 @@ Notes:
   - Doing 4000 mile intervals
   - Doing 5 month intervals
 ```
-````
 
 
 ## Miscellaneous Commands
