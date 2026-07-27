@@ -3,8 +3,8 @@
 - [ ] Create branch off `master` with name `pre-release-prep-<version-number>`.
 - [ ] Bump version in `cargo.toml` to `<version-number>`.
 - [ ] Run `cargo update --package maintenance_tracker` to ensure the `Cargo.lock` file gets update with the new version number.
-- [ ] Update the `## Unreleased` section in the `CHANGELOG.md` to `Version <version-number>`.
-- [ ] Run `./scripts/lint.sh` to apply linting changes if needed.
+- [ ] Update the `## Unreleased` section in the `CHANGELOG.md` to `Version <version-number>` and update changelog if needed.
+- [ ] Run `./scripts/ci.sh` to apply linting changes if needed.
 - [ ] Commit changes.
 - [ ] Merge `pre-release-prep-<version-number>` branch into `master`.
 - [ ] Delete the `pre-release-prep-<version-number>` branch.

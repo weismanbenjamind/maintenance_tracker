@@ -1,6 +1,10 @@
 # All Changes to Package Housed Here
 
-## Unreleased
+## 1.0.0
+
+### Added
+
+- Testing suite and associated changes
 
 ## 0.2.0
 
