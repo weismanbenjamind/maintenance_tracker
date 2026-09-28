@@ -9,6 +9,17 @@ pub(crate) fn months_to_days_floored(months: u32) -> i64 {
     (months as f64 / 12.0 * 365.0).floor() as i64
 }
 
+/// Converts a numner of days to months
+/// Assumes 364.25 days/year.
+/// Rounds to hundreths of a months.
+// TODO - Test
+pub(crate) fn days_to_months(days: i64) -> f64 {
+    let exact_months = days as f64 / 364.25 * 12.0;
+
+    // Below rounds to hundreths
+    (exact_months * 100.0).round() / 100.0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

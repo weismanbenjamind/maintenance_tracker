@@ -9,6 +9,7 @@ use chrono::NaiveDate;
 use log::debug;
 
 use crate::containers::ServiceMetdata;
+use crate::dates::days_to_months;
 
 /// Calculates service diffs.
 ///
@@ -61,14 +62,14 @@ impl DiffCalculator {
                 DiffResult::Miles(Self::calc_miles_diff(next_service_miles, *curr_miles))
             }
             Self::Date { date_threshold } => {
-                DiffResult::Days(Self::calc_days_diff(next_service_date, *date_threshold))
+                DiffResult::Time(Self::calc_time_diff(next_service_date, *date_threshold))
             }
             Self::MilesAndDate {
                 curr_miles,
                 date_threshold,
-            } => DiffResult::MilesAndDays(
+            } => DiffResult::MilesAndTime(
                 Self::calc_miles_diff(next_service_miles, *curr_miles),
-                Self::calc_days_diff(next_service_date, *date_threshold),
+                Self::calc_time_diff(next_service_date, *date_threshold),
             ),
         };
 
@@ -93,12 +94,12 @@ impl DiffCalculator {
         }
     }
 
-    /// Calculate the days diff between next service date and a target date.
-    fn calc_days_diff(next_service_date: NaiveDate, date_threshold: NaiveDate) -> DaysDiffResult {
+    /// Calculate the time diff between next service date and a target date.
+    fn calc_time_diff(next_service_date: NaiveDate, date_threshold: NaiveDate) -> TimeDiffResult {
         debug!(
-            "Calculating days diff with next service date on {next_service_date} and date threshold {date_threshold}"
+            "Calculating time diff with next service date on {next_service_date} and date threshold {date_threshold}"
         );
-        DaysDiffResult {
+        TimeDiffResult {
             days_diff: (next_service_date - date_threshold).num_days(),
             date_threshold,
         }
@@ -115,13 +116,13 @@ pub(super) struct DiffOutput<'a> {
 
 /// Enum to house the result of a diff operation for:
 /// - miles
-/// - days
-/// - miles and days
+/// - time
+/// - miles and time
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum DiffResult {
     Miles(MilesDiffResult),
-    Days(DaysDiffResult),
-    MilesAndDays(MilesDiffResult, DaysDiffResult),
+    Time(TimeDiffResult),
+    MilesAndTime(MilesDiffResult, TimeDiffResult),
 }
 
 /// Struct to house the result of a miles diff.
@@ -131,11 +132,21 @@ struct MilesDiffResult {
     curr_miles: u32,
 }
 
-/// Struct to house the result of a days diff.
+/// Struct to house the result of a time diff.
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct DaysDiffResult {
+struct TimeDiffResult {
     days_diff: i64,
     date_threshold: NaiveDate,
+}
+
+impl TimeDiffResult {
+    /// Calculate the months diff from the days diff.
+    /// Assumes 364.25 days/year.
+    /// Rounds to nearest hundreths of a months.
+    // TODO - Test
+    fn months_diff(&self) -> f64 {
+        days_to_months(self.days_diff)
+    }
 }
 
 impl<'a> std::fmt::Display for DiffOutput<'a> {
@@ -145,13 +156,13 @@ impl<'a> std::fmt::Display for DiffOutput<'a> {
             DiffResult::Miles(miles_diff_result) => {
                 write_miles_diff_result(f, *miles_diff_result, self.next_service_miles)
             }
-            DiffResult::Days(days_diff_result) => {
-                write_days_diff_result(f, *days_diff_result, self.next_service_date)
+            DiffResult::Time(days_diff_result) => {
+                write_time_diff_result(f, *days_diff_result, self.next_service_date)
             }
-            DiffResult::MilesAndDays(miles_diff_result, days_diff_result) => {
+            DiffResult::MilesAndTime(miles_diff_result, days_diff_result) => {
                 write_miles_diff_result(f, *miles_diff_result, self.next_service_miles)?;
                 writeln!(f)?;
-                write_days_diff_result(f, *days_diff_result, self.next_service_date)
+                write_time_diff_result(f, *days_diff_result, self.next_service_date)
             }
         }
     }
@@ -172,18 +183,23 @@ fn write_miles_diff_result(
     )
 }
 
-/// Write the days diff result to a Formatter.
-fn write_days_diff_result(
+/// Write the time diff result to a Formatter.
+fn write_time_diff_result(
     f: &mut std::fmt::Formatter<'_>,
-    days_diff_result: DaysDiffResult,
+    time_diff_result: TimeDiffResult,
     next_service_date: NaiveDate,
 ) -> std::fmt::Result {
     writeln!(f, "Next service date: {next_service_date}")?;
-    writeln!(f, "Date threshold: {}", days_diff_result.date_threshold)?;
-    write!(
+    writeln!(f, "Date threshold: {}", time_diff_result.date_threshold)?;
+    writeln!(
         f,
         "Days until next service (Next Service Date - Date Threshold): {} Days",
-        days_diff_result.days_diff
+        time_diff_result.days_diff
+    )?;
+    write!(
+        f,
+        "Months until next service (Next Service Date - Date Threshold): {} Months",
+        time_diff_result.months_diff()
     )
 }
 
@@ -280,7 +296,7 @@ mod tests {
         assert_eq!(result.next_service_date, NEXT_SERVICE.date());
         assert_eq!(
             result.diff_result,
-            DiffResult::Days(DaysDiffResult {
+            DiffResult::Time(TimeDiffResult {
                 days_diff: -days_diff,
                 date_threshold
             })
@@ -311,11 +327,11 @@ mod tests {
             miles_diff: miles_diff as i64,
             curr_miles,
         };
-        let days_diff_result = DaysDiffResult {
+        let days_diff_result = TimeDiffResult {
             days_diff: -days_diff,
             date_threshold,
         };
-        let diff_result = DiffResult::MilesAndDays(miles_diff_result, days_diff_result);
+        let diff_result = DiffResult::MilesAndTime(miles_diff_result, days_diff_result);
 
         assert_eq!(result.diff_result, diff_result);
     }
@@ -335,7 +351,7 @@ mod tests {
         let days_diff = 30;
         let next_service_date = NaiveDate::from_ymd_opt(2026, 6, 3).unwrap();
         let date_threshold = next_service_date - TimeDelta::days(days_diff);
-        let found = DiffCalculator::calc_days_diff(next_service_date, date_threshold);
+        let found = DiffCalculator::calc_time_diff(next_service_date, date_threshold);
         assert_eq!(found.date_threshold, date_threshold);
         assert_eq!(found.days_diff, days_diff);
     }
@@ -374,8 +390,9 @@ mod tests {
         let next_service_miles = 71000;
         let next_service_date = NaiveDate::from_ymd_opt(2026, 6, 3).unwrap();
         let days_diff = 30;
+        let months_diff = 0.99;
         let date_threshold = next_service_date + TimeDelta::days(30);
-        let diff_result = DiffResult::Days(DaysDiffResult {
+        let diff_result = DiffResult::Time(TimeDiffResult {
             days_diff,
             date_threshold,
         });
@@ -391,7 +408,8 @@ mod tests {
             "Name: {name}\n\
             Next service date: {next_service_date}\n\
             Date threshold: {date_threshold}\n\
-            Days until next service (Next Service Date - Date Threshold): {days_diff} Days",
+            Days until next service (Next Service Date - Date Threshold): {days_diff} Days\n\
+            Months until next service (Next Service Date - Date Threshold): {months_diff} Months"
         );
         assert_eq!(found, expected);
     }
@@ -406,14 +424,15 @@ mod tests {
 
         let next_service_date = NaiveDate::from_ymd_opt(2026, 6, 3).unwrap();
         let days_diff = 30;
+        let months_diff = 0.99;
         let date_threshold = next_service_date + TimeDelta::days(30);
 
-        let diff_result = DiffResult::MilesAndDays(
+        let diff_result = DiffResult::MilesAndTime(
             MilesDiffResult {
                 miles_diff: miles_diff as i64,
                 curr_miles,
             },
-            DaysDiffResult {
+            TimeDiffResult {
                 days_diff,
                 date_threshold,
             },
@@ -434,7 +453,8 @@ mod tests {
             Miles until next service (Next Service - Current): {miles_diff} Miles\n\
             Next service date: {next_service_date}\n\
             Date threshold: {date_threshold}\n\
-            Days until next service (Next Service Date - Date Threshold): {days_diff} Days",
+            Days until next service (Next Service Date - Date Threshold): {days_diff} Days\n\
+            Months until next service (Next Service Date - Date Threshold): {months_diff} Months"
         );
 
         assert_eq!(found, expected);
@@ -470,29 +490,31 @@ mod tests {
         assert_eq!(found, expected);
     }
 
-    struct TestWriteDaysDiffCase(DaysDiffResult, NaiveDate);
+    struct TestWriteDaysDiffCase(TimeDiffResult, NaiveDate);
 
     impl std::fmt::Display for TestWriteDaysDiffCase {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write_days_diff_result(f, self.0, self.1)
+            write_time_diff_result(f, self.0, self.1)
         }
     }
 
     #[test]
     fn diff_calculator_write_days_diff() {
         let date_threshold = NaiveDate::from_ymd_opt(2026, 6, 3).unwrap();
-        let result = DaysDiffResult {
+        let result = TimeDiffResult {
             days_diff: 30,
             date_threshold,
         };
         let next_service_date = date_threshold + chrono::TimeDelta::days(30);
+        let months_diff = 0.99;
 
         let found = format!("{}", TestWriteDaysDiffCase(result, next_service_date));
         let expected = format!(
             "Next service date: {next_service_date}\n\
             Date threshold: {}\n\
-            Days until next service (Next Service Date - Date Threshold): {} Days",
-            result.date_threshold, result.days_diff
+            Days until next service (Next Service Date - Date Threshold): {} Days\n\
+            Months until next service (Next Service Date - Date Threshold): {} Months",
+            result.date_threshold, result.days_diff, months_diff,
         );
 
         assert_eq!(found, expected);

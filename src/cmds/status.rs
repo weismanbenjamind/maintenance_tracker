@@ -8,6 +8,7 @@ use log::{debug, info};
 use std::fmt::Write;
 
 use crate::containers::MaintenanceLog;
+use crate::dates::days_to_months;
 use crate::errors::CmdsError;
 
 /// Arguments for Status command.
@@ -97,6 +98,15 @@ impl<'a> StatusResult<'a> {
 
     /// Get the difference in days between the next service date
     /// and the date passed to the StatusResult struct.
+    /// Assumes 364.25 days/year.
+    /// Rounds to hundreths of a month.
+    // TODO - Test
+    fn months_diff(&self) -> f64 {
+        days_to_months(self.days_diff())
+    }
+
+    /// Get the difference in days between the next service date
+    /// and the date passed to the StatusResult struct.
     fn days_diff(&self) -> i64 {
         (self.next_service_date - self.date).num_days()
     }
@@ -114,10 +124,15 @@ impl<'a> std::fmt::Display for StatusResult<'a> {
         )?;
         writeln!(f, "Next service date: {}", self.next_service_date)?;
         writeln!(f, "Today: {}", self.date)?;
-        write!(
+        writeln!(
             f,
             "Days until next service (Next Service Date - Today): {} Days",
             self.days_diff()
+        )?;
+        write!(
+            f,
+            "Months until next service (Next Service Date - Today): {} Months",
+            self.months_diff()
         )
     }
 }
@@ -154,6 +169,7 @@ mod tests {
         let miles = NEXT_SERVICE.miles() - miles_diff as u32;
 
         let days_diff = 30;
+        let months_diff = 0.99;
         let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
 
         let cmd = Status {
@@ -165,10 +181,10 @@ mod tests {
         let found = cmd.run(&log).unwrap();
 
         let mut buf = String::new();
-        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff);
+        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff, months_diff);
         _ = writeln!(buf);
         _ = writeln!(buf);
-        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff);
+        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff, months_diff);
 
         assert_eq!(found, buf);
     }
@@ -179,6 +195,7 @@ mod tests {
         let miles = NEXT_SERVICE.miles() - miles_diff as u32;
 
         let days_diff = 30;
+        let months_diff = 0.99;
         let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
 
         let cmd = Status {
@@ -191,7 +208,7 @@ mod tests {
         let found = cmd.run(&log).unwrap();
 
         let mut buf = String::new();
-        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff);
+        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff, months_diff);
 
         assert_eq!(found, buf);
     }
@@ -218,6 +235,9 @@ mod tests {
         let days_diff = (next_service_date - date).num_days();
         assert_eq!(status_result.days_diff(), days_diff);
 
+        let months_diff = ((days_diff as f64 / 364.25 * 12.0) * 100.0).round() / 100.0;
+        assert_eq!(months_diff, status_result.months_diff());
+
         let mut buf = String::new();
 
         // String writes can't fail
@@ -231,10 +251,14 @@ mod tests {
         );
         _ = writeln!(buf, "Next service date: {}", next_service_date);
         _ = writeln!(buf, "Today: {}", date);
-        _ = write!(
+        _ = writeln!(
             buf,
             "Days until next service (Next Service Date - Today): {} Days",
             days_diff
+        );
+        _ = write!(
+            buf,
+            "Months until next service (Next Service Date - Today): {months_diff} Months",
         );
 
         assert_eq!(format!("{status_result}"), buf);
@@ -246,6 +270,7 @@ mod tests {
         today: NaiveDate,
         miles_diff: i32,
         days_diff: i64,
+        months_diff: f64,
     ) {
         // Writes to a string can't fail
         _ = writeln!(buf, "Name: {}", NAME);
@@ -258,10 +283,14 @@ mod tests {
         );
         _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
         _ = writeln!(buf, "Today: {}", today);
-        _ = write!(
+        _ = writeln!(
             buf,
             "Days until next service (Next Service Date - Today): {} Days",
             days_diff
+        );
+        _ = write!(
+            buf,
+            "Months until next service (Next Service Date - Today): {months_diff} Months",
         );
     }
 }
