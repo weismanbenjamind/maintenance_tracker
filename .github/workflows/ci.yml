@@ -35,7 +35,7 @@ on:
         description: Rust toolchain version used to test
 
 jobs:
-  lint:
+  test-and-lint:
     runs-on: ${{ inputs.runs-on  || 'macos-26'}}
     steps:
       - name: Checkout Code
@@ -50,6 +50,6 @@ jobs:
         id: install-nightly-format
         run: rustup component add --toolchain nightly-aarch64-apple-darwin rustfmt
 
-      - name: CI
-        id: lint
+      - name: Test and Lint
+        id: test-and-lint
         run: ./scripts/ci.sh

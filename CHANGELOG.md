@@ -4,6 +4,7 @@
 
 ### Added
 
+- Formatting updates
 - Months displayed for `status` command and `diff threshold --date <date>` and `diff interval --months <months>` subcommands
 
 ### Fixed
