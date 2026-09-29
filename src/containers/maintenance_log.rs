@@ -2,13 +2,18 @@
 //!
 //! Container to model entire maintenance log
 
-use crate::containers::ServiceMetdata;
-use crate::errors::{IdNotFoundError, MaintenanceLogError};
+use std::{
+    collections::{HashMap, hash_map::Keys},
+    path::Path,
+};
+
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::hash_map::Keys;
-use std::path::Path;
+
+use crate::{
+    containers::ServiceMetdata,
+    errors::{IdNotFoundError, MaintenanceLogError},
+};
 
 /// Struct to model maintenance log.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -110,14 +115,13 @@ fn build_subdirs(path: &Path) -> Result<(), MaintenanceLogError> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::testing::constants::ID;
-    use crate::testing::{build_log, build_metadata};
+    use std::{io::Write, path::PathBuf};
 
     use indoc::indoc;
-    use std::io::Write;
-    use std::path::PathBuf;
     use tempfile::{NamedTempFile, TempDir};
+
+    use super::*;
+    use crate::testing::{build_log, build_metadata, constants::ID};
 
     #[test]
     fn test_maintenance_log_constructor() {

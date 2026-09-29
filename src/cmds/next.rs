@@ -3,10 +3,9 @@
 //! Command to get a specific service's next miles and date thresholds.
 
 use clap::Args;
-
-use crate::containers::MaintenanceLog;
-use crate::errors::CmdsError;
 use log::info;
+
+use crate::{containers::MaintenanceLog, errors::CmdsError};
 
 /// Houses the arguments for the next command.
 #[derive(Clone, Debug, Args)]
@@ -47,8 +46,7 @@ impl Next {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::constants::ID;
-    use crate::testing::{build_log, constants};
+    use crate::testing::{build_log, constants, constants::ID};
 
     #[test]
     fn next_new() {

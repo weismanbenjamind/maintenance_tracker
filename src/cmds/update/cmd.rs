@@ -2,15 +2,17 @@
 //!
 //! Houses commands, utilities, and functions for updating previous services
 
-use super::notes::UpdateNotesCmd;
-use super::prev_services::UpdatePreviousServicesCmd;
+use std::fmt::Write;
 
-use crate::containers::{MaintenanceLog, ServiceMetdata};
-use crate::errors::{CmdsError, UpdateError};
 use chrono::NaiveDate;
 use clap::{Args, Subcommand};
 use log::{debug, info};
-use std::fmt::Write;
+
+use super::{notes::UpdateNotesCmd, prev_services::UpdatePreviousServicesCmd};
+use crate::{
+    containers::{MaintenanceLog, ServiceMetdata},
+    errors::{CmdsError, UpdateError},
+};
 
 /// Args for updating a service.
 #[derive(Clone, Debug, Args)]
@@ -377,11 +379,13 @@ mod tests {
     use chrono::TimeDelta;
 
     use super::*;
-    use crate::cmds::update::{notes, prev_services};
-    use crate::testing::constants::{
-        ID, NAME, NEXT_SERVICE, NOTE, PREVIOUS_SERVICE, SERVICE_INTERVAL,
+    use crate::{
+        cmds::update::{notes, prev_services},
+        testing::{
+            build_log, build_metadata,
+            constants::{ID, NAME, NEXT_SERVICE, NOTE, PREVIOUS_SERVICE, SERVICE_INTERVAL},
+        },
     };
-    use crate::testing::{build_log, build_metadata};
 
     #[test]
     fn update_new() {

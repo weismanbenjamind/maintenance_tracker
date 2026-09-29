@@ -2,11 +2,11 @@
 //!
 //! Houses subcommands for diff operations
 
-use super::cmd::Cmd as DiffCmd;
-use crate::dates::months_to_days_floored;
-use crate::errors::DiffError;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
+
+use super::cmd::Cmd as DiffCmd;
+use crate::{dates::months_to_days_floored, errors::DiffError};
 
 /// Houses args for the Threshold subcommand
 #[derive(Clone, Copy, Debug, Args)]

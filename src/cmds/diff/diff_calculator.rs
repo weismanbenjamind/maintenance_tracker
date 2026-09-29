@@ -3,13 +3,11 @@
 //! Used to calculate diffs in service miles/date thresholds vs. target miles/date respectivly.
 //! Can also calculate diffs for service miles/date thresholds vs. target miles/date combinations.
 
-use super::subcmds::ValidatedThreshold;
-
 use chrono::NaiveDate;
 use log::debug;
 
-use crate::containers::ServiceMetdata;
-use crate::dates::days_to_months;
+use super::subcmds::ValidatedThreshold;
+use crate::{containers::ServiceMetdata, dates::days_to_months};
 
 /// Calculates service diffs.
 ///
@@ -206,10 +204,13 @@ fn write_time_diff_result(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::testing::build_metadata;
-    use crate::testing::constants::{NAME, NEXT_SERVICE};
     use chrono::TimeDelta;
+
+    use super::*;
+    use crate::testing::{
+        build_metadata,
+        constants::{NAME, NEXT_SERVICE},
+    };
 
     #[test]
     fn diff_calculator_from_validated_threshold_miles_and_date() {

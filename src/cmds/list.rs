@@ -2,11 +2,12 @@
 //!
 //! Command to list all possible service interval ids.
 
-use crate::containers::MaintenanceLog;
-use crate::errors::CmdsError;
+use std::fmt::Write;
+
 use clap::Args;
 use log::info;
-use std::fmt::Write;
+
+use crate::{containers::MaintenanceLog, errors::CmdsError};
 
 // Using a unit (static) struct hre to follow all command patters
 /// Struct to house args for listing all service interval ids

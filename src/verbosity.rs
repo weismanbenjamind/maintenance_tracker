@@ -2,12 +2,10 @@
 //!
 //! # Module to house functionality for setting verbosit for CLI runs.
 
-use std::sync::OnceLock;
+use std::{fmt::Write, sync::OnceLock};
 
 use log::info;
-use std::fmt::Write;
-use tracing_subscriber::EnvFilter;
-use tracing_subscriber::fmt as tracing_subscriber_fmt;
+use tracing_subscriber::{EnvFilter, fmt as tracing_subscriber_fmt};
 
 static LOG_LEVEL: OnceLock<String> = OnceLock::new();
 const WARN: &str = "warn";

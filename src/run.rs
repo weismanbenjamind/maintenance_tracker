@@ -3,14 +3,15 @@
 //! Main entry point for maintenance log library.
 //! Meant to be called by `main` in maintenance log binary.
 
-use crate::cfg_resolve::resolve_cfg;
-use crate::cli::Cmd;
-use crate::cli::MaintenanceTrackerArgs;
-use crate::containers::MaintenanceLog;
-use crate::errors::ContainersError;
-use crate::errors::MaintenanceTrackerError;
-use crate::verbosity::set_verbosity;
 use log::info;
+
+use crate::{
+    cfg_resolve::resolve_cfg,
+    cli::{Cmd, MaintenanceTrackerArgs},
+    containers::MaintenanceLog,
+    errors::{ContainersError, MaintenanceTrackerError},
+    verbosity::set_verbosity,
+};
 
 const RUST_LOG: &str = "RUST_LOG";
 
@@ -75,15 +76,17 @@ pub fn run(args: MaintenanceTrackerArgs) -> Result<SuccessMsg, MaintenanceTracke
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::cmds::diff_testing;
-    use crate::cmds::update_testing;
-    use crate::cmds::{self, NextService, ServiceInterval};
-    use crate::testing::build_log;
-    use crate::testing::constants::{ID, NAME, NEXT_SERVICE, NOTE, SERVICE_INTERVAL};
-
     use chrono::{NaiveDate, TimeDelta};
     use tempfile::{NamedTempFile, TempDir};
+
+    use super::*;
+    use crate::{
+        cmds::{self, NextService, ServiceInterval, diff_testing, update_testing},
+        testing::{
+            build_log,
+            constants::{ID, NAME, NEXT_SERVICE, NOTE, SERVICE_INTERVAL},
+        },
+    };
 
     fn init_log_file() -> NamedTempFile {
         let tmpfile = NamedTempFile::with_suffix(".toml").unwrap();

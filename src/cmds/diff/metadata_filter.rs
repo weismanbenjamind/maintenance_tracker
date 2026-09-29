@@ -2,10 +2,10 @@
 //!
 //! Houses a filtering operations for ServiceMetadata structs
 
-use super::subcmds::ValidatedThreshold;
 use chrono::NaiveDate;
 use log::debug;
 
+use super::subcmds::ValidatedThreshold;
 use crate::containers::ServiceMetdata;
 
 /// Enum to represent a filter.
@@ -94,10 +94,10 @@ impl From<ValidatedThreshold> for MetadataFilter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::testing::build_metadata;
-    use crate::testing::constants::NEXT_SERVICE;
     use chrono::TimeDelta;
+
+    use super::*;
+    use crate::testing::{build_metadata, constants::NEXT_SERVICE};
 
     #[test]
     fn metadata_filter_apply_miles_and_date_both_eq() {
