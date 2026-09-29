@@ -141,9 +141,10 @@ struct TimeDiffResult {
 
 impl TimeDiffResult {
     /// Calculate the months diff from the days diff.
-    /// Assumes 364.25 days/year.
+    ///
+    /// Assumes 365.25 days/year.
+    ///
     /// Rounds to nearest hundreths of a months.
-    // TODO - Test
     fn months_diff(&self) -> f64 {
         days_to_months(self.days_diff)
     }
@@ -518,5 +519,15 @@ mod tests {
         );
 
         assert_eq!(found, expected);
+    }
+
+    #[test]
+    fn test_time_diff_result_months() {
+        let time_diff_result = TimeDiffResult {
+            days_diff: 45,
+            date_threshold: NaiveDate::from_ymd_opt(2026, 1, 15).unwrap(),
+        };
+
+        assert_eq!(time_diff_result.months_diff(), 1.48);
     }
 }

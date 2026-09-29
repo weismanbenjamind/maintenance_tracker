@@ -12,10 +12,11 @@ pub(crate) fn months_to_days_floored(months: u32) -> i64 {
     (months as f64 / 12.0 * DAYS_PER_YEAR).floor() as i64
 }
 
-/// Converts a number of days to months
+/// Converts a number of days to months.
+///
 /// Assumes 365.25 days/year.
-/// Rounds to hundreths of a months.
-// TODO - Test
+///
+/// Rounds to hundreths of a month.
 pub(crate) fn days_to_months(days: i64) -> f64 {
     let exact_months = days as f64 / DAYS_PER_YEAR * 12.0;
 
@@ -35,5 +36,16 @@ mod tests {
     #[test]
     fn test_months_to_days_floored_round() {
         assert_eq!(months_to_days_floored(35), 1065)
+    }
+
+    #[test]
+    fn test_days_to_months_no_round() {
+        // 1461 days is 4 years
+        assert_eq!(days_to_months(1461), 48.0);
+    }
+
+    #[test]
+    fn test_days_to_months_round() {
+        assert_eq!(days_to_months(45), 1.48);
     }
 }

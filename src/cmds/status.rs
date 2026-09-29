@@ -98,9 +98,10 @@ impl<'a> StatusResult<'a> {
 
     /// Get the difference in days between the next service date
     /// and the date passed to the StatusResult struct.
-    /// Assumes 364.25 days/year.
+    ///
+    /// Assumes 365.25 days/year.
+    ///
     /// Rounds to hundreths of a month.
-    // TODO - Test
     fn months_diff(&self) -> f64 {
         days_to_months(self.days_diff())
     }
@@ -235,7 +236,8 @@ mod tests {
         let days_diff = (next_service_date - date).num_days();
         assert_eq!(status_result.days_diff(), days_diff);
 
-        let months_diff = ((days_diff as f64 / 365.25 * 12.0) * 100.0).round() / 100.0;
+        // Manuallt calculated the months diff below
+        let months_diff = 11.99;
         assert_eq!(months_diff, status_result.months_diff());
 
         let mut buf = String::new();
