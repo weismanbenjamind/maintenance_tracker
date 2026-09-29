@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Months displayed for `status` command and `diff threshold --date <date>` and `diff interval --months <months>` subcommands
+
 ### Fixed
 
 - Issue where was using 365 days instead of 365.25 days in date conversions
