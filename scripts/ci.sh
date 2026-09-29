@@ -7,7 +7,7 @@ cargo test || FAILED=1
 echo Done running tests
 
 echo Formatting
-cargo fmt --check || FAILED=1
+cargo +nightly fmt --check || FAILED=1
 echo Formatting complete
 
 echo Checking debug artifact

@@ -2,6 +2,6 @@
 
 set -e
 
-./scripts/format.sh
+./scripts/format_nightly.sh
 ./scripts/clippy.sh
 ./scripts/check.sh
