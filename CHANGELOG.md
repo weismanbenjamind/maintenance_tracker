@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Issue where was using 365 days instead of 365.25 days in date conversions
+
 ## 1.0.0
 
 ### Added

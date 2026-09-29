@@ -470,6 +470,6 @@ mod tests {
 
     #[test]
     fn subcmds_build_time_delta_round() {
-        assert_eq!(build_days_time_delta(35), TimeDelta::days(1064));
+        assert_eq!(build_days_time_delta(35), TimeDelta::days(1065));
     }
 }

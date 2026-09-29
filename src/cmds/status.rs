@@ -235,7 +235,7 @@ mod tests {
         let days_diff = (next_service_date - date).num_days();
         assert_eq!(status_result.days_diff(), days_diff);
 
-        let months_diff = ((days_diff as f64 / 364.25 * 12.0) * 100.0).round() / 100.0;
+        let months_diff = ((days_diff as f64 / 365.25 * 12.0) * 100.0).round() / 100.0;
         assert_eq!(months_diff, status_result.months_diff());
 
         let mut buf = String::new();
