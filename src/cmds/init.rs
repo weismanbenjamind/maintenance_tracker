@@ -4,11 +4,14 @@
 
 use std::str::FromStr;
 
-use crate::containers::{MaintenanceLog, ServiceMetdata};
-use crate::errors::{CmdsError, InitError};
 use chrono::NaiveDate;
 use clap::Args;
 use log::{debug, info};
+
+use crate::{
+    containers::{MaintenanceLog, ServiceMetdata},
+    errors::{CmdsError, InitError},
+};
 
 const YYYY_MM_DD: &str = "%Y-%m-%d";
 const DELIMITER: &str = ";";
@@ -220,8 +223,7 @@ impl NextService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::build_log;
-    use crate::testing::constants::ID;
+    use crate::testing::{build_log, constants::ID};
 
     #[test]
     fn init_new() {

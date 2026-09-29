@@ -2,9 +2,12 @@
 //!
 //! Module to house all errors from maintenance_tracker library
 
+use std::{
+    num::ParseIntError,
+    path::{Path, PathBuf},
+};
+
 use chrono::ParseError;
-use std::num::ParseIntError;
-use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 /// Top level error coming out of the MaintenanceTracker library.

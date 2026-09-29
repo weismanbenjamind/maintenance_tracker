@@ -5,8 +5,10 @@
 use clap::Args;
 use log::info;
 
-use crate::containers::MaintenanceLog;
-use crate::errors::{CmdsError, IdNotFoundError};
+use crate::{
+    containers::MaintenanceLog,
+    errors::{CmdsError, IdNotFoundError},
+};
 
 /// Args for delete command.
 #[derive(Clone, Debug, Args)]
@@ -41,8 +43,7 @@ impl Delete {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::build_log;
-    use crate::testing::constants::ID;
+    use crate::testing::{build_log, constants::ID};
 
     #[test]
     fn delete_new() {

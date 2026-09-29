@@ -2,14 +2,13 @@
 //!
 //! Houses command for getting status of a single ID or multiple IDs
 
+use std::fmt::Write;
+
 use chrono::{Local, NaiveDate};
 use clap::Args;
 use log::{debug, info};
-use std::fmt::Write;
 
-use crate::containers::MaintenanceLog;
-use crate::dates::days_to_months;
-use crate::errors::CmdsError;
+use crate::{containers::MaintenanceLog, dates::days_to_months, errors::CmdsError};
 
 /// Arguments for Status command.
 #[derive(Clone, Debug, Args)]
@@ -143,8 +142,10 @@ mod tests {
     use chrono::TimeDelta;
 
     use super::*;
-    use crate::testing::constants::{ID, NAME, NEXT_SERVICE};
-    use crate::testing::{build_log, build_metadata};
+    use crate::testing::{
+        build_log, build_metadata,
+        constants::{ID, NAME, NEXT_SERVICE},
+    };
 
     #[test]
     fn status_new() {

@@ -17,15 +17,14 @@ pub(crate) use complete::Complete;
 pub(crate) use delete::Delete;
 pub(crate) use detail::Detail;
 pub(crate) use diff::Diff;
+// Expose some modules only for testing
+#[cfg(test)]
+pub(crate) use diff::testing as diff_testing;
 pub(crate) use init::{Init, NextService, PreviousService, ServiceInterval};
 pub(crate) use list::List;
 pub(crate) use log::Log;
 pub(crate) use next::Next;
 pub(crate) use status::Status;
 pub(crate) use update::Update;
-
-// Expose some modules only for testing
-#[cfg(test)]
-pub(crate) use diff::testing as diff_testing;
 #[cfg(test)]
 pub(crate) use update::testing as update_testing;

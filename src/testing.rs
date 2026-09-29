@@ -5,16 +5,17 @@
 
 #![cfg(test)]
 
-use crate::containers::{MaintenanceLog, ServiceMetdata};
-
 use std::collections::HashMap;
+
+use crate::containers::{MaintenanceLog, ServiceMetdata};
 
 /// Module which houses constants for testing.
 /// All testing factory functions use these constants
 /// to build their objects.
 pub(crate) mod constants {
-    use crate::containers::{ServiceEvent, ServiceInterval};
     use chrono::NaiveDate;
+
+    use crate::containers::{ServiceEvent, ServiceInterval};
 
     pub(crate) const NAME: &str = "name";
     pub(crate) const SERVICE_INTERVAL: ServiceInterval = ServiceInterval::new(4000, 5);

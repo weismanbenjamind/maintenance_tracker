@@ -2,9 +2,11 @@
 //!
 //! Module housing utilites to resolve the path to the config
 
-use crate::errors::CfgResolveError;
-use log::info;
 use std::path::{Path, PathBuf};
+
+use log::info;
+
+use crate::errors::CfgResolveError;
 
 const SKIP_ENV_FLAG: &str = "skip";
 

@@ -2,11 +2,15 @@
 //!
 //! Container for housing metadata about a given service.
 
-use super::notes::Notes;
-use crate::containers::previous_services::PreviousServices;
-use crate::containers::services::{ServiceEvent, ServiceInterval};
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
+use super::notes::Notes;
+use crate::containers::{
+    previous_services::PreviousServices,
+    services::{ServiceEvent, ServiceInterval},
+};
 
 /// Struct to house metadata about a given service.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -124,8 +128,9 @@ impl fmt::Display for ServiceMetdata {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::NaiveDate;
+
+    use super::*;
 
     const NAME: &str = "name";
     const SERVICE_INTERVAL: ServiceInterval = ServiceInterval::new(4000, 5);

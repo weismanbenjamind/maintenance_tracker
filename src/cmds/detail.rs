@@ -5,8 +5,7 @@
 use clap::Args;
 use log::info;
 
-use crate::containers::MaintenanceLog;
-use crate::errors::CmdsError;
+use crate::{containers::MaintenanceLog, errors::CmdsError};
 
 /// Houses arguments for the detail command.
 #[derive(Clone, Debug, Args)]
@@ -48,8 +47,7 @@ impl Detail {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::constants::ID;
-    use crate::testing::{build_log, build_metadata};
+    use crate::testing::{build_log, build_metadata, constants::ID};
 
     #[test]
     fn detail_new() {

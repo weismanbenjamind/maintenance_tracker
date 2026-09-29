@@ -2,11 +2,12 @@
 //!
 //! Houses functionality for dealing with previous services of a maintenance item
 
-use super::services::ServiceEvent;
-use crate::errors::PreviousServicesError;
 use chrono::NaiveDate;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
+
+use super::services::ServiceEvent;
+use crate::errors::PreviousServicesError;
 
 /// Struct to house previous services.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -171,8 +172,9 @@ fn filter_prev_services_idxs(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::NaiveDate;
+
+    use super::*;
 
     const MILES: ServiceEvent =
         ServiceEvent::new(70000, NaiveDate::from_ymd_opt(2026, 6, 1).unwrap());

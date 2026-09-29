@@ -2,14 +2,13 @@
 //!
 //! Top level command line interface for `maintenance_log` library and binary.
 
-use crate::cmds;
-use crate::constants::DEFAULT_MAINTENANCE_LOG_PATH;
-use std::path::PathBuf;
-
 #[cfg(test)]
 use std::path::Path;
+use std::path::PathBuf;
 
 use clap::{ArgAction, Parser, Subcommand};
+
+use crate::{cmds, constants::DEFAULT_MAINTENANCE_LOG_PATH};
 
 /// Top level args for the maintenance_log CLI.
 #[derive(Clone, Debug, Parser)]
@@ -99,8 +98,9 @@ pub(crate) enum Cmd {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::matches;
+
+    use super::*;
 
     #[test]
     fn maintenance_tracker_args_new() {

@@ -2,17 +2,16 @@
 //!
 //! Houses top level command for diff operation
 
-use super::diff_calculator::DiffCalculator;
-use super::metadata_filter::MetadataFilter;
-use super::subcmds;
-use super::subcmds::ValidatedThreshold;
+use std::fmt::Write;
 
 use clap::{Args, Subcommand};
 use log::{debug, info};
-use std::fmt::Write;
 
-use crate::containers::MaintenanceLog;
-use crate::errors::CmdsError;
+use super::{
+    diff_calculator::DiffCalculator, metadata_filter::MetadataFilter, subcmds,
+    subcmds::ValidatedThreshold,
+};
+use crate::{containers::MaintenanceLog, errors::CmdsError};
 
 /// Houses args for diff command
 #[derive(Clone, Debug, Args)]
@@ -87,8 +86,10 @@ mod tests {
     use chrono::TimeDelta;
 
     use super::*;
-    use crate::testing::constants::{ID, NEXT_SERVICE};
-    use crate::testing::{build_log, build_metadata};
+    use crate::testing::{
+        build_log, build_metadata,
+        constants::{ID, NEXT_SERVICE},
+    };
 
     #[test]
     fn cmd_new() {

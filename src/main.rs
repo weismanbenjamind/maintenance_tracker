@@ -1,9 +1,12 @@
 //! # Main entry point for `maintenance_log` binary
 
+use std::{
+    io::{Write, stderr, stdout},
+    process::ExitCode,
+};
+
 use clap::Parser;
 use maintenance_tracker::{MaintenanceTrackerArgs, run};
-use std::io::{Write, stderr, stdout};
-use std::process::ExitCode;
 
 /// Run the Maintenance Tracker CLI
 fn main() -> ExitCode {

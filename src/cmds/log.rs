@@ -2,15 +2,20 @@
 //!
 //! Initializes a maintenance log
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
-use crate::constants::DEFAULT_MAINTENANCE_LOG_PATH;
-use crate::containers::{MaintenanceLog, ServiceEvent, ServiceInterval, ServiceMetdata};
-use crate::errors::CmdsError;
 use chrono::{Local, TimeDelta};
 use clap::Args;
 use log::{debug, info};
+
+use crate::{
+    constants::DEFAULT_MAINTENANCE_LOG_PATH,
+    containers::{MaintenanceLog, ServiceEvent, ServiceInterval, ServiceMetdata},
+    errors::CmdsError,
+};
 
 /// Houses arguments for initializing the maintenance log.
 #[derive(Clone, Debug, Args)]
@@ -143,8 +148,9 @@ fn init_log(path: &Path) -> Result<String, CmdsError> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::{NamedTempFile, TempDir};
+
+    use super::*;
 
     #[test]
     fn log_new() {

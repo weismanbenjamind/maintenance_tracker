@@ -3,11 +3,11 @@
 //! Command to mark a service as complete, update it's next service mileage/date,
 //! and add a previous service to its service history.
 
-use crate::containers::MaintenanceLog;
-use crate::errors::CmdsError;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 use log::info;
+
+use crate::{containers::MaintenanceLog, errors::CmdsError};
 
 /// Houses args for the `Complete` command.
 #[derive(Clone, Debug, Args)]
@@ -68,12 +68,16 @@ impl Complete {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    use crate::containers::ServiceEvent;
-    use crate::testing::build_log;
-    use crate::testing::constants::{ID, NAME, NEXT_SERVICE, PREVIOUS_SERVICE, SERVICE_INTERVAL};
     use chrono::{NaiveDate, TimeDelta};
+
+    use super::*;
+    use crate::{
+        containers::ServiceEvent,
+        testing::{
+            build_log,
+            constants::{ID, NAME, NEXT_SERVICE, PREVIOUS_SERVICE, SERVICE_INTERVAL},
+        },
+    };
 
     #[test]
     fn complete_new() {

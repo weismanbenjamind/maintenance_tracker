@@ -2,12 +2,15 @@
 //!
 //! Houses various containers relating to services
 
-use crate::cmds::ServiceInterval as InitServiceInterval;
-use crate::cmds::{NextService, PreviousService};
-use crate::dates::months_to_days_floored;
+use std::fmt;
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use std::fmt;
+
+use crate::{
+    cmds::{NextService, PreviousService, ServiceInterval as InitServiceInterval},
+    dates::months_to_days_floored,
+};
 
 /// Struct to represent a service event (e.g. miles on vehicle and date of event).
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]

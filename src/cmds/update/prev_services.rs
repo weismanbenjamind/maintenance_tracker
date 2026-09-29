@@ -2,8 +2,7 @@
 //!
 //! Houses args, comands and utilities for updating a previos service
 
-use chrono::Local;
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 use clap::{Args, Subcommand};
 
 /// Args for appending a previous service
