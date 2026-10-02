@@ -81,8 +81,7 @@ impl ServiceMetdata {
         &mut self.notes
     }
 
-    /// Borrow the previous services. Only used for testing.
-    #[cfg(test)]
+    /// Borrow the previous services.
     pub(crate) fn prev_services(&self) -> &PreviousServices {
         &self.previous_services
     }
