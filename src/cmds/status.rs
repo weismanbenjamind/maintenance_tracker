@@ -5,13 +5,13 @@
 use std::fmt::{Display, Write};
 
 use bon::Builder;
-use chrono::{Local, NaiveDate};
+use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
 use log::{debug, info};
 use owo_colors::{OwoColorize, Style, style};
 
 use crate::{
-    containers::{MaintenanceLog, ServiceInterval},
+    containers::{MaintenanceLog, ServiceEvent, ServiceInterval},
     dates::days_to_months,
     errors::CmdsError,
 };
@@ -71,18 +71,13 @@ impl Status {
         let mut buf = String::new();
 
         metadata.iter().for_each(|m| {
-            let next_service = m.next_service();
-            let prev_service = m.prev_services().get_most_recent();
-
             let status_result = StatusResult::builder()
                 .name(m.name())
                 .curr_miles(self.curr_miles)
-                .next_service_miles(next_service.miles())
                 .date(self.today)
-                .next_service_date(next_service.date())
+                .next_service(m.next_service())
                 .service_interval(m.service_interval())
-                .maybe_prev_service_miles(prev_service.map(|p| p.miles()))
-                .maybe_prev_service_date(prev_service.map(|p| p.date()))
+                .maybe_prev_service(m.prev_services().get_most_recent())
                 .build();
 
             // Writing to a string can't fail
@@ -95,26 +90,40 @@ impl Status {
     }
 }
 
-// TODO - How many of these fields do I need? Is using a struct here the best method?
+#[derive(Clone, Copy, Debug, Builder)]
+struct Ratio {
+    numerator: i64,
+    denominator: i64,
+}
+
+impl Ratio {
+    // TODO - this should work for my use case but verify it does
+    // Find spot where will lose data with the i64 to f64 conversion
+    // Maybe even write helper to warn data loss may be occuring if detected
+    fn safe_calc(&self) -> Option<f64> {
+        (self.denominator != 0).then(|| self.numerator as f64 / self.denominator as f64)
+    }
+}
+
 /// View struct which houses the output of a status calculation.
 /// Allows for easy formatting.
 #[derive(Clone, Copy, Debug, Builder)]
 struct StatusResult<'a> {
     name: &'a str,
     curr_miles: u32,
-    next_service_miles: u32,
     date: NaiveDate,
-    next_service_date: NaiveDate,
+    next_service: ServiceEvent,
     service_interval: ServiceInterval,
-    prev_service_miles: Option<u32>,
-    prev_service_date: Option<NaiveDate>,
+    prev_service: Option<ServiceEvent>,
 }
 
+// TODO - Overflow and divide by zero guards here. Use ::From vs. `as` to guard against
+// overflow
 impl<'a> StatusResult<'a> {
     /// Get the miles differences between the next service miles
     /// and current miles on the vehicle.
     fn miles_diff(&self) -> i64 {
-        self.next_service_miles as i64 - self.curr_miles as i64
+        self.next_service.miles() as i64 - self.curr_miles as i64
     }
 
     /// Get the difference in days between the next service date
@@ -130,53 +139,58 @@ impl<'a> StatusResult<'a> {
     /// Get the difference in days between the next service date
     /// and the date passed to the StatusResult struct.
     fn days_diff(&self) -> i64 {
-        (self.next_service_date - self.date).num_days()
+        (self.next_service.date() - self.date).num_days()
+    }
+
+    fn miles_ratio(&self) -> Ratio {
+        let diff = match self.prev_service.map(|p| p.miles()) {
+            Some(prev_service_miles) => self.curr_miles - prev_service_miles,
+            None => self.curr_miles,
+        };
+
+        Ratio::builder()
+            .numerator(diff.into())
+            .denominator(self.service_interval.miles().into())
+            .build()
+    }
+
+    fn time_ratio(&self) -> Ratio {
+        let diff = match self.prev_service.map(|p| p.date()) {
+            Some(prev_service_date) => self.date - prev_service_date,
+            // If have not performed a service yet then t0
+            // Is calculated by substracting the
+            // service interval from the first service date
+            None => {
+                self.date
+                    - (self.next_service.date() - TimeDelta::days(self.service_interval.days()))
+            }
+        };
+
+        Ratio::builder()
+            .numerator(diff.num_days())
+            .denominator(self.service_interval.days())
+            .build()
     }
 }
 
 impl<'a> std::fmt::Display for StatusResult<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Name: {}", self.name)?;
-        writeln!(f, "Next service (miles): {} Miles", self.next_service_miles)?;
+
+        let next_service = self.next_service;
+
+        writeln!(f, "Next service (miles): {} Miles", next_service.miles())?;
         writeln!(f, "Current mileage: {} Miles", self.curr_miles)?;
-        writeln!(f, "Next service date: {}", self.next_service_date)?;
+        writeln!(f, "Next service date: {}", next_service.date())?;
         writeln!(f, "Today: {}", self.date)?;
-
-        let miles_ratio = calc_miles_ratio(
-            self.curr_miles,
-            self.next_service_miles,
-            self.service_interval.miles(),
-            self.prev_service_miles,
-        );
-        write_miles_output(f, miles_ratio, self.miles_diff())?;
-
-        let time_ratio = calc_time_ratio(
-            self.date,
-            self.next_service_date,
-            self.service_interval.days(),
-            self.prev_service_date,
-        );
-        write_time_output(f, time_ratio, self.days_diff(), self.months_diff())
+        write_miles_output(f, self.miles_ratio(), self.miles_diff())?;
+        write_time_output(f, self.time_ratio(), self.days_diff(), self.months_diff())
     }
-}
-
-fn calc_miles_ratio(
-    curr_miles: u32,
-    next_service_miles: u32,
-    miles_interval: u32,
-    prev_service_miles: Option<u32>,
-) -> f64 {
-    let diff = match prev_service_miles {
-        Some(prev_service_miles) => curr_miles - prev_service_miles,
-        None => next_service_miles - curr_miles,
-    };
-
-    diff as f64 / miles_interval as f64
 }
 
 fn write_miles_output(
     f: &mut std::fmt::Formatter,
-    miles_ratio: f64,
+    miles_ratio: Ratio,
     miles_diff: i64,
 ) -> std::fmt::Result {
     let style = get_style(miles_ratio);
@@ -185,45 +199,46 @@ fn write_miles_output(
     writer.write("Distance to next service (Next service - Current): ")?;
     writer.write(miles_diff)?;
     writer.write(" Miles")?;
-    writer.write(" (")?;
-    writer.write(get_percentage(miles_ratio))?;
-    writer.write("% of maintenance interval)")?;
-    writer.newline()
-}
 
-fn calc_time_ratio(
-    today: NaiveDate,
-    next_service_date: NaiveDate,
-    days_interval: i64,
-    prev_service_date: Option<NaiveDate>,
-) -> f64 {
-    let diff = match prev_service_date {
-        Some(prev_service_date) => today - prev_service_date,
-        None => next_service_date - today,
-    };
+    if let Some(ratio) = miles_ratio.safe_calc() {
+        writer.write(" (")?;
+        writer.write(get_percentage(ratio))?;
+        writer.write("% of maintenance interval)")?;
+        writer.newline()?;
+    }
 
-    diff.num_days() as f64 / days_interval as f64
+    Ok(())
 }
 
 fn write_time_output(
     f: &mut std::fmt::Formatter,
-    time_ratio: f64,
+    time_ratio: Ratio,
     days_diff: i64,
     months_diff: f64,
 ) -> std::fmt::Result {
     let style = get_style(time_ratio);
     let mut writer = StyleWriter { f, style };
 
-    writer.write("Days until next service (Next Service - Today): ")?;
+    writer.write("Time until next service (Next Service - Today): ")?;
     writer.write(days_diff)?;
-    writer.write(" Days (")?;
+    writer.write(" Days/")?;
     writer.write(months_diff)?;
-    writer.write(" Months, ")?;
-    writer.write(get_percentage(time_ratio))?;
-    writer.write("% of maintenance inverval)")
+    writer.write(" Months")?;
+
+    if let Some(ratio) = time_ratio.safe_calc() {
+        writer.write(" (")?;
+        writer.write(get_percentage(ratio))?;
+        writer.write("% of maintenance inverval)")?;
+    }
+
+    Ok(())
 }
 
-fn get_style(ratio: f64) -> Style {
+fn get_style(ratio: Ratio) -> Option<Style> {
+    ratio.safe_calc().map(_get_style)
+}
+
+fn _get_style(ratio: f64) -> Style {
     if ratio >= RED_THRESH {
         RED
     } else if ratio >= YELLOW_THRESH {
@@ -239,12 +254,15 @@ fn get_percentage(ratio: f64) -> f64 {
 
 struct StyleWriter<'a, 'b> {
     f: &'a mut std::fmt::Formatter<'b>,
-    style: Style,
+    style: Option<Style>,
 }
 
 impl<'a, 'b> StyleWriter<'a, 'b> {
     fn write<T: Display>(&mut self, t: T) -> std::fmt::Result {
-        write!(self.f, "{}", t.style(self.style))
+        match self.style {
+            Some(s) => write!(self.f, "{}", t.style(s)),
+            None => write!(self.f, "{}", t),
+        }
     }
 
     fn newline(&mut self) -> std::fmt::Result {
