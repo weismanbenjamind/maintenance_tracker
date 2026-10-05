@@ -7,7 +7,7 @@ use std::fmt::{Display, Write};
 use bon::Builder;
 use chrono::{Local, NaiveDate, TimeDelta};
 use clap::Args;
-use log::{debug, info};
+use log::{debug, info, warn};
 use owo_colors::{OwoColorize, Style, style};
 
 use crate::{
@@ -90,18 +90,38 @@ impl Status {
     }
 }
 
+// Max of u64 entirely fits max of i64
+// So use u64 for type below (instead of i64)
+// u64 is useful since that's what .unsigned_abs() returns in fits_f64 function
+const MAX_I64_TO_F64: u64 = 1 << f64::MANTISSA_DIGITS;
+
+fn fits_f64(i: i64) -> bool {
+    // .unsigned_abs() will take the absolute value of i64
+    // and convert to u64
+    // Since u64::MAX > i64::MAX -> no data loss here
+    i.unsigned_abs() < MAX_I64_TO_F64
+}
+
 #[derive(Clone, Copy, Debug, Builder)]
-struct Ratio {
+struct MaintenanceIntervalRatio {
     numerator: i64,
     denominator: i64,
 }
 
-impl Ratio {
-    // TODO - this should work for my use case but verify it does
-    // Find spot where will lose data with the i64 to f64 conversion
-    // Maybe even write helper to warn data loss may be occuring if detected
+impl MaintenanceIntervalRatio {
     fn safe_calc(&self) -> Option<f64> {
-        (self.denominator != 0).then(|| self.numerator as f64 / self.denominator as f64)
+        (self.denominator != 0).then(|| {
+            self.warn_if_data_loss();
+            self.numerator as f64 / self.denominator as f64
+        })
+    }
+
+    fn warn_if_data_loss(&self) {
+        if !fits_f64(self.numerator) || !fits_f64(self.denominator) {
+            warn!(
+                "Detected data loss when calculating ratio for percentage of maintenance interval used"
+            )
+        }
     }
 }
 
@@ -142,19 +162,19 @@ impl<'a> StatusResult<'a> {
         (self.next_service.date() - self.date).num_days()
     }
 
-    fn miles_ratio(&self) -> Ratio {
+    fn miles_ratio(&self) -> MaintenanceIntervalRatio {
         let diff = match self.prev_service.map(|p| p.miles()) {
             Some(prev_service_miles) => self.curr_miles - prev_service_miles,
             None => self.curr_miles,
         };
 
-        Ratio::builder()
+        MaintenanceIntervalRatio::builder()
             .numerator(diff.into())
             .denominator(self.service_interval.miles().into())
             .build()
     }
 
-    fn time_ratio(&self) -> Ratio {
+    fn time_ratio(&self) -> MaintenanceIntervalRatio {
         let diff = match self.prev_service.map(|p| p.date()) {
             Some(prev_service_date) => self.date - prev_service_date,
             // If have not performed a service yet then t0
@@ -166,7 +186,7 @@ impl<'a> StatusResult<'a> {
             }
         };
 
-        Ratio::builder()
+        MaintenanceIntervalRatio::builder()
             .numerator(diff.num_days())
             .denominator(self.service_interval.days())
             .build()
@@ -190,9 +210,11 @@ impl<'a> std::fmt::Display for StatusResult<'a> {
 
 fn write_miles_output(
     f: &mut std::fmt::Formatter,
-    miles_ratio: Ratio,
+    miles_ratio: MaintenanceIntervalRatio,
     miles_diff: i64,
 ) -> std::fmt::Result {
+    // If miles ratio has a zero denominator style will be None
+    // And style writer will write without any color
     let style = get_style(miles_ratio);
     let mut writer = StyleWriter { f, style };
 
@@ -200,11 +222,17 @@ fn write_miles_output(
     writer.write(miles_diff)?;
     writer.write(" Miles")?;
 
-    if let Some(ratio) = miles_ratio.safe_calc() {
-        writer.write(" (")?;
-        writer.write(get_percentage(ratio))?;
-        writer.write("% of maintenance interval)")?;
-        writer.newline()?;
+    // If have a zero denominator warn and do not write % of miles interval used
+    // Style writer will be configured to print without color if have a zero
+    // denominator so text already printed above will be colored correctly
+    match miles_ratio.safe_calc() {
+        Some(ratio) => {
+            writer.write(" (")?;
+            writer.write(get_percentage(ratio))?;
+            writer.write("% of maintenance interval)")?;
+            writer.newline()?;
+        }
+        None => warn_for_zero_denom("miles"),
     }
 
     Ok(())
@@ -212,29 +240,41 @@ fn write_miles_output(
 
 fn write_time_output(
     f: &mut std::fmt::Formatter,
-    time_ratio: Ratio,
+    time_ratio: MaintenanceIntervalRatio,
     days_diff: i64,
     months_diff: f64,
 ) -> std::fmt::Result {
+    // If time ratio has a zero denominator style will be None
+    // And style writer will write without any color
     let style = get_style(time_ratio);
     let mut writer = StyleWriter { f, style };
 
+    // If have a zero denominator warn and do not write % of time interval used
+    // Style writer will be configured to print without color if have a zero
+    // denominator so text already printed above will be colored correctly
     writer.write("Time until next service (Next Service - Today): ")?;
     writer.write(days_diff)?;
     writer.write(" Days/")?;
     writer.write(months_diff)?;
     writer.write(" Months")?;
 
-    if let Some(ratio) = time_ratio.safe_calc() {
-        writer.write(" (")?;
-        writer.write(get_percentage(ratio))?;
-        writer.write("% of maintenance inverval)")?;
+    match time_ratio.safe_calc() {
+        Some(ratio) => {
+            writer.write(" (")?;
+            writer.write(get_percentage(ratio))?;
+            writer.write("% of maintenance inverval)")?;
+        }
+        None => warn_for_zero_denom("time"),
     }
 
     Ok(())
 }
 
-fn get_style(ratio: Ratio) -> Option<Style> {
+fn warn_for_zero_denom(interval_name: &str) {
+    warn!("Found zero denominator when calculating percentage of {interval_name} used. Skipping.")
+}
+
+fn get_style(ratio: MaintenanceIntervalRatio) -> Option<Style> {
     ratio.safe_calc().map(_get_style)
 }
 
