@@ -101,7 +101,7 @@ impl PreviousServices {
     }
 
     /// Get the most recent service if it exists. If no previous service has been
-    /// performed. `None` otherwise.
+    /// performed returns `None`.
     pub(crate) fn get_most_recent(&self) -> Option<ServiceEvent> {
         self.service_events
             .as_deref()?

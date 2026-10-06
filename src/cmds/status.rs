@@ -83,7 +83,7 @@ impl Status {
                 .date(self.today)
                 .next_service(m.next_service())
                 .service_interval(m.service_interval())
-                .maybe_prev_service(m.prev_services().get_most_recent())
+                .maybe_prev_service(m.prev_service())
                 .build();
 
             // Writing to a string can't fail
