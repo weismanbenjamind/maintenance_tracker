@@ -16,11 +16,17 @@ use crate::{
     errors::CmdsError,
 };
 
+// Thresholds and styles for changing color of output text
 const RED_THRESH: f64 = 1.00;
 const YELLOW_THRESH: f64 = 0.75;
 const RED: Style = style().red();
 const YELLOW: Style = style().yellow();
 const GREEN: Style = style().green();
+
+// Max of u64 entirely fits max of i64
+// So use u64 for type below (instead of i64)
+// u64 is useful since that's what .unsigned_abs() returns in fits_f64 function
+const MAX_I64_TO_F64: u64 = 1 << f64::MANTISSA_DIGITS;
 
 /// Arguments for Status command.
 #[derive(Clone, Debug, Args)]
@@ -90,25 +96,20 @@ impl Status {
     }
 }
 
-// Max of u64 entirely fits max of i64
-// So use u64 for type below (instead of i64)
-// u64 is useful since that's what .unsigned_abs() returns in fits_f64 function
-const MAX_I64_TO_F64: u64 = 1 << f64::MANTISSA_DIGITS;
-
-fn fits_f64(i: i64) -> bool {
-    // .unsigned_abs() will take the absolute value of i64
-    // and convert to u64
-    // Since u64::MAX > i64::MAX -> no data loss here
-    i.unsigned_abs() < MAX_I64_TO_F64
-}
-
-#[derive(Clone, Copy, Debug, Builder)]
+/// Ratio for maintenance intervals.
+/// Used to ensure then denominator is not 0 when calculating the ratio.
+/// Will warn if data loss occurs when ratio calc occus
+/// (e.g. when `i64`s get converted to `f64`s in the ratio).
+#[derive(Clone, Copy, Debug)]
 struct MaintenanceIntervalRatio {
     numerator: i64,
     denominator: i64,
 }
 
 impl MaintenanceIntervalRatio {
+    /// Safely calculates the maintenance interval ratio.
+    /// Returns the ratio is the denominator is not zero,
+    /// None otherwise
     fn safe_calc(&self) -> Option<f64> {
         (self.denominator != 0).then(|| {
             self.warn_if_data_loss();
@@ -116,6 +117,8 @@ impl MaintenanceIntervalRatio {
         })
     }
 
+    /// Emits a warning if data loss occurs when doing the `i64` -> `f64` conversions
+    /// to calculate the maintenance interval ratio.
     fn warn_if_data_loss(&self) {
         if !fits_f64(self.numerator) || !fits_f64(self.denominator) {
             warn!(
@@ -137,13 +140,11 @@ struct StatusResult<'a> {
     prev_service: Option<ServiceEvent>,
 }
 
-// TODO - Overflow and divide by zero guards here. Use ::From vs. `as` to guard against
-// overflow
 impl<'a> StatusResult<'a> {
     /// Get the miles differences between the next service miles
     /// and current miles on the vehicle.
     fn miles_diff(&self) -> i64 {
-        self.next_service.miles() as i64 - self.curr_miles as i64
+        i64::from(self.next_service.miles()) - i64::from(self.curr_miles)
     }
 
     /// Get the difference in days between the next service date
@@ -162,18 +163,24 @@ impl<'a> StatusResult<'a> {
         (self.next_service.date() - self.date).num_days()
     }
 
+    /// Calculates the miles ratio (% of miles used in a maintenance interval).
     fn miles_ratio(&self) -> MaintenanceIntervalRatio {
         let diff = match self.prev_service.map(|p| p.miles()) {
             Some(prev_service_miles) => self.curr_miles - prev_service_miles,
             None => self.curr_miles,
         };
 
-        MaintenanceIntervalRatio::builder()
-            .numerator(diff.into())
-            .denominator(self.service_interval.miles().into())
-            .build()
+        MaintenanceIntervalRatio {
+            numerator: diff.into(),
+            denominator: self.service_interval.miles().into(),
+        }
     }
 
+    /// Calculates the time ratio (% of time used in a maintenance interval).
+    /// If no service has been performed yet, the time ratio is calculated by
+    /// Back calculating t0 by subtracting the service interval from the expected first
+    /// service date. t0 is then subtracted from the current date and this difference is
+    /// divided by the maintenance interval.
     fn time_ratio(&self) -> MaintenanceIntervalRatio {
         let diff = match self.prev_service.map(|p| p.date()) {
             Some(prev_service_date) => self.date - prev_service_date,
@@ -186,10 +193,10 @@ impl<'a> StatusResult<'a> {
             }
         };
 
-        MaintenanceIntervalRatio::builder()
-            .numerator(diff.num_days())
-            .denominator(self.service_interval.days())
-            .build()
+        MaintenanceIntervalRatio {
+            numerator: diff.num_days(),
+            denominator: self.service_interval.days(),
+        }
     }
 }
 
@@ -208,6 +215,43 @@ impl<'a> std::fmt::Display for StatusResult<'a> {
     }
 }
 
+/// Struct to handle writing syled messags into a formatter.
+struct StyleWriter<'a, 'b> {
+    f: &'a mut std::fmt::Formatter<'b>,
+    style: Option<Style>,
+}
+
+impl<'a, 'b> StyleWriter<'a, 'b> {
+    /// Writes a styled message into a formatter if the .style attribute is not None.
+    /// Otherwise, writes a non-styled message.
+    /// No newline is written at the end of the message.
+    fn write<T: Display>(&mut self, t: T) -> std::fmt::Result {
+        match self.style {
+            Some(s) => write!(self.f, "{}", t.style(s)),
+            None => write!(self.f, "{}", t),
+        }
+    }
+
+    /// Writes a newline into the self contained formatter.
+    fn newline(&mut self) -> std::fmt::Result {
+        writeln!(self.f)
+    }
+}
+
+/// Checks if an i64 fits within an f64 completely.
+/// Returns true if can convert without data loss,
+/// false otherwise
+fn fits_f64(i: i64) -> bool {
+    // .unsigned_abs() will take the absolute value of i64
+    // and convert to u64
+    // Since u64::MAX > i64::MAX -> no data loss here
+    i.unsigned_abs() < MAX_I64_TO_F64
+}
+
+/// Writes the miles output.
+/// If the miles ratio can be safely calculated (e.g. a non-zero denominator)
+/// The output will be written in red, yellow, or green depending on the % of the miles
+/// interval used.
 fn write_miles_output(
     f: &mut std::fmt::Formatter,
     miles_ratio: MaintenanceIntervalRatio,
@@ -238,6 +282,10 @@ fn write_miles_output(
     Ok(())
 }
 
+/// Writes the time output.
+/// If the time ratio can be safely calculated (e.g. a non-zero denominator)
+/// The output will be written in red, yellow, or green depending on the % of the time
+/// interval used.
 fn write_time_output(
     f: &mut std::fmt::Formatter,
     time_ratio: MaintenanceIntervalRatio,
@@ -274,40 +322,24 @@ fn warn_for_zero_denom(interval_name: &str) {
     warn!("Found zero denominator when calculating percentage of {interval_name} used. Skipping.")
 }
 
+/// Gets the style used to write outputs which show % of interval used.
+/// If the interval cannot be safely calculated returns None,
+/// Otherwise returns the style (red, green, or yellow)
 fn get_style(ratio: MaintenanceIntervalRatio) -> Option<Style> {
-    ratio.safe_calc().map(_get_style)
+    ratio.safe_calc().map(|ratio| {
+        if ratio >= RED_THRESH {
+            RED
+        } else if ratio >= YELLOW_THRESH {
+            YELLOW
+        } else {
+            GREEN
+        }
+    })
 }
 
-fn _get_style(ratio: f64) -> Style {
-    if ratio >= RED_THRESH {
-        RED
-    } else if ratio >= YELLOW_THRESH {
-        YELLOW
-    } else {
-        GREEN
-    }
-}
-
+/// Gets a percentage from a ratio. Percentage is rounded to 2 decimal places.
 fn get_percentage(ratio: f64) -> f64 {
     (ratio * 10000.0).round() / 100.0
-}
-
-struct StyleWriter<'a, 'b> {
-    f: &'a mut std::fmt::Formatter<'b>,
-    style: Option<Style>,
-}
-
-impl<'a, 'b> StyleWriter<'a, 'b> {
-    fn write<T: Display>(&mut self, t: T) -> std::fmt::Result {
-        match self.style {
-            Some(s) => write!(self.f, "{}", t.style(s)),
-            None => write!(self.f, "{}", t),
-        }
-    }
-
-    fn newline(&mut self) -> std::fmt::Result {
-        writeln!(self.f)
-    }
 }
 
 #[cfg(test)]
