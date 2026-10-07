@@ -100,7 +100,7 @@ impl Status {
 /// Used to ensure then denominator is not 0 when calculating the ratio.
 /// Will warn if data loss occurs when ratio calc occus
 /// (e.g. when `i64`s get converted to `f64`s in the ratio).
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct MaintenanceIntervalRatio {
     numerator: i64,
     denominator: i64,
@@ -206,7 +206,7 @@ impl<'a> std::fmt::Display for StatusResult<'a> {
 
         let next_service = self.next_service;
 
-        writeln!(f, "Next service (miles): {} Miles", next_service.miles())?;
+        writeln!(f, "Next service: {} Miles", next_service.miles())?;
         writeln!(f, "Current mileage: {} Miles", self.curr_miles)?;
         writeln!(f, "Next service date: {}", next_service.date())?;
         writeln!(f, "Today: {}", self.date)?;
@@ -300,7 +300,7 @@ fn write_time_output(
     // If have a zero denominator warn and do not write % of time interval used
     // Style writer will be configured to print without color if have a zero
     // denominator so text already printed above will be colored correctly
-    writer.write("Time until next service (Next Service - Today): ")?;
+    writer.write("Time until next service (Next service - Today): ")?;
     writer.write(days_diff)?;
     writer.write(" Days/")?;
     writer.write(months_diff)?;
@@ -310,7 +310,7 @@ fn write_time_output(
         Some(ratio) => {
             writer.write(" (")?;
             writer.write(get_percentage(ratio))?;
-            writer.write("% of maintenance inverval)")?;
+            writer.write("% of maintenance interval)")?;
         }
         None => warn_for_zero_denom("time"),
     }
@@ -318,6 +318,7 @@ fn write_time_output(
     Ok(())
 }
 
+/// Emits a warning if the denominator of a fraction is zero.
 fn warn_for_zero_denom(interval_name: &str) {
     warn!("Found zero denominator when calculating percentage of {interval_name} used. Skipping.")
 }
@@ -349,7 +350,7 @@ mod tests {
     use super::*;
     use crate::testing::{
         build_log, build_metadata,
-        constants::{ID, NAME, NEXT_SERVICE},
+        constants::{ID, NAME, NEXT_SERVICE, PREVIOUS_SERVICE, SERVICE_INTERVAL},
     };
 
     #[test]
@@ -372,12 +373,25 @@ mod tests {
         assert!(!log.contains(new_id));
         log.insert(new_id, metadata);
 
-        let miles_diff: i32 = 3000;
+        let miles_diff: u32 = 3000;
         let miles = NEXT_SERVICE.miles() - miles_diff as u32;
+
+        let miles_percent = (f64::from(miles - PREVIOUS_SERVICE.miles())
+            / f64::from(SERVICE_INTERVAL.miles())
+            * 10000.0)
+            .round()
+            / 100.00;
 
         let days_diff = 30;
         let months_diff = 0.99;
         let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
+
+        // Note `as f64` risks data loss
+        let time_percent = ((today - PREVIOUS_SERVICE.date()).num_days() as f64
+            / SERVICE_INTERVAL.days() as f64
+            * 10000.0)
+            .round()
+            / 100.00;
 
         let cmd = Status {
             curr_miles: miles,
@@ -386,24 +400,58 @@ mod tests {
         };
 
         let found = cmd.run(&log).unwrap();
+        let found = remove_ansi_colors(found);
 
         let mut buf = String::new();
-        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff, months_diff);
+        output_string_to_buf_percent(
+            &mut buf,
+            miles,
+            today,
+            miles_diff,
+            days_diff,
+            months_diff,
+            miles_percent,
+            time_percent,
+        );
+
         _ = writeln!(buf);
         _ = writeln!(buf);
-        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff, months_diff);
+
+        output_string_to_buf_percent(
+            &mut buf,
+            miles,
+            today,
+            miles_diff,
+            days_diff,
+            months_diff,
+            miles_percent,
+            time_percent,
+        );
 
         assert_eq!(found, buf);
     }
 
     #[test]
     fn status_run_single_id() {
-        let miles_diff: i32 = 3000;
-        let miles = NEXT_SERVICE.miles() - miles_diff as u32;
+        let miles_diff: u32 = 3000;
+        let miles = NEXT_SERVICE.miles() - miles_diff;
+
+        let miles_percent = (f64::from(miles - PREVIOUS_SERVICE.miles())
+            / f64::from(SERVICE_INTERVAL.miles())
+            * 10000.0)
+            .round()
+            / 100.00;
 
         let days_diff = 30;
         let months_diff = 0.99;
         let today = NEXT_SERVICE.date() - TimeDelta::days(days_diff);
+
+        // Note `as f64` risks data loss
+        let time_percent = ((today - PREVIOUS_SERVICE.date()).num_days() as f64
+            / SERVICE_INTERVAL.days() as f64
+            * 10000.0)
+            .round()
+            / 100.00;
 
         let cmd = Status {
             curr_miles: miles,
@@ -413,92 +461,140 @@ mod tests {
 
         let log = build_log();
         let found = cmd.run(&log).unwrap();
+        let found = remove_ansi_colors(found);
 
         let mut buf = String::new();
-        output_string_to_buf(&mut buf, miles, today, miles_diff, days_diff, months_diff);
+        output_string_to_buf_percent(
+            &mut buf,
+            miles,
+            today,
+            miles_diff,
+            days_diff,
+            months_diff,
+            miles_percent,
+            time_percent,
+        );
 
         assert_eq!(found, buf);
     }
 
-    // #[test]
-    // fn status_status_result() {
-    //     let name = "name";
-    //     let curr_miles = 1000;
-    //     let next_service_miles = 1500;
-    //     let date = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
-    //     let next_service_date = NaiveDate::from_ymd_opt(2027, 7, 1).unwrap();
+    #[test]
+    fn status_status_result() {
+        let name = "name";
+        let curr_miles = 1000;
+        let service_interval_miles = 500;
+        let next_service_miles = curr_miles + service_interval_miles;
+        let date = NaiveDate::from_ymd_opt(2026, 7, 1).unwrap();
+        let next_service_date = NaiveDate::from_ymd_opt(2027, 7, 1).unwrap();
+        let service_interval_days: u32 = 365;
+        let service_interval_months = 12;
 
-    //     let status_result = StatusResult {
-    //         name,
-    //         curr_miles,
-    //         next_service_miles,
-    //         date,
-    //         next_service_date,
-    //     };
+        let next_service = ServiceEvent::new(next_service_miles, next_service_date);
+        let service_interval =
+            ServiceInterval::new(service_interval_miles, service_interval_months);
+        let prev_service = ServiceEvent::new(
+            curr_miles - service_interval_miles,
+            date - TimeDelta::days(i64::from(service_interval_days)),
+        );
 
-    //     let miles_diff = next_service_miles as i64 - curr_miles as i64;
-    //     assert_eq!(status_result.miles_diff(), miles_diff);
+        let status_result = StatusResult::builder()
+            .name(name)
+            .curr_miles(curr_miles)
+            .date(date)
+            .next_service(next_service)
+            .service_interval(service_interval)
+            .prev_service(prev_service)
+            .build();
 
-    //     let days_diff = (next_service_date - date).num_days();
-    //     assert_eq!(status_result.days_diff(), days_diff);
+        let miles_diff = i64::from(next_service_miles) - i64::from(curr_miles);
+        assert_eq!(status_result.miles_diff(), miles_diff);
 
-    //     // Manuallt calculated the months diff below
-    //     let months_diff = 11.99;
-    //     assert_eq!(months_diff, status_result.months_diff());
+        let days_diff = (next_service_date - date).num_days();
+        assert_eq!(status_result.days_diff(), days_diff);
 
-    //     let mut buf = String::new();
+        // Manually calculated the months diff below
+        let months_diff = 11.99;
+        assert_eq!(months_diff, status_result.months_diff());
 
-    //     // String writes can't fail
-    //     _ = writeln!(buf, "Name: {}", name);
-    //     _ = writeln!(buf, "Next service (miles): {} Miles", next_service_miles);
-    //     _ = writeln!(buf, "Current mileage: {} Miles", curr_miles);
-    //     _ = writeln!(
-    //         buf,
-    //         "Miles until next service (Next Service Miles - Current Miles): {} Miles",
-    //         miles_diff
-    //     );
-    //     _ = writeln!(buf, "Next service date: {}", next_service_date);
-    //     _ = writeln!(buf, "Today: {}", date);
-    //     _ = writeln!(
-    //         buf,
-    //         "Days until next service (Next Service Date - Today): {} Days",
-    //         days_diff
-    //     );
-    //     _ = write!(
-    //         buf,
-    //         "Months until next service (Next Service Date - Today): {months_diff} Months",
-    //     );
+        let expected_months_interval_ratio = MaintenanceIntervalRatio {
+            numerator: i64::from(curr_miles - prev_service.miles()),
+            denominator: i64::from(service_interval_miles),
+        };
+        assert_eq!(status_result.miles_ratio(), expected_months_interval_ratio);
 
-    //     assert_eq!(format!("{status_result}"), buf);
-    // }
+        let expected_time_interval_ratio = MaintenanceIntervalRatio {
+            numerator: (date - prev_service.date()).num_days(),
+            denominator: i64::from(service_interval_days),
+        };
+        assert_eq!(status_result.time_ratio(), expected_time_interval_ratio);
 
-    fn output_string_to_buf(
+        let miles_percent = (f64::from(curr_miles - prev_service.miles())
+            / f64::from(service_interval.miles())
+            * 10000.0)
+            .round()
+            / 100.00;
+
+        // Note - risking data loss with as f64 notation below
+        let time_percent = ((date - prev_service.date()).num_days() as f64
+            / service_interval.days() as f64
+            * 10000.0)
+            .round()
+            / 100.00;
+
+        let mut buf = String::new();
+        // Writes to a string can't fail
+        _ = writeln!(buf, "Name: {}", name);
+        _ = writeln!(buf, "Next service: {} Miles", next_service.miles());
+        _ = writeln!(buf, "Current mileage: {} Miles", curr_miles);
+        _ = writeln!(buf, "Next service date: {}", next_service.date());
+        _ = writeln!(buf, "Today: {}", date);
+        _ = writeln!(
+            buf,
+            "Distance to next service (Next service - Current): {} Miles ({}% of maintenance interval)",
+            miles_diff, miles_percent
+        );
+        _ = write!(
+            buf,
+            "Time until next service (Next service - Today): {} Days/{} Months ({}% of maintenance interval)",
+            days_diff, months_diff, time_percent
+        );
+
+        let found = format!("{status_result}");
+        let found = remove_ansi_colors(found);
+
+        assert_eq!(found, buf);
+    }
+
+    fn output_string_to_buf_percent(
         buf: &mut String,
         miles: u32,
         today: NaiveDate,
-        miles_diff: i32,
+        miles_diff: u32,
         days_diff: i64,
         months_diff: f64,
+        miles_percent: f64,
+        time_percent: f64,
     ) {
         // Writes to a string can't fail
         _ = writeln!(buf, "Name: {}", NAME);
-        _ = writeln!(buf, "Next service (miles): {} Miles", NEXT_SERVICE.miles());
+        _ = writeln!(buf, "Next service: {} Miles", NEXT_SERVICE.miles());
         _ = writeln!(buf, "Current mileage: {} Miles", miles);
-        _ = writeln!(
-            buf,
-            "Miles until next service (Next Service Miles - Current Miles): {} Miles",
-            miles_diff
-        );
         _ = writeln!(buf, "Next service date: {}", NEXT_SERVICE.date());
         _ = writeln!(buf, "Today: {}", today);
         _ = writeln!(
             buf,
-            "Days until next service (Next Service Date - Today): {} Days",
-            days_diff
+            "Distance to next service (Next service - Current): {} Miles ({}% of maintenance interval)",
+            miles_diff, miles_percent
         );
         _ = write!(
             buf,
-            "Months until next service (Next Service Date - Today): {months_diff} Months",
+            "Time until next service (Next service - Today): {} Days/{} Months ({}% of maintenance interval)",
+            days_diff, months_diff, time_percent
         );
+    }
+
+    fn remove_ansi_colors(s: String) -> String {
+        let stripped = strip_ansi_escapes::strip(s);
+        String::from_utf8(stripped).unwrap()
     }
 }

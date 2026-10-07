@@ -107,8 +107,8 @@ mod tests {
         let args = MaintenanceTrackerArgs::new(tmpfile.path().into(), None, None, cmd);
 
         let found = run(args).unwrap().as_str().to_lowercase();
-        assert!(found.contains("miles until next service"));
-        assert!(found.contains("days until next service"))
+        assert!(found.contains("distance to next service"));
+        assert!(found.contains("time until next service"))
     }
 
     #[test]
