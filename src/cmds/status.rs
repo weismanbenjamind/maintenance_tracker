@@ -119,11 +119,16 @@ impl MaintenanceIntervalRatio {
 
     /// Emits a warning if data loss occurs when doing the `i64` -> `f64` conversions
     /// to calculate the maintenance interval ratio.
-    fn warn_if_data_loss(&self) {
-        if !fits_f64(self.numerator) || !fits_f64(self.denominator) {
-            warn!(
-                "Detected data loss when calculating ratio for percentage of maintenance interval used"
-            )
+    /// Returns true if warning was emitted, false otherwise
+    fn warn_if_data_loss(&self) -> bool {
+        match !fits_f64(self.numerator) || !fits_f64(self.denominator) {
+            true => {
+                warn!(
+                    "Detected data loss when calculating ratio for percentage of maintenance interval used"
+                );
+                true
+            }
+            false => false,
         }
     }
 }
@@ -570,7 +575,7 @@ mod tests {
     }
 
     #[test]
-    fn test_status_green() {
+    fn status_green() {
         let green_frac = 0.05;
         let miles =
             green_frac * f64::from(SERVICE_INTERVAL.miles()) + f64::from(PREVIOUS_SERVICE.miles());
@@ -594,7 +599,7 @@ mod tests {
     }
 
     #[test]
-    fn test_status_yellow() {
+    fn status_yellow() {
         let yellow_frac = YELLOW_THRESH + 0.05;
         let miles =
             yellow_frac * f64::from(SERVICE_INTERVAL.miles()) + f64::from(PREVIOUS_SERVICE.miles());
@@ -618,7 +623,7 @@ mod tests {
     }
 
     #[test]
-    fn test_status_red() {
+    fn status_red() {
         let miles = PREVIOUS_SERVICE.miles() + SERVICE_INTERVAL.miles() + 1;
         let today = PREVIOUS_SERVICE.date() + TimeDelta::days(SERVICE_INTERVAL.days() + 1);
 
@@ -638,7 +643,7 @@ mod tests {
     }
 
     #[test]
-    fn test_zero_denom_skips_color_and_percent_interval() {
+    fn zero_denom_skips_color_and_percent_interval() {
         let mut log = build_log();
         let service_interval = log.get_mut(ID).unwrap().service_interval_mut();
         service_interval.set_miles(0);
@@ -659,7 +664,7 @@ mod tests {
     }
 
     #[test]
-    fn test_no_prev_services() {
+    fn no_prev_services() {
         let mut log = build_log();
         log.get_mut(ID).unwrap().prev_services_mut().clear();
 
@@ -686,6 +691,63 @@ mod tests {
             "{expected_miles_percent}% of maintenance interval"
         )));
         assert!(found.contains(&format!("{expected_time_precent}% of maintenance interval")));
+    }
+
+    #[test]
+    fn warn_if_data_loss_pos() {
+        let ok_val = 1;
+
+        let mut ratio = MaintenanceIntervalRatio {
+            numerator: ok_val,
+            denominator: ok_val,
+        };
+        assert!(!ratio.warn_if_data_loss());
+
+        // Stored MAX_I64_TO_F64 as u64
+        // Know it fits into i64
+        // Okay with as notation here
+        let i64_with_loss = MAX_I64_TO_F64 as i64 + 1;
+
+        ratio.numerator = i64_with_loss;
+        assert!(ratio.warn_if_data_loss());
+
+        ratio.numerator = ok_val;
+        ratio.denominator = i64_with_loss;
+        assert!(ratio.warn_if_data_loss());
+
+        ratio.numerator = i64_with_loss;
+        assert!(ratio.warn_if_data_loss())
+    }
+
+    #[test]
+    fn warn_if_data_loss_neg() {
+        let ok_val = -1i64;
+
+        let mut ratio = MaintenanceIntervalRatio {
+            numerator: ok_val,
+            denominator: ok_val,
+        };
+        assert!(!ratio.warn_if_data_loss());
+
+        // Stored MAX_I64_TO_F64 as u64
+        // Know it fits into i64
+        // Okay with as notation here
+        let i64_with_loss = -(MAX_I64_TO_F64 as i64) - 1;
+
+        ratio.numerator = i64_with_loss;
+        assert!(ratio.warn_if_data_loss());
+
+        ratio.numerator = ok_val;
+        ratio.denominator = i64_with_loss;
+        assert!(ratio.warn_if_data_loss());
+
+        ratio.numerator = i64_with_loss;
+        assert!(ratio.warn_if_data_loss())
+    }
+
+    #[test]
+    fn test_get_percentage() {
+        assert_eq!(get_percentage(0.123456789), 12.35);
     }
 
     fn output_string_to_buf_percent(
