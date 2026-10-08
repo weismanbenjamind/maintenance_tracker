@@ -165,8 +165,8 @@ impl<'a> StatusResult<'a> {
 
     /// Calculates the miles ratio (% of miles used in a maintenance interval).
     fn miles_ratio(&self) -> MaintenanceIntervalRatio {
-        let diff = match self.prev_service.map(|p| p.miles()) {
-            Some(prev_service_miles) => self.curr_miles - prev_service_miles,
+        let diff = match self.prev_service {
+            Some(prev_service) => self.curr_miles - prev_service.miles(),
             None => self.curr_miles,
         };
 
@@ -182,8 +182,8 @@ impl<'a> StatusResult<'a> {
     /// service date. t0 is then subtracted from the current date and this difference is
     /// divided by the maintenance interval.
     fn time_ratio(&self) -> MaintenanceIntervalRatio {
-        let diff = match self.prev_service.map(|p| p.date()) {
-            Some(prev_service_date) => self.date - prev_service_date,
+        let diff = match self.prev_service {
+            Some(prev_service) => self.date - prev_service.date(),
             // If have not performed a service yet then t0
             // Is calculated by substracting the
             // service interval from the first service date
@@ -346,6 +346,10 @@ fn get_percentage(ratio: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use chrono::TimeDelta;
+    use owo_colors::{
+        Color,
+        colors::{Green as OWO_GREEN, Red as OWO_RED, Yellow as OWO_YELLOW},
+    };
 
     use super::*;
     use crate::testing::{
@@ -563,6 +567,125 @@ mod tests {
         let found = remove_ansi_colors(found);
 
         assert_eq!(found, buf);
+    }
+
+    #[test]
+    fn test_status_green() {
+        let green_frac = 0.05;
+        let miles =
+            green_frac * f64::from(SERVICE_INTERVAL.miles()) + f64::from(PREVIOUS_SERVICE.miles());
+
+        let days_diff = green_frac * SERVICE_INTERVAL.days() as f64; // Note - risking data loss
+        let today = PREVIOUS_SERVICE.date() + TimeDelta::days(days_diff as i64); // Note - risking data loss
+
+        let cmd = Status {
+            curr_miles: miles as u32, // Note - risking data loss with as notation
+            id: Some(ID.into()),
+            today,
+        };
+
+        let log = build_log();
+        let found = cmd.run(&log).unwrap();
+
+        assert_eq!(found.matches("% of maintenance interval").count(), 2);
+        assert!(found.contains(OWO_GREEN::ANSI_FG));
+        assert!(!found.contains(OWO_YELLOW::ANSI_FG));
+        assert!(!found.contains(OWO_RED::ANSI_FG));
+    }
+
+    #[test]
+    fn test_status_yellow() {
+        let yellow_frac = YELLOW_THRESH + 0.05;
+        let miles =
+            yellow_frac * f64::from(SERVICE_INTERVAL.miles()) + f64::from(PREVIOUS_SERVICE.miles());
+
+        let days_diff = yellow_frac * SERVICE_INTERVAL.days() as f64; // Note - risking data loss
+        let today = PREVIOUS_SERVICE.date() + TimeDelta::days(days_diff as i64); // Note - risking data loss
+
+        let cmd = Status {
+            curr_miles: miles as u32, // Note - risking data loss with as notation
+            id: Some(ID.into()),
+            today,
+        };
+
+        let log = build_log();
+        let found = cmd.run(&log).unwrap();
+
+        assert_eq!(found.matches("% of maintenance interval").count(), 2);
+        assert!(found.contains(OWO_YELLOW::ANSI_FG));
+        assert!(!found.contains(OWO_GREEN::ANSI_FG));
+        assert!(!found.contains(OWO_RED::ANSI_FG));
+    }
+
+    #[test]
+    fn test_status_red() {
+        let miles = PREVIOUS_SERVICE.miles() + SERVICE_INTERVAL.miles() + 1;
+        let today = PREVIOUS_SERVICE.date() + TimeDelta::days(SERVICE_INTERVAL.days() + 1);
+
+        let cmd = Status {
+            curr_miles: miles,
+            id: Some(ID.into()),
+            today,
+        };
+
+        let log = build_log();
+        let found = cmd.run(&log).unwrap();
+
+        assert_eq!(found.matches("% of maintenance interval").count(), 2);
+        assert!(found.contains(OWO_RED::ANSI_FG));
+        assert!(!found.contains(OWO_YELLOW::ANSI_FG));
+        assert!(!found.contains(OWO_GREEN::ANSI_FG));
+    }
+
+    #[test]
+    fn test_zero_denom_skips_color_and_percent_interval() {
+        let mut log = build_log();
+        let service_interval = log.get_mut(ID).unwrap().service_interval_mut();
+        service_interval.set_miles(0);
+        service_interval.set_months(0);
+
+        let cmd = Status {
+            curr_miles: NEXT_SERVICE.miles() - 100,
+            id: Some(ID.into()),
+            today: NEXT_SERVICE.date() - TimeDelta::days(30),
+        };
+
+        let found = cmd.run(&log).unwrap();
+
+        assert_eq!(found.matches("% of maintenance interval").count(), 0);
+        assert!(!found.contains(OWO_RED::ANSI_FG));
+        assert!(!found.contains(OWO_YELLOW::ANSI_FG));
+        assert!(!found.contains(OWO_GREEN::ANSI_FG));
+    }
+
+    #[test]
+    fn test_no_prev_services() {
+        let mut log = build_log();
+        log.get_mut(ID).unwrap().prev_services_mut().clear();
+
+        let curr_miles = NEXT_SERVICE.miles() - 100;
+        let expected_miles_percent =
+            (f64::from(curr_miles) / f64::from(SERVICE_INTERVAL.miles()) * 10000.0).round() / 100.0;
+
+        let today = NEXT_SERVICE.date() - TimeDelta::days(30);
+        let time_diff =
+            (today - (NEXT_SERVICE.date() - TimeDelta::days(SERVICE_INTERVAL.days()))).num_days();
+        let expected_time_precent =
+            (time_diff as f64 / SERVICE_INTERVAL.days() as f64 * 10000.0).round() / 100.0;
+
+        let cmd = Status {
+            curr_miles: NEXT_SERVICE.miles() - 100,
+            id: Some(ID.into()),
+            today: NEXT_SERVICE.date() - TimeDelta::days(30),
+        };
+
+        let found = cmd.run(&log).unwrap();
+        let found = remove_ansi_colors(found);
+
+        assert!(found.contains(&format!(
+            "{expected_miles_percent}% of maintenance interval"
+        )));
+        assert!(found.contains(&format!("{expected_time_precent}% of maintenance interval")));
     }
 
     fn output_string_to_buf_percent(
