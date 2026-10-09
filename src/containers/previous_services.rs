@@ -100,6 +100,16 @@ impl PreviousServices {
         self.service_events = None
     }
 
+    /// Get the most recent service if it exists. If no previous service has been
+    /// performed returns `None`.
+    pub(crate) fn get_most_recent(&self) -> Option<ServiceEvent> {
+        self.service_events
+            .as_deref()?
+            .iter()
+            .max_by_key(|s| s.date())
+            .copied()
+    }
+
     /// Gets the number of previous services if set.
     /// If no previous services returns None.
     /// Only used for testing.
@@ -525,5 +535,20 @@ mod tests {
         assert_eq!(found.len(), 2);
         assert_eq!(found[0], 2);
         assert_eq!(found[1], 3);
+    }
+
+    #[test]
+    fn get_most_recent_no_prev() {
+        // Cool with panic below
+        assert!(build_previous_services_none().get_most_recent().is_none())
+    }
+
+    #[test]
+    fn get_most_recent_prev() {
+        let oldest = ServiceEvent::new(10000, NaiveDate::from_ymd_opt(2025, 1, 1).unwrap());
+        let newer = ServiceEvent::new(15000, NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
+
+        let prev_services = PreviousServices::new(Some(vec![oldest, newer]));
+        assert_eq!(prev_services.get_most_recent().unwrap(), newer);
     }
 }

@@ -70,6 +70,12 @@ impl ServiceMetdata {
         &mut self.next_service
     }
 
+    /// Gets the most recent previous service if it exists.
+    /// Returns `None` if no previous services have been performed.
+    pub(crate) fn prev_service(&self) -> Option<ServiceEvent> {
+        self.previous_services.get_most_recent()
+    }
+
     /// Borrow the notes. Only used for testing.
     #[cfg(test)]
     pub(crate) fn notes(&self) -> &Notes {
@@ -81,7 +87,7 @@ impl ServiceMetdata {
         &mut self.notes
     }
 
-    /// Borrow the previous services. Only used for testing.
+    /// Borrow the previous services. Only used in tests.
     #[cfg(test)]
     pub(crate) fn prev_services(&self) -> &PreviousServices {
         &self.previous_services
@@ -261,5 +267,34 @@ mod tests {
             NEXT_SERVICE.date(),
         );
         assert_eq!(found, expected);
+    }
+
+    #[test]
+    fn test_prev_service_none() {
+        let metadata = ServiceMetdata {
+            name: NAME.into(),
+            service_interval: SERVICE_INTERVAL,
+            next_service: NEXT_SERVICE,
+            previous_services: PreviousServices::new(None),
+            notes: Notes::new(None),
+        };
+
+        assert!(metadata.prev_service().is_none())
+    }
+
+    #[test]
+    fn test_prev_service_some() {
+        let service = ServiceEvent::new(10000, NaiveDate::from_ymd_opt(2025, 1, 1).unwrap());
+        let prev_services = PreviousServices::new(Some(vec![service]));
+
+        let metadata = ServiceMetdata {
+            name: NAME.into(),
+            service_interval: SERVICE_INTERVAL,
+            next_service: NEXT_SERVICE,
+            previous_services: prev_services,
+            notes: Notes::new(None),
+        };
+
+        assert_eq!(metadata.prev_service().unwrap(), service)
     }
 }
