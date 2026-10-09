@@ -750,6 +750,24 @@ mod tests {
         assert_eq!(get_percentage(0.123456789), 12.35);
     }
 
+    #[test]
+    fn test_safe_calc_non_zero_denom() {
+        let ratio = MaintenanceIntervalRatio {
+            numerator: 1,
+            denominator: 2,
+        };
+        assert_eq!(ratio.safe_calc().unwrap(), 0.5);
+    }
+
+    #[test]
+    fn test_safe_calc_zero_denom() {
+        let ratio = MaintenanceIntervalRatio {
+            numerator: 1,
+            denominator: 0,
+        };
+        assert!(ratio.safe_calc().is_none());
+    }
+
     fn output_string_to_buf_percent(
         buf: &mut String,
         miles: u32,
