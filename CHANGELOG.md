@@ -1,6 +1,6 @@
 # All Changes to Package Housed Here
 
-## Unreleased
+## 1.1.0
 
 ### Added
 
